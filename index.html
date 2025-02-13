@@ -501,14 +501,17 @@
 }
 
     function updateRangeSelection(e) {
-        if (!isMouseDown || isSelecting === null) return;
-        const cell = e.target.closest('.range-cell');
-        if (!cell) return;
-        
-        if (cell.classList.contains('selected') !== isSelecting) {
-            toggleRangeCell(cell);
-        }
+    if (!isMouseDown || isSelecting === null) return;
+    const cell = e.target.closest('.range-cell');
+    if (!cell) return;
+    
+    const selections = JSON.parse(cell.dataset.selections || '[]');
+    const hasCurrentColor = selections.some(s => s.color === currentColor);
+    
+    if (hasCurrentColor !== isSelecting) {
+        toggleRangeCell(cell);
     }
+}
 
     function endRangeSelection() {
         isMouseDown = false;
