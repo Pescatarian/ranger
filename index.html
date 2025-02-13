@@ -299,6 +299,7 @@
     let selectedCell = null;
     const cellData = new Map();
     let currentWeight = 100;
+    let currentColor = '#4CAF50';
     let isMouseDown = false;
     let isSelecting = null;
 
@@ -332,37 +333,37 @@
         }
     }
 
-function createRangeGrid() {
-    const rangeGrid = document.getElementById('rangeGrid');
-    const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
-    
-    for (let i = 0; i < ranks.length; i++) {
-        for (let j = 0; j < ranks.length; j++) {
-            const cell = document.createElement('div');
-            cell.className = 'range-cell';
-            
-            const textSpan = document.createElement('span');
-            if (i === j) {
-                // Pocket pairs
-                textSpan.textContent = ranks[i] + ranks[j];
-            } else if (i < j) {
-                // Suited hands on the right side
-                textSpan.textContent = ranks[i] + ranks[j] + 's';  // Higher card first
-            } else {
-                // Offsuit hands on the left side
-                textSpan.textContent = ranks[j] + ranks[i] + 'o';  // Swapped to put higher card first
-            }
-            cell.appendChild(textSpan);
+    function createRangeGrid() {
+        const rangeGrid = document.getElementById('rangeGrid');
+        const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+        
+        for (let i = 0; i < ranks.length; i++) {
+            for (let j = 0; j < ranks.length; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'range-cell';
+                
+                const textSpan = document.createElement('span');
+                if (i === j) {
+                    // Pocket pairs
+                    textSpan.textContent = ranks[i] + ranks[j];
+                } else if (i < j) {
+                    // Suited hands on the right side
+                    textSpan.textContent = ranks[i] + ranks[j] + 's';
+                } else {
+                    // Offsuit hands on the left side
+                    textSpan.textContent = ranks[j] + ranks[i] + 'o';
+                }
+                cell.appendChild(textSpan);
 
-            cell.addEventListener('mousedown', startRangeSelection);
-            cell.addEventListener('mouseover', updateRangeSelection);
-            
-            rangeGrid.appendChild(cell);
+                cell.addEventListener('mousedown', startRangeSelection);
+                cell.addEventListener('mouseover', updateRangeSelection);
+                
+                rangeGrid.appendChild(cell);
+            }
         }
+        
+        document.addEventListener('mouseup', endRangeSelection);
     }
-    
-    document.addEventListener('mouseup', endRangeSelection);
-}
 
     function updateStats() {
         const selectedCells = document.querySelectorAll('.range-cell.selected');
@@ -370,40 +371,93 @@ function createRangeGrid() {
         
         selectedCells.forEach(cell => {
             const hand = cell.querySelector('span').textContent;
-            const weight = parseFloat(cell.dataset.weight || 100) / 100;
+            const selections = JSON.parse(cell.dataset.selections || '[]');
             
             let handCombos = 0;
             if (hand.length === 2) {
-                // Pocket pair (AA, KK, etc.)
-                handCombos = 6;
+                handCombos = 6; // Pocket pair
             } else if (hand.endsWith('s')) {
-                // Suited hand (AKs, T9s, etc.)
-                handCombos = 4;
+                handCombos = 4; // Suited
             } else if (hand.endsWith('o')) {
-                // Offsuit hand (AKo, T9o, etc.)
-                handCombos = 12;
+                handCombos = 12; // Offsuit
             }
             
-            // Apply weight to the combos
-            totalCombos += handCombos * weight;
+            // Sum up weighted combos from all selections
+            selections.forEach(selection => {
+                totalCombos += handCombos * (selection.weight / 100);
+            });
         });
         
-        // Total possible combinations = 1326
         const totalPossibleCombos = 1326;
-        
-        // Calculate range percentage
         const rangePercentage = (totalCombos / totalPossibleCombos * 100).toFixed(1);
         
-        // Update the display
         document.getElementById('rangePercent').textContent = rangePercentage + '%';
         document.getElementById('comboCount').textContent = Math.round(totalCombos);
     }
 
-    function clearSelection() {
-        document.querySelectorAll('.range-cell.selected').forEach(cell => {
+    function updateColor(e) {
+        currentColor = e.target.value;
+    }
+
+    function toggleRangeCell(cell) {
+        if (!cell.dataset.selections) {
+            cell.dataset.selections = JSON.stringify([]);
+        }
+        
+        let selections = JSON.parse(cell.dataset.selections);
+        const existingSelectionIndex = selections.findIndex(s => s.color === currentColor);
+
+        if (existingSelectionIndex >= 0) {
+            selections.splice(existingSelectionIndex, 1);
+        } else {
+            selections.push({
+                color: currentColor,
+                weight: currentWeight
+            });
+        }
+
+        cell.dataset.selections = JSON.stringify(selections);
+        updateCellVisual(cell);
+        updateRangeText();
+        updateStats();
+    }
+
+    function updateCellVisual(cell) {
+        const selections = JSON.parse(cell.dataset.selections || '[]');
+        
+        if (selections.length === 0) {
+            cell.style.background = '#1a1a1a';
             cell.classList.remove('selected');
-            cell.style.removeProperty('--weight-height');
-            delete cell.dataset.weight;
+            return;
+        }
+
+        cell.classList.add('selected');
+        
+        if (selections.length === 1) {
+            const {color, weight} = selections[0];
+            cell.style.background = `linear-gradient(to right, ${color} ${weight}%, #1a1a1a ${weight}%)`;
+        } else {
+            let gradientString = 'linear-gradient(to right, ';
+            let currentPosition = 0;
+            
+            selections.forEach((selection, index) => {
+                gradientString += `${selection.color} ${currentPosition}% ${currentPosition + selection.weight}%`;
+                currentPosition += selection.weight;
+                
+                if (index < selections.length - 1) {
+                    gradientString += ', ';
+                }
+            });
+            
+            gradientString += `, #1a1a1a ${currentPosition}%)`;
+            cell.style.background = gradientString;
+        }
+    }
+
+    function clearSelection() {
+        document.querySelectorAll('.range-cell').forEach(cell => {
+            cell.dataset.selections = JSON.stringify([]);
+            updateCellVisual(cell);
         });
         document.getElementById('rangeText').value = '';
         updateStats();
@@ -412,25 +466,25 @@ function createRangeGrid() {
     function handleRangeTextChange(e) {
         const text = e.target.value.trim();
         
-        document.querySelectorAll('.range-cell.selected').forEach(cell => {
-            cell.classList.remove('selected');
-            cell.style.removeProperty('--weight-height');
-            delete cell.dataset.weight;
+        document.querySelectorAll('.range-cell').forEach(cell => {
+            cell.dataset.selections = JSON.stringify([]);
+            updateCellVisual(cell);
         });
         
         if (text) {
-            const weightGroups = text.match(/\[\d+\][^[]+\[\/\d+\]/g) || [];
+            const weightGroups = text.match(/\[\d+:[#\w]+\][^[]+\[\/\d+\]/g) || [];
             weightGroups.forEach(group => {
-                const weight = group.match(/\[(\d+)\]/)[1];
+                const [_, weight, color] = group.match(/\[(\d+):([#\w]+)\]/);
                 const hands = group.match(/\]([^[]+)\[/)[1].split(',');
                 
                 hands.forEach(hand => {
                     const cell = [...document.querySelectorAll('.range-cell')]
                         .find(cell => cell.querySelector('span').textContent.trim() === hand.trim());
                     if (cell) {
-                        cell.classList.add('selected');
-                        cell.style.setProperty('--weight-height', `${weight}%`);
-                        cell.dataset.weight = weight;
+                        const selections = JSON.parse(cell.dataset.selections || '[]');
+                        selections.push({color, weight: parseInt(weight)});
+                        cell.dataset.selections = JSON.stringify(selections);
+                        updateCellVisual(cell);
                     }
                 });
             });
@@ -485,33 +539,26 @@ function createRangeGrid() {
         document.getElementById('sidebar').style.display = isRangeBuilderOpen ? 'flex' : 'none';
     }
 
-    function toggleRangeCell(cell) {
-        cell.classList.toggle('selected');
-        if(cell.classList.contains('selected')) {
-            cell.style.setProperty('--weight-height', `${currentWeight}%`);
-            cell.dataset.weight = currentWeight;
-        } else {
-            cell.style.removeProperty('--weight-height');
-            delete cell.dataset.weight;
-        }
-        updateRangeText();
-        updateStats();
-    }
-
     function updateRangeText() {
-        const selectedCells = [...document.querySelectorAll('.range-cell.selected')];
-        const handsByWeight = {};
+        const cells = [...document.querySelectorAll('.range-cell')];
+        const selectionsByColorAndWeight = {};
         
-        selectedCells.forEach(cell => {
-            const weight = cell.dataset.weight || 100;
-            if (!handsByWeight[weight]) {
-                handsByWeight[weight] = [];
-            }
-            handsByWeight[weight].push(cell.querySelector('span').textContent);
+        cells.forEach(cell => {
+            const selections = JSON.parse(cell.dataset.selections || '[]');
+            selections.forEach(({color, weight}) => {
+                const key = `${color}_${weight}`;
+                if (!selectionsByColorAndWeight[key]) {
+                    selectionsByColorAndWeight[key] = [];
+                }
+                selectionsByColorAndWeight[key].push(cell.querySelector('span').textContent);
+            });
         });
         
-        const formattedGroups = Object.entries(handsByWeight)
-            .map(([weight, hands]) => `[${weight}]${hands.join(',')}[/${weight}]`);
+        const formattedGroups = Object.entries(selectionsByColorAndWeight)
+            .map(([key, hands]) => {
+                const [color, weight] = key.split('_');
+                return `[${weight}:${color}]${hands.join(',')}[/${weight}]`;
+            });
         
         document.getElementById('rangeText').value = formattedGroups.join(',');
     }
@@ -577,6 +624,7 @@ function createRangeGrid() {
         createGrid();
         createRangeGrid();
         toggleViewMode();
+        document.getElementById('colorPicker').addEventListener('input', updateColor);
     });
 </script>
 </body>
