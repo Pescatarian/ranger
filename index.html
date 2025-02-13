@@ -217,14 +217,14 @@
             background-color: #45a049;
         }
 
-   .range-text {
+.range-text {
     width: calc(100% - 40px);
-    height: 40px;  /* Reduced from 100px to 60px */
+    height: 40px;
     background-color: #1a1a1a;
     color: #4CAF50;
     border: 1px solid #444;
     padding: 10px;
-    margin-top: 20px;
+    margin-top: 30px;  /* Increased from 20px to 30px */
     font-family: Arial, sans-serif;
     resize: none;
 }
@@ -313,7 +313,7 @@
         }
     }
 
-  function createRangeGrid() {
+ function createRangeGrid() {
     const rangeGrid = document.getElementById('rangeGrid');
     const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     
@@ -328,10 +328,10 @@
                 textSpan.textContent = ranks[i] + ranks[j];
             } else if (i < j) {
                 // Suited hands on the right side
-                textSpan.textContent = ranks[j] + ranks[i] + 's';
+                textSpan.textContent = ranks[i] + ranks[j] + 's';  // Higher card first
             } else {
                 // Offsuit hands on the left side
-                textSpan.textContent = ranks[i] + ranks[j] + 'o';
+                textSpan.textContent = ranks[i] + ranks[j] + 'o';  // Higher card first
             }
             cell.appendChild(textSpan);
 
