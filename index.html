@@ -399,28 +399,44 @@
     }
 }
 
-    function toggleRangeCell(cell) {
-        if (!cell.dataset.selections) {
-            cell.dataset.selections = JSON.stringify([]);
-        }
-        
-        let selections = JSON.parse(cell.dataset.selections);
-        const existingSelectionIndex = selections.findIndex(s => s.color === currentColor);
-
-        if (existingSelectionIndex >= 0) {
-            selections.splice(existingSelectionIndex, 1);
-        } else {
-            selections.push({
-                color: currentColor,
-                weight: currentWeight
-            });
-        }
-
-        cell.dataset.selections = JSON.stringify(selections);
-        updateCellVisual(cell);
-        updateRangeText();
-        updateStats();
+  function toggleRangeCell(cell) {
+    if (!cell.dataset.selections) {
+        cell.dataset.selections = JSON.stringify([]);
     }
+    
+    let selections = JSON.parse(cell.dataset.selections);
+    const existingSelectionIndex = selections.findIndex(s => s.color === currentColor);
+    const totalCurrentWeight = selections.reduce((sum, s) => sum + s.weight, 0);
+
+    if (existingSelectionIndex >= 0) {
+        // If same color exists, update its weight
+        selections[existingSelectionIndex].weight = currentWeight;
+    } else {
+        // If adding new color
+        if (totalCurrentWeight + currentWeight > 100) {
+            // Adjust existing selections proportionally
+            const remainingWeight = 100 - currentWeight;
+            const ratio = remainingWeight / totalCurrentWeight;
+            selections = selections.map(s => ({
+                ...s,
+                weight: Math.round(s.weight * ratio)
+            }));
+        }
+        // Add new selection
+        selections.push({
+            color: currentColor,
+            weight: currentWeight
+        });
+    }
+
+    // Remove selections with 0 weight
+    selections = selections.filter(s => s.weight > 0);
+    
+    cell.dataset.selections = JSON.stringify(selections);
+    updateCellVisual(cell);
+    updateRangeText();
+    updateStats();
+}
 
     function updateCellVisual(cell) {
         const selections = JSON.parse(cell.dataset.selections || '[]');
