@@ -344,22 +344,28 @@
         document.addEventListener('mouseup', endRangeSelection);
     }
 
-    function updateStats() {
+   function updateStats() {
     const selectedCells = document.querySelectorAll('.range-cell.selected');
     let totalCombos = 0;
     
     selectedCells.forEach(cell => {
         const hand = cell.querySelector('span').textContent;
+        const weight = parseFloat(cell.dataset.weight || 100) / 100;
+        
+        let handCombos = 0;
         if (hand.length === 2) {
             // Pocket pair (AA, KK, etc.)
-            totalCombos += 6;
+            handCombos = 6;
         } else if (hand.endsWith('s')) {
             // Suited hand (AKs, T9s, etc.)
-            totalCombos += 4;
+            handCombos = 4;
         } else if (hand.endsWith('o')) {
             // Offsuit hand (AKo, T9o, etc.)
-            totalCombos += 12;
+            handCombos = 12;
         }
+        
+        // Apply weight to the combos
+        totalCombos += handCombos * weight;
     });
     
     // Total possible combinations = 1326
@@ -370,7 +376,7 @@
     
     // Update the display
     document.getElementById('rangePercent').textContent = rangePercentage + '%';
-    document.getElementById('comboCount').textContent = totalCombos;
+    document.getElementById('comboCount').textContent = Math.round(totalCombos);
 }
 
     function clearSelection() {
