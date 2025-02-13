@@ -134,10 +134,11 @@
             position: absolute;
             bottom: 0;
             left: 0;
-            width: 100%;
+            right: 0;
             height: var(--weight-height, 100%);
             background-color: #4CAF50;
             z-index: -1;
+            transform-origin: bottom;
             transition: height 0.3s ease;
         }
 
@@ -266,7 +267,7 @@
                     cell.className = 'range-cell';
                     
                     const textSpan = document.createElement('span');
-                    if (i <= j) {
+                    if (i >= j) {  // Changed condition for hand placement
                         const hand = ranks[i] + ranks[j] + (i === j ? '' : 'o');
                         textSpan.textContent = hand;
                         cell.onclick = () => toggleRangeCell(cell);
