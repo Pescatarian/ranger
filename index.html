@@ -345,17 +345,33 @@
     }
 
     function updateStats() {
-        const totalCombos = 169; // Total possible combinations in a 13x13 grid
-        const selectedCells = document.querySelectorAll('.range-cell.selected');
-        const selectedCount = selectedCells.length;
-        
-        // Calculate range percentage
-        const rangePercentage = (selectedCount / totalCombos * 100).toFixed(1);
-        
-        // Update the display
-        document.getElementById('rangePercent').textContent = rangePercentage + '%';
-        document.getElementById('comboCount').textContent = selectedCount;
-    }
+    const selectedCells = document.querySelectorAll('.range-cell.selected');
+    let totalCombos = 0;
+    
+    selectedCells.forEach(cell => {
+        const hand = cell.querySelector('span').textContent;
+        if (hand.length === 2) {
+            // Pocket pair (AA, KK, etc.)
+            totalCombos += 6;
+        } else if (hand.endsWith('s')) {
+            // Suited hand (AKs, T9s, etc.)
+            totalCombos += 4;
+        } else if (hand.endsWith('o')) {
+            // Offsuit hand (AKo, T9o, etc.)
+            totalCombos += 12;
+        }
+    });
+    
+    // Total possible combinations = 1326
+    const totalPossibleCombos = 1326;
+    
+    // Calculate range percentage
+    const rangePercentage = (totalCombos / totalPossibleCombos * 100).toFixed(1);
+    
+    // Update the display
+    document.getElementById('rangePercent').textContent = rangePercentage + '%';
+    document.getElementById('comboCount').textContent = totalCombos;
+}
 
     function clearSelection() {
         document.querySelectorAll('.range-cell.selected').forEach(cell => {
