@@ -218,10 +218,10 @@
             background-color: #45a049;
         }
 
-       .range-text {
+   .range-text {
     width: calc(100% - 40px);
     height: 100px;
-    background-color: #2d2d2d;
+    background-color: #1a1a1a;  /* Changed from #2d2d2d to #1a1a1a */
     color: #4CAF50;
     border: 1px solid #444;
     padding: 10px;
@@ -249,7 +249,7 @@
         <div class="grid-container" id="grid"></div>
     </div>
 
-    <div class="sidebar" id="sidebar">
+   <div class="sidebar" id="sidebar">
         <h2>Range Builder</h2>
         <div class="range-grid" id="rangeGrid"></div>
         <div class="top-controls">
@@ -271,8 +271,7 @@
             </div>
             <button class="clear-button" onclick="clearSelection()">Clear</button>
         </div>
-       <textarea id="rangeText" class="range-text" 
-                  placeholder="Selected hands will appear here..." 
+        <textarea id="rangeText" class="range-text" 
                   oninput="handleRangeTextChange(event)"></textarea>
         <button class="button save-button" onclick="saveToCell()">Save to Cell</button>
     </div>
