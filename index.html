@@ -129,18 +129,18 @@
             z-index: 1;
         }
 
-        .range-cell.selected::before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: var(--weight-height, 100%);
-            background-color: #4CAF50;
-            z-index: -1;
-            transform-origin: bottom;
-            transition: height 0.3s ease;
-        }
+       .range-cell.selected::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--weight-height, 100%);  /* Changed from height to width */
+    background-color: #4CAF50;
+    z-index: -1;
+    transform-origin: left;
+    transition: width 0.3s ease;  /* Changed from height to width */
+}
 
         .range-cell span {
             z-index: 2;
