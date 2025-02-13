@@ -80,8 +80,7 @@
             position: fixed;
             right: 0;
             top: 0;
-            bottom: 0;
-            overflow-y: auto;
+            height: 100vh;
         }
 
         .sidebar.active {
@@ -96,10 +95,11 @@
         .range-grid {
             display: grid;
             grid-template-columns: repeat(13, 1fr);
+            grid-template-rows: repeat(13, 1fr);
             gap: 2px;
             margin-top: 20px;
-            aspect-ratio: 1;
             width: 360px;
+            aspect-ratio: 1;
             margin-left: auto;
             margin-right: auto;
         }
@@ -177,28 +177,6 @@
         let selectedCell = null;
         const cellData = new Map();
 
-        function toggleViewMode() {
-            isViewMode = true;
-            isRangeBuilderOpen = false;
-            
-            document.getElementById('viewModeBtn').classList.add('active');
-            document.getElementById('rangeBuilderBtn').classList.remove('active');
-            
-            document.getElementById('grid').classList.remove('hidden');
-            document.getElementById('sidebar').classList.remove('active');
-        }
-
-        function toggleRangeBuilder() {
-            isRangeBuilderOpen = !isRangeBuilderOpen;
-            isViewMode = !isRangeBuilderOpen;
-            
-            document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
-            document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
-            
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('grid').classList.toggle('hidden', isRangeBuilderOpen);
-        }
-
         function createGrid() {
             const grid = document.getElementById('grid');
             for (let i = 0; i < 8; i++) {
@@ -234,15 +212,42 @@
             const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
             
             for (let i = 0; i < ranks.length; i++) {
-                for (let j = i; j < ranks.length; j++) {
+                for (let j = 0; j < ranks.length; j++) {
                     const cell = document.createElement('div');
                     cell.className = 'range-cell';
-                    const hand = ranks[i] + ranks[j] + (i === j ? '' : (i < j ? 's' : 'o'));
-                    cell.textContent = hand;
-                    cell.onclick = () => toggleRangeCell(cell);
+                    
+                    // Only create valid hands
+                    if (i <= j) {
+                        const hand = ranks[i] + ranks[j] + (i === j ? '' : (i < j ? 'o' : 's'));
+                        cell.textContent = hand;
+                        cell.onclick = () => toggleRangeCell(cell);
+                    }
+                    
                     rangeGrid.appendChild(cell);
                 }
             }
+        }
+
+        function toggleViewMode() {
+            isViewMode = true;
+            isRangeBuilderOpen = false;
+            
+            document.getElementById('viewModeBtn').classList.add('active');
+            document.getElementById('rangeBuilderBtn').classList.remove('active');
+            
+            document.getElementById('grid').classList.remove('hidden');
+            document.getElementById('sidebar').classList.remove('active');
+        }
+
+        function toggleRangeBuilder() {
+            isRangeBuilderOpen = !isRangeBuilderOpen;
+            isViewMode = !isRangeBuilderOpen;
+            
+            document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
+            document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
+            
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('grid').classList.toggle('hidden', isRangeBuilderOpen);
         }
 
         function toggleRangeCell(cell) {
