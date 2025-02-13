@@ -102,7 +102,7 @@
             grid-template-columns: repeat(13, 1fr);
             gap: 2px;
             margin-top: 20px;
-            width: calc(100% - 40px);
+            width: calc(100% - 20px);
             aspect-ratio: 1;
             margin-bottom: 20px;
         }
@@ -135,10 +135,6 @@
             display: flex;
             gap: 10px;
             z-index: 1000;
-        }
-
-        .grid-container.hidden {
-            display: none;
         }
 
         .range-text {
@@ -246,7 +242,6 @@
             document.getElementById('viewModeBtn').classList.add('active');
             document.getElementById('rangeBuilderBtn').classList.remove('active');
             
-            document.getElementById('grid').classList.remove('hidden');
             document.getElementById('sidebar').classList.remove('active');
         }
 
@@ -258,7 +253,6 @@
             document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
             
             document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('grid').classList.toggle('hidden', isRangeBuilderOpen);
         }
 
         function toggleRangeCell(cell) {
