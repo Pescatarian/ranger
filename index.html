@@ -10,6 +10,7 @@
             margin: 0;
             padding: 20px;
             display: flex;
+            user-select: none; /* Prevent text selection during drag */
         }
 
         .main-container {
@@ -129,18 +130,18 @@
             z-index: 1;
         }
 
-       .range-cell.selected::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: var(--weight-height, 100%);  /* Changed from height to width */
-    background-color: #4CAF50;
-    z-index: -1;
-    transform-origin: left;
-    transition: width 0.3s ease;  /* Changed from height to width */
-}
+        .range-cell.selected::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: var(--weight-height, 100%);
+            background-color: #4CAF50;
+            z-index: -1;
+            transform-origin: left;
+            transition: width 0.3s ease;
+        }
 
         .range-cell span {
             z-index: 2;
@@ -226,6 +227,8 @@
         let selectedCell = null;
         const cellData = new Map();
         let currentWeight = 100;
+        let isMouseDown = false;
+        let isSelecting = null;
 
         function createGrid() {
             const grid = document.getElementById('grid');
@@ -267,19 +270,47 @@
                     cell.className = 'range-cell';
                     
                     const textSpan = document.createElement('span');
-                    if (i >= j) {  // Changed condition for hand placement
+                    if (i >= j) {
                         const hand = ranks[i] + ranks[j] + (i === j ? '' : 'o');
                         textSpan.textContent = hand;
-                        cell.onclick = () => toggleRangeCell(cell);
                     } else {
                         const hand = ranks[j] + ranks[i] + 's';
                         textSpan.textContent = hand;
-                        cell.onclick = () => toggleRangeCell(cell);
                     }
                     cell.appendChild(textSpan);
+
+                    // Add mouse events for drag selection
+                    cell.addEventListener('mousedown', startRangeSelection);
+                    cell.addEventListener('mouseover', updateRangeSelection);
+                    
                     rangeGrid.appendChild(cell);
                 }
             }
+            
+            // Add mouseup listener to document
+            document.addEventListener('mouseup', endRangeSelection);
+        }
+
+        function startRangeSelection(e) {
+            isMouseDown = true;
+            const cell = e.target.closest('.range-cell');
+            isSelecting = !cell.classList.contains('selected');
+            toggleRangeCell(cell);
+        }
+
+        function updateRangeSelection(e) {
+            if (!isMouseDown || isSelecting === null) return;
+            const cell = e.target.closest('.range-cell');
+            if (!cell) return;
+            
+            if (cell.classList.contains('selected') !== isSelecting) {
+                toggleRangeCell(cell);
+            }
+        }
+
+        function endRangeSelection() {
+            isMouseDown = false;
+            isSelecting = null;
         }
 
         function updateWeight(value) {
