@@ -123,23 +123,11 @@
             background-color: #2d2d2d;
         }
 
-        .range-cell.selected {
+                .range-cell.selected {
             color: white;
             position: relative;
             z-index: 1;
-        }
-
-        .range-cell.selected::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: var(--weight-height, 100%);
-            background-color: #4CAF50;
-            z-index: -1;
-            transform-origin: left;
-            transition: width 0.3s ease;
+            transition: background 0.3s ease;
         }
 
         .range-cell span {
@@ -365,39 +353,51 @@
         document.addEventListener('mouseup', endRangeSelection);
     }
 
-    function updateStats() {
-        const selectedCells = document.querySelectorAll('.range-cell.selected');
-        let totalCombos = 0;
+   function updateStats() {
+    const selectedCells = document.querySelectorAll('.range-cell');
+    let totalCombos = 0;
+    
+    selectedCells.forEach(cell => {
+        const hand = cell.querySelector('span').textContent;
+        const selections = JSON.parse(cell.dataset.selections || '[]');
         
-        selectedCells.forEach(cell => {
-            const hand = cell.querySelector('span').textContent;
-            const selections = JSON.parse(cell.dataset.selections || '[]');
-            
-            let handCombos = 0;
-            if (hand.length === 2) {
-                handCombos = 6; // Pocket pair
-            } else if (hand.endsWith('s')) {
-                handCombos = 4; // Suited
-            } else if (hand.endsWith('o')) {
-                handCombos = 12; // Offsuit
-            }
-            
-            // Sum up weighted combos from all selections
-            selections.forEach(selection => {
-                totalCombos += handCombos * (selection.weight / 100);
-            });
-        });
+        if (selections.length === 0) return;
         
-        const totalPossibleCombos = 1326;
-        const rangePercentage = (totalCombos / totalPossibleCombos * 100).toFixed(1);
+        let handCombos = 0;
+        if (hand.length === 2) {
+            handCombos = 6; // Pocket pair
+        } else if (hand.endsWith('s')) {
+            handCombos = 4; // Suited
+        } else if (hand.endsWith('o')) {
+            handCombos = 12; // Offsuit
+        }
         
-        document.getElementById('rangePercent').textContent = rangePercentage + '%';
-        document.getElementById('comboCount').textContent = Math.round(totalCombos);
-    }
+        // Calculate total weight percentage (capped at 100%)
+        const totalWeight = Math.min(
+            selections.reduce((sum, s) => sum + (s.weight || 0), 0),
+            100
+        ) / 100;
+        
+        totalCombos += handCombos * totalWeight;
+    });
+    
+    const totalPossibleCombos = 1326;
+    const rangePercentage = (totalCombos / totalPossibleCombos * 100).toFixed(1);
+    
+    document.getElementById('rangePercent').textContent = rangePercentage + '%';
+    document.getElementById('comboCount').textContent = Math.round(totalCombos);
+}
 
-    function updateColor(e) {
-        currentColor = e.target.value;
+   function updateColor(e) {
+    const color = e.target.value;
+    // Validate color format
+    if (/^#[0-9A-F]{6}$/i.test(color)) {
+        currentColor = color;
+    } else {
+        console.warn('Invalid color format:', color);
+        e.target.value = currentColor; // Reset to previous valid color
     }
+}
 
     function toggleRangeCell(cell) {
         if (!cell.dataset.selections) {
@@ -493,11 +493,12 @@
     }
 
     function startRangeSelection(e) {
-        isMouseDown = true;
-        const cell = e.target.closest('.range-cell');
-        isSelecting = !cell.classList.contains('selected');
-        toggleRangeCell(cell);
-    }
+    isMouseDown = true;
+    const cell = e.target.closest('.range-cell');
+    const selections = JSON.parse(cell.dataset.selections || '[]');
+    isSelecting = !selections.some(s => s.color === currentColor);
+    toggleRangeCell(cell);
+}
 
     function updateRangeSelection(e) {
         if (!isMouseDown || isSelecting === null) return;
@@ -572,20 +573,25 @@
         selectedCell.style.border = '2px solid #4CAF50';
     }
 
-    function saveToCell() {
-        if (!selectedCell) {
-            alert('Please select a cell first');
-            return;
-        }
-        
-        const rangeText = document.getElementById('rangeText').value;
-        cellData.set(selectedCell.dataset.id, rangeText);
-        
-        const content = selectedCell.querySelector('.cell-content');
-        content.innerHTML = '📝';
-        
-        toggleRangeBuilder();
+   function saveToCell() {
+    if (!selectedCell) {
+        alert('Please select a cell first');
+        return;
     }
+    
+    const rangeText = document.getElementById('rangeText').value;
+    // Validate the range text format
+    if (rangeText && !rangeText.match(/^\[[\d]+:[#\w]+\][^[]+\[\/\d+\](,\[[\d]+:[#\w]+\][^[]+\[\/\d+\])*$/)) {
+        alert('Invalid range format');
+        return;
+    }
+    
+    cellData.set(selectedCell.dataset.id, rangeText);
+    const content = selectedCell.querySelector('.cell-content');
+    content.innerHTML = '📝';
+    
+    toggleRangeBuilder();
+}
 
     function handleDragStart(e) {
         if (!isViewMode) return;
