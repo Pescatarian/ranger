@@ -90,11 +90,11 @@
         }
 
        .sidebar h2 {
-    color: #4CAF50;
-    margin-top: 20px;  /* Reduced from 60px to 20px */
-    width: 100%;
-    padding-left: 20px;
-}
+            color: #4CAF50;
+            margin-top: 20px;  /* Reduced from 60px to 20px */
+            width: 100%;
+            padding-left: 20px;
+    }
 
 .range-grid {
     display: grid;
@@ -124,12 +124,12 @@
         }
 
                 .range-cell.selected {
-            color: white;
-            position: relative;
-            z-index: 1;
-            transition: background 0.3s ease;
-        }
-
+                    color: white;
+                    position: relative;
+                    z-index: 1;
+                    transition: background 0.3s ease;
+            }
+    
         .range-cell span {
             z-index: 2;
             position: relative;
@@ -144,13 +144,14 @@
             z-index: 1000;
         }
 
-        .top-controls {
+       .top-controls {
             width: calc(100% - 40px);
             margin: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
+            gap: 10px;
+}
 
         .weight-control {
             display: flex;
@@ -161,7 +162,7 @@
 .color-weight-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
 }
 
 .color-input {
@@ -173,12 +174,11 @@
     background: #1a1a1a;
     cursor: pointer;
 }
-        .stats-container {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
+     .stats-container {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
         .stat-box {
             display: flex;
             align-items: center;
