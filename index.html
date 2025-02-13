@@ -74,83 +74,86 @@
             transform: scale(1.05);
         }
 
-        /* Range Builder Sidebar */
-        .sidebar {
-            width: 600px;
-            background-color: #2d2d2d;
-            padding: 20px;
-            border-left: 1px solid #444;
-            display: none;
-            position: fixed;
-            right: 0;
-            top: 0;
-            height: 100vh;
-            flex-direction: column;
-            align-items: center;
-        }
+      /* Range Builder Sidebar */
+.sidebar {
+    width: 600px;
+    background-color: #2d2d2d;
+    padding: 20px;
+    border-left: 1px solid #444;
+    display: none;
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+}
 
-       .sidebar h2 {
-            color: #4CAF50;
-            margin-top: 20px;  /* Reduced from 60px to 20px */
-            width: 100%;
-            padding-left: 20px;
-    }
+.sidebar h2 {
+    color: #4CAF50;
+    margin: 0 0 20px 0;
+    width: 100%;
+    padding-left: 20px;
+}
 
 .range-grid {
     display: grid;
     grid-template-columns: repeat(13, 1fr);
     gap: 4px;
-    margin: 10px 20px;  /* Reduced top margin from 20px to 10px */
-    width: calc(100% - 40px);
+    width: 100%;
     aspect-ratio: 1;
     margin-bottom: 20px;
+    box-sizing: border-box;
 }
-        .range-cell {
-            aspect-ratio: 1;
-            background-color: #1a1a1a;
-            border: 1px solid #444;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            cursor: pointer;
-            color: #4CAF50;
-            position: relative;
-            overflow: hidden;
-        }
 
-        .range-cell:hover {
-            background-color: #2d2d2d;
-        }
+.range-cell {
+    aspect-ratio: 1;
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    color: #4CAF50;
+    position: relative;
+    overflow: hidden;
+}
 
-                .range-cell.selected {
-                    color: white;
-                    position: relative;
-                    z-index: 1;
-                    transition: background 0.3s ease;
-            }
-    
-        .range-cell span {
-            z-index: 2;
-            position: relative;
-        }
+.range-cell:hover {
+    background-color: #2d2d2d;
+}
 
-        .controls {
+.range-cell.selected {
+    color: white;
+    position: relative;
+    z-index: 1;
+    transition: background 0.3s ease;
+}
+
+.range-cell span {
+    z-index: 2;
+    position: relative;
+}
+
+.controls {
     position: fixed;
     top: 20px;
-    right: 30px; /* Increased from 20px for more space from edge */
+    right: 30px;
     display: flex;
-    gap: 15px; /* Increased from 10px for better button spacing */
+    gap: 15px;
     z-index: 1000;
 }
 
- .top-controls {
-    width: calc(100% - 40px);
-    margin: 10px 20px;
+.top-controls {
+    width: 100%;
     display: flex;
-    justify-content: flex-start; /* Changed from space-between */
+    justify-content: space-between;
     align-items: center;
-    gap: 30px; /* Increased from 20px */
+    padding: 0 20px;
+    box-sizing: border-box;
+    margin-bottom: 20px;
 }
 
 .weight-control {
@@ -158,23 +161,21 @@
     align-items: center;
     gap: 10px;
     color: #4CAF50;
-    min-width: 250px; /* Increased from 200px */
-    flex-shrink: 0; /* Prevent shrinking */
 }
 
 .stats-container {
     display: flex;
-    gap: 30px; /* Increased from 20px */
+    gap: 20px;
     align-items: center;
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
 }
 
 .color-weight-group {
     display: flex;
     align-items: center;
-    gap: 10px; /* Increased from 8px */
+    gap: 10px;
     flex-wrap: nowrap;
-    white-space: nowrap; /* Added to prevent text wrapping */
+    white-space: nowrap;
 }
 
 .stat-box {
@@ -182,39 +183,39 @@
     align-items: center;
     gap: 5px;
     color: #4CAF50;
-    white-space: nowrap; /* Prevent wrapping */
+    white-space: nowrap;
 }
 
-       .color-input {
-            width: 40px;
-            height: 30px;
-            padding: 0;
-            border: 1px solid #444;
-            border-radius: 4px;
-            background: #1a1a1a;
-            cursor: pointer;
-        }
-    
-         .stat-value {
-            background: #1a1a1a;
-            padding: 5px 10px;
-            border-radius: 4px;
-            border: 1px solid #444;
-            min-width: 50px;
-            text-align: center;
-        }
+.color-input {
+    width: 40px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #1a1a1a;
+    cursor: pointer;
+}
 
-        .weight-input {
-            width: 60px;
-            background: #1a1a1a;
-            color: #4CAF50;
-            border: 1px solid #444;
-            padding: 5px;
-            border-radius: 4px;
-            text-align: center;
-        }
+.stat-value {
+    background: #1a1a1a;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    min-width: 50px;
+    text-align: center;
+}
 
- .clear-button {
+.weight-input {
+    width: 60px;
+    background: #1a1a1a;
+    color: #4CAF50;
+    border: 1px solid #444;
+    padding: 5px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.clear-button {
     padding: 8px 16px;
     background-color: #4CAF50;
     color: white;
@@ -222,34 +223,35 @@
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-left: auto; /* Push to the right */
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
 }
 
 .clear-button:hover {
     background-color: #45a049;
 }
-         
+
 .range-text {
-    width: calc(100% - 40px);
+    width: 100%;
     height: 40px;
     background-color: #1a1a1a;
     color: #4CAF50;
     border: 1px solid #444;
     padding: 10px;
-    margin-top: 30px;  /* Increased from 20px to 30px */
+    margin: 20px 0;
     font-family: Arial, sans-serif;
     resize: none;
+    box-sizing: border-box;
 }
 
 .save-button {
-    width: calc(100% - 40px);
+    width: 100%;
     margin-top: 5px;
+    box-sizing: border-box;
 }
 
-         .cell[draggable="true"] {
-            cursor: move;
-        }
+.cell[draggable="true"] {
+    cursor: move;
+}
     </style>
 </head>
 
