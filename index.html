@@ -313,7 +313,7 @@
         }
     }
 
- function createRangeGrid() {
+function createRangeGrid() {
     const rangeGrid = document.getElementById('rangeGrid');
     const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     
@@ -331,7 +331,7 @@
                 textSpan.textContent = ranks[i] + ranks[j] + 's';  // Higher card first
             } else {
                 // Offsuit hands on the left side
-                textSpan.textContent = ranks[i] + ranks[j] + 'o';  // Higher card first
+                textSpan.textContent = ranks[j] + ranks[i] + 'o';  // Swapped to put higher card first
             }
             cell.appendChild(textSpan);
 
