@@ -10,7 +10,7 @@
             margin: 0;
             padding: 20px;
             display: flex;
-            user-select: none; /* Prevent text selection during drag */
+            user-select: none;
         }
 
         .main-container {
@@ -157,6 +157,45 @@
             z-index: 1000;
         }
 
+        .top-controls {
+            width: calc(100% - 40px);
+            margin: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .weight-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #4CAF50;
+        }
+
+        .weight-input {
+            width: 60px;
+            background: #1a1a1a;
+            color: #4CAF50;
+            border: 1px solid #444;
+            padding: 5px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .clear-button {
+            padding: 8px 16px;
+            background-color: #444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-button:hover {
+            background-color: #666;
+        }
+
         .range-text {
             width: calc(100% - 40px);
             height: 100px;
@@ -177,26 +216,6 @@
         .cell[draggable="true"] {
             cursor: move;
         }
-
-        /* Weight Control Styles */
-        .weight-control {
-            width: calc(100% - 40px);
-            margin: 10px 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #4CAF50;
-        }
-
-        .weight-input {
-            width: 60px;
-            background: #1a1a1a;
-            color: #4CAF50;
-            border: 1px solid #444;
-            padding: 5px;
-            border-radius: 4px;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
@@ -211,227 +230,269 @@
     <div class="sidebar" id="sidebar">
         <h2>Range Builder</h2>
         <div class="range-grid" id="rangeGrid"></div>
-        <div class="weight-control">
-            <label for="weightInput">Weight:</label>
-            <input type="number" id="weightInput" value="100" min="0" max="100" 
-                   class="weight-input" onchange="updateWeight(this.value)">
-            <span>%</span>
+        <div class="top-controls">
+            <div class="weight-control">
+                <label for="weightInput">Weight:</label>
+                <input type="number" id="weightInput" value="100" min="0" max="100" 
+                       class="weight-input" onchange="updateWeight(this.value)">
+                <span>%</span>
+            </div>
+            <button class="clear-button" onclick="clearSelection()">Clear</button>
         </div>
-        <textarea id="rangeText" class="range-text" placeholder="Selected hands will appear here..."></textarea>
+        <textarea id="rangeText" class="range-text" 
+                  placeholder="Selected hands will appear here..." 
+                  oninput="handleRangeTextChange(event)"></textarea>
         <button class="button save-button" onclick="saveToCell()">Save to Cell</button>
     </div>
-
     <script>
-        let isViewMode = true;
-        let isRangeBuilderOpen = false;
-        let selectedCell = null;
-        const cellData = new Map();
-        let currentWeight = 100;
-        let isMouseDown = false;
-        let isSelecting = null;
+    let isViewMode = true;
+    let isRangeBuilderOpen = false;
+    let selectedCell = null;
+    const cellData = new Map();
+    let currentWeight = 100;
+    let isMouseDown = false;
+    let isSelecting = null;
 
-        function createGrid() {
-            const grid = document.getElementById('grid');
-            for (let i = 0; i < 8; i++) {
-                for (let j = 0; j < 8; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    const cellId = `${String.fromCharCode(65 + j)}${i + 1}`;
-                    
-                    const cellContent = document.createElement('div');
-                    cellContent.className = 'cell-content';
-                    
-                    const cellIdSpan = document.createElement('span');
-                    cellIdSpan.className = 'cell-id';
-                    cellIdSpan.textContent = cellId;
-                    
-                    cell.appendChild(cellIdSpan);
-                    cell.appendChild(cellContent);
-                    cell.dataset.id = cellId;
-                    
-                    cell.addEventListener('click', selectCell);
-                    cell.setAttribute('draggable', true);
-                    cell.addEventListener('dragstart', handleDragStart);
-                    cell.addEventListener('dragover', handleDragOver);
-                    cell.addEventListener('drop', handleDrop);
-                    
-                    grid.appendChild(cell);
-                }
+    function createGrid() {
+        const grid = document.getElementById('grid');
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                const cellId = `${String.fromCharCode(65 + j)}${i + 1}`;
+                
+                const cellContent = document.createElement('div');
+                cellContent.className = 'cell-content';
+                
+                const cellIdSpan = document.createElement('span');
+                cellIdSpan.className = 'cell-id';
+                cellIdSpan.textContent = cellId;
+                
+                cell.appendChild(cellIdSpan);
+                cell.appendChild(cellContent);
+                cell.dataset.id = cellId;
+                
+                cell.addEventListener('click', selectCell);
+                cell.setAttribute('draggable', true);
+                cell.addEventListener('dragstart', handleDragStart);
+                cell.addEventListener('dragover', handleDragOver);
+                cell.addEventListener('drop', handleDrop);
+                
+                grid.appendChild(cell);
             }
         }
+    }
 
-        function createRangeGrid() {
-            const rangeGrid = document.getElementById('rangeGrid');
-            const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
-            
-            for (let i = 0; i < ranks.length; i++) {
-                for (let j = 0; j < ranks.length; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'range-cell';
-                    
-                    const textSpan = document.createElement('span');
-                    if (i >= j) {
-                        const hand = ranks[i] + ranks[j] + (i === j ? '' : 'o');
-                        textSpan.textContent = hand;
-                    } else {
-                        const hand = ranks[j] + ranks[i] + 's';
-                        textSpan.textContent = hand;
+    function createRangeGrid() {
+        const rangeGrid = document.getElementById('rangeGrid');
+        const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+        
+        for (let i = 0; i < ranks.length; i++) {
+            for (let j = 0; j < ranks.length; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'range-cell';
+                
+                const textSpan = document.createElement('span');
+                if (i >= j) {
+                    const hand = ranks[i] + ranks[j] + (i === j ? '' : 'o');
+                    textSpan.textContent = hand;
+                } else {
+                    const hand = ranks[j] + ranks[i] + 's';
+                    textSpan.textContent = hand;
+                }
+                cell.appendChild(textSpan);
+
+                cell.addEventListener('mousedown', startRangeSelection);
+                cell.addEventListener('mouseover', updateRangeSelection);
+                
+                rangeGrid.appendChild(cell);
+            }
+        }
+        
+        document.addEventListener('mouseup', endRangeSelection);
+    }
+
+    function clearSelection() {
+        // Clear all selected cells
+        document.querySelectorAll('.range-cell.selected').forEach(cell => {
+            cell.classList.remove('selected');
+            cell.style.removeProperty('--weight-height');
+            delete cell.dataset.weight;
+        });
+        
+        // Clear the text area
+        document.getElementById('rangeText').value = '';
+    }
+
+    function handleRangeTextChange(e) {
+        const text = e.target.value.trim();
+        
+        // Clear all current selections
+        document.querySelectorAll('.range-cell.selected').forEach(cell => {
+            cell.classList.remove('selected');
+            cell.style.removeProperty('--weight-height');
+            delete cell.dataset.weight;
+        });
+        
+        // If there's text, parse it and select corresponding hands
+        if (text) {
+            const weightGroups = text.match(/\[\d+\][^[]+\[\/\d+\]/g) || [];
+            weightGroups.forEach(group => {
+                const weight = group.match(/\[(\d+)\]/)[1];
+                const hands = group.match(/\]([^[]+)\[/)[1].split(',');
+                
+                hands.forEach(hand => {
+                    const cell = [...document.querySelectorAll('.range-cell')]
+                        .find(cell => cell.querySelector('span').textContent.trim() === hand.trim());
+                    if (cell) {
+                        cell.classList.add('selected');
+                        cell.style.setProperty('--weight-height', `${weight}%`);
+                        cell.dataset.weight = weight;
                     }
-                    cell.appendChild(textSpan);
-
-                    // Add mouse events for drag selection
-                    cell.addEventListener('mousedown', startRangeSelection);
-                    cell.addEventListener('mouseover', updateRangeSelection);
-                    
-                    rangeGrid.appendChild(cell);
-                }
-            }
-            
-            // Add mouseup listener to document
-            document.addEventListener('mouseup', endRangeSelection);
+                });
+            });
         }
+    }
 
-        function startRangeSelection(e) {
-            isMouseDown = true;
-            const cell = e.target.closest('.range-cell');
-            isSelecting = !cell.classList.contains('selected');
+    function startRangeSelection(e) {
+        isMouseDown = true;
+        const cell = e.target.closest('.range-cell');
+        isSelecting = !cell.classList.contains('selected');
+        toggleRangeCell(cell);
+    }
+
+    function updateRangeSelection(e) {
+        if (!isMouseDown || isSelecting === null) return;
+        const cell = e.target.closest('.range-cell');
+        if (!cell) return;
+        
+        if (cell.classList.contains('selected') !== isSelecting) {
             toggleRangeCell(cell);
         }
+    }
 
-        function updateRangeSelection(e) {
-            if (!isMouseDown || isSelecting === null) return;
-            const cell = e.target.closest('.range-cell');
-            if (!cell) return;
-            
-            if (cell.classList.contains('selected') !== isSelecting) {
-                toggleRangeCell(cell);
+    function endRangeSelection() {
+        isMouseDown = false;
+        isSelecting = null;
+    }
+
+    function updateWeight(value) {
+        currentWeight = Math.min(Math.max(0, value), 100);
+        document.getElementById('weightInput').value = currentWeight;
+    }
+
+    function toggleViewMode() {
+        isViewMode = true;
+        isRangeBuilderOpen = false;
+        
+        document.getElementById('viewModeBtn').classList.add('active');
+        document.getElementById('rangeBuilderBtn').classList.remove('active');
+        
+        document.getElementById('sidebar').style.display = 'none';
+    }
+
+    function toggleRangeBuilder() {
+        isRangeBuilderOpen = !isRangeBuilderOpen;
+        isViewMode = !isRangeBuilderOpen;
+        
+        document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
+        document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
+        
+        document.getElementById('sidebar').style.display = isRangeBuilderOpen ? 'flex' : 'none';
+    }
+
+    function toggleRangeCell(cell) {
+        cell.classList.toggle('selected');
+        if(cell.classList.contains('selected')) {
+            cell.style.setProperty('--weight-height', `${currentWeight}%`);
+            cell.dataset.weight = currentWeight;
+        } else {
+            cell.style.removeProperty('--weight-height');
+            delete cell.dataset.weight;
+        }
+        updateRangeText();
+    }
+
+    function updateRangeText() {
+        const selectedCells = [...document.querySelectorAll('.range-cell.selected')];
+        const handsByWeight = {};
+        
+        selectedCells.forEach(cell => {
+            const weight = cell.dataset.weight || 100;
+            if (!handsByWeight[weight]) {
+                handsByWeight[weight] = [];
             }
-        }
-
-        function endRangeSelection() {
-            isMouseDown = false;
-            isSelecting = null;
-        }
-
-        function updateWeight(value) {
-            currentWeight = Math.min(Math.max(0, value), 100);
-            document.getElementById('weightInput').value = currentWeight;
-        }
-
-        function toggleViewMode() {
-            isViewMode = true;
-            isRangeBuilderOpen = false;
-            
-            document.getElementById('viewModeBtn').classList.add('active');
-            document.getElementById('rangeBuilderBtn').classList.remove('active');
-            
-            document.getElementById('sidebar').style.display = 'none';
-        }
-
-        function toggleRangeBuilder() {
-            isRangeBuilderOpen = !isRangeBuilderOpen;
-            isViewMode = !isRangeBuilderOpen;
-            
-            document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
-            document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
-            
-            document.getElementById('sidebar').style.display = isRangeBuilderOpen ? 'flex' : 'none';
-        }
-
-        function toggleRangeCell(cell) {
-            cell.classList.toggle('selected');
-            if(cell.classList.contains('selected')) {
-                cell.style.setProperty('--weight-height', `${currentWeight}%`);
-                cell.dataset.weight = currentWeight;
-            } else {
-                cell.style.removeProperty('--weight-height');
-                delete cell.dataset.weight;
-            }
-            updateRangeText();
-        }
-
-        function updateRangeText() {
-            // Group hands by weight
-            const selectedCells = [...document.querySelectorAll('.range-cell.selected')];
-            const handsByWeight = {};
-            
-            selectedCells.forEach(cell => {
-                const weight = cell.dataset.weight || 100;
-                if (!handsByWeight[weight]) {
-                    handsByWeight[weight] = [];
-                }
-                handsByWeight[weight].push(cell.querySelector('span').textContent);
-            });
-            
-            // Format each group with the requested syntax
-            const formattedGroups = Object.entries(handsByWeight)
-                .map(([weight, hands]) => `[${weight}]${hands.join(',')}[/${weight}]`);
-            
-            document.getElementById('rangeText').value = formattedGroups.join(',');
-        }
-
-        function selectCell(e) {
-            if (!isViewMode) return;
-            if (selectedCell) {
-                selectedCell.style.border = '1px solid #444';
-            }
-            selectedCell = e.currentTarget;
-            selectedCell.style.border = '2px solid #4CAF50';
-        }
-
-        function saveToCell() {
-            if (!selectedCell) {
-                alert('Please select a cell first');
-                return;
-            }
-            
-            const rangeText = document.getElementById('rangeText').value;
-            cellData.set(selectedCell.dataset.id, rangeText);
-            
-            const content = selectedCell.querySelector('.cell-content');
-            content.innerHTML = '📝';
-            
-            toggleRangeBuilder();
-        }
-
-        function handleDragStart(e) {
-            if (!isViewMode) return;
-            e.dataTransfer.setData('text/plain', e.target.dataset.id);
-        }
-
-        function handleDragOver(e) {
-            if (!isViewMode) return;
-            e.preventDefault();
-        }
-
-        function handleDrop(e) {
-            if (!isViewMode) return;
-            e.preventDefault();
-            const sourceId = e.dataTransfer.getData('text/plain');
-            const targetId = e.target.closest('.cell').dataset.id;
-            
-            const sourceData = cellData.get(sourceId);
-            const targetData = cellData.get(targetId);
-            
-            if (sourceData) cellData.set(targetId, sourceData);
-            if (targetData) cellData.set(sourceId, targetData);
-            
-            updateCellContent(sourceId);
-            updateCellContent(targetId);
-        }
-
-        function updateCellContent(cellId) {
-            const cell = document.querySelector(`[data-id="${cellId}"]`);
-            const content = cell.querySelector('.cell-content');
-            const data = cellData.get(cellId);
-            content.innerHTML = data ? '📝' : '';
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            createGrid();
-            createRangeGrid();
-            toggleViewMode();
+            handsByWeight[weight].push(cell.querySelector('span').textContent);
         });
-    </script>
+        
+        const formattedGroups = Object.entries(handsByWeight)
+            .map(([weight, hands]) => `[${weight}]${hands.join(',')}[/${weight}]`);
+        
+        document.getElementById('rangeText').value = formattedGroups.join(',');
+    }
+
+    function selectCell(e) {
+        if (!isViewMode) return;
+        if (selectedCell) {
+            selectedCell.style.border = '1px solid #444';
+        }
+        selectedCell = e.currentTarget;
+        selectedCell.style.border = '2px solid #4CAF50';
+    }
+
+    function saveToCell() {
+        if (!selectedCell) {
+            alert('Please select a cell first');
+            return;
+        }
+        
+        const rangeText = document.getElementById('rangeText').value;
+        cellData.set(selectedCell.dataset.id, rangeText);
+        
+        const content = selectedCell.querySelector('.cell-content');
+        content.innerHTML = '📝';
+        
+        toggleRangeBuilder();
+    }
+
+    function handleDragStart(e) {
+        if (!isViewMode) return;
+        e.dataTransfer.setData('text/plain', e.target.dataset.id);
+    }
+
+    function handleDragOver(e) {
+        if (!isViewMode) return;
+        e.preventDefault();
+    }
+
+    function handleDrop(e) {
+        if (!isViewMode) return;
+        e.preventDefault();
+        const sourceId = e.dataTransfer.getData('text/plain');
+        const targetId = e.target.closest('.cell').dataset.id;
+        
+        const sourceData = cellData.get(sourceId);
+        const targetData = cellData.get(targetId);
+        
+        if (sourceData) cellData.set(targetId, sourceData);
+        if (targetData) cellData.set(sourceId, targetData);
+        
+        updateCellContent(sourceId);
+        updateCellContent(targetId);
+    }
+
+    function updateCellContent(cellId) {
+        const cell = document.querySelector(`[data-id="${cellId}"]`);
+        const content = cell.querySelector('.cell-content');
+        const data = cellData.get(cellId);
+        content.innerHTML = data ? '📝' : '';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        createGrid();
+        createRangeGrid();
+        toggleViewMode();
+    });
+</script>
 </body>
 </html>
