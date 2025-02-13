@@ -81,27 +81,30 @@
             right: 0;
             top: 0;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .sidebar.active {
-            display: block;
+            display: flex;
         }
 
         .sidebar h2 {
             color: #4CAF50;
             margin-top: 60px;
+            width: 100%;
+            padding-left: 20px;
         }
 
         .range-grid {
             display: grid;
             grid-template-columns: repeat(13, 1fr);
-            grid-template-rows: repeat(13, 1fr);
             gap: 2px;
             margin-top: 20px;
-            width: 360px;
+            width: calc(100% - 40px);
             aspect-ratio: 1;
-            margin-left: auto;
-            margin-right: auto;
+            margin-bottom: 20px;
         }
 
         .range-cell {
@@ -139,7 +142,7 @@
         }
 
         .range-text {
-            width: 100%;
+            width: calc(100% - 40px);
             height: 100px;
             background-color: #1a1a1a;
             color: #4CAF50;
@@ -148,6 +151,11 @@
             margin-top: 20px;
             font-family: Arial, sans-serif;
             resize: vertical;
+        }
+
+        .save-button {
+            width: calc(100% - 40px);
+            margin-top: 10px;
         }
 
         .cell[draggable="true"] {
@@ -168,7 +176,7 @@
         <h2>Range Builder</h2>
         <div class="range-grid" id="rangeGrid"></div>
         <textarea id="rangeText" class="range-text" placeholder="Selected hands will appear here..."></textarea>
-        <button class="button" onclick="saveToCell()" style="margin-top: 10px;">Save to Cell</button>
+        <button class="button save-button" onclick="saveToCell()">Save to Cell</button>
     </div>
 
     <script>
@@ -216,9 +224,12 @@
                     const cell = document.createElement('div');
                     cell.className = 'range-cell';
                     
-                    // Only create valid hands
-                    if (i <= j) {
-                        const hand = ranks[i] + ranks[j] + (i === j ? '' : (i < j ? 'o' : 's'));
+                    if (i <= j) {  // Upper right triangle including diagonal
+                        const hand = ranks[i] + ranks[j] + (i === j ? '' : 'o');
+                        cell.textContent = hand;
+                        cell.onclick = () => toggleRangeCell(cell);
+                    } else {  // Lower left triangle
+                        const hand = ranks[j] + ranks[i] + 's';
                         cell.textContent = hand;
                         cell.onclick = () => toggleRangeCell(cell);
                     }
