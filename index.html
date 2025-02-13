@@ -204,31 +204,31 @@
             text-align: center;
         }
 
-.clear-button {
-    padding: 8px 16px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.clear-button:hover {
-    background-color: #45a049; 
-}
+        .clear-button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
- .range-text {
+        .clear-button:hover {
+            background-color: #45a049;
+        }
+
+       .range-text {
     width: calc(100% - 40px);
-    height: 100px; /* Fixed height */
-    background-color: #1a1a1a; /* Dark background */
-    color: #4CAF50; /* Green text */
+    height: 100px;
+    background-color: #2d2d2d;
+    color: #4CAF50;
     border: 1px solid #444;
     padding: 10px;
     margin-top: 20px;
     font-family: Arial, sans-serif;
-    resize: none; /* Prevent resizing */
+    resize: none;
+}
 
         .save-button {
             width: calc(100% - 40px);
@@ -271,7 +271,7 @@
             </div>
             <button class="clear-button" onclick="clearSelection()">Clear</button>
         </div>
-        <textarea id="rangeText" class="range-text" 
+       <textarea id="rangeText" class="range-text" 
                   placeholder="Selected hands will appear here..." 
                   oninput="handleRangeTextChange(event)"></textarea>
         <button class="button save-button" onclick="saveToCell()">Save to Cell</button>
@@ -325,14 +325,15 @@
             cell.className = 'range-cell';
             
             const textSpan = document.createElement('span');
-            if (i >= j) {
-                // For pairs and offsuit hands, higher card should be first
-                const hand = i === j ? ranks[i] + ranks[j] : ranks[i] + ranks[j] + 'o';
-                textSpan.textContent = hand;
+            if (i === j) {
+                // Pocket pairs
+                textSpan.textContent = ranks[i] + ranks[j];
+            } else if (i < j) {
+                // Offsuit hands - ensure higher card is first
+                textSpan.textContent = ranks[i] + ranks[j] + 'o';
             } else {
-                // For suited hands, higher card should be first
-                const hand = ranks[i] + ranks[j] + 's';
-                textSpan.textContent = hand;
+                // Suited hands - higher card is first
+                textSpan.textContent = ranks[j] + ranks[i] + 's';
             }
             cell.appendChild(textSpan);
 
@@ -346,40 +347,40 @@
     document.addEventListener('mouseup', endRangeSelection);
 }
 
-   function updateStats() {
-    const selectedCells = document.querySelectorAll('.range-cell.selected');
-    let totalCombos = 0;
-    
-    selectedCells.forEach(cell => {
-        const hand = cell.querySelector('span').textContent;
-        const weight = parseFloat(cell.dataset.weight || 100) / 100;
+    function updateStats() {
+        const selectedCells = document.querySelectorAll('.range-cell.selected');
+        let totalCombos = 0;
         
-        let handCombos = 0;
-        if (hand.length === 2) {
-            // Pocket pair (AA, KK, etc.)
-            handCombos = 6;
-        } else if (hand.endsWith('s')) {
-            // Suited hand (AKs, T9s, etc.)
-            handCombos = 4;
-        } else if (hand.endsWith('o')) {
-            // Offsuit hand (AKo, T9o, etc.)
-            handCombos = 12;
-        }
+        selectedCells.forEach(cell => {
+            const hand = cell.querySelector('span').textContent;
+            const weight = parseFloat(cell.dataset.weight || 100) / 100;
+            
+            let handCombos = 0;
+            if (hand.length === 2) {
+                // Pocket pair (AA, KK, etc.)
+                handCombos = 6;
+            } else if (hand.endsWith('s')) {
+                // Suited hand (AKs, T9s, etc.)
+                handCombos = 4;
+            } else if (hand.endsWith('o')) {
+                // Offsuit hand (AKo, T9o, etc.)
+                handCombos = 12;
+            }
+            
+            // Apply weight to the combos
+            totalCombos += handCombos * weight;
+        });
         
-        // Apply weight to the combos
-        totalCombos += handCombos * weight;
-    });
-    
-    // Total possible combinations = 1326
-    const totalPossibleCombos = 1326;
-    
-    // Calculate range percentage
-    const rangePercentage = (totalCombos / totalPossibleCombos * 100).toFixed(1);
-    
-    // Update the display
-    document.getElementById('rangePercent').textContent = rangePercentage + '%';
-    document.getElementById('comboCount').textContent = Math.round(totalCombos);
-}
+        // Total possible combinations = 1326
+        const totalPossibleCombos = 1326;
+        
+        // Calculate range percentage
+        const rangePercentage = (totalCombos / totalPossibleCombos * 100).toFixed(1);
+        
+        // Update the display
+        document.getElementById('rangePercent').textContent = rangePercentage + '%';
+        document.getElementById('comboCount').textContent = Math.round(totalCombos);
+    }
 
     function clearSelection() {
         document.querySelectorAll('.range-cell.selected').forEach(cell => {
