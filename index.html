@@ -220,8 +220,8 @@
 
    .range-text {
     width: calc(100% - 40px);
-    height: 100px;
-    background-color: #1a1a1a;  /* Changed from #2d2d2d to #1a1a1a */
+    height: 40px;  /* Reduced from 100px to 60px */
+    background-color: #1a1a1a;
     color: #4CAF50;
     border: 1px solid #444;
     padding: 10px;
@@ -230,12 +230,12 @@
     resize: none;
 }
 
-        .save-button {
-            width: calc(100% - 40px);
-            margin-top: 10px;
-        }
+.save-button {
+    width: calc(100% - 40px);
+    margin-top: 5px;
+}
 
-        .cell[draggable="true"] {
+         .cell[draggable="true"] {
             cursor: move;
         }
     </style>
@@ -314,7 +314,7 @@
         }
     }
 
-   function createRangeGrid() {
+  function createRangeGrid() {
     const rangeGrid = document.getElementById('rangeGrid');
     const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     
@@ -327,12 +327,12 @@
             if (i === j) {
                 // Pocket pairs
                 textSpan.textContent = ranks[i] + ranks[j];
-            } else if (i < j) {
-                // Offsuit hands - ensure higher card is first
-                textSpan.textContent = ranks[i] + ranks[j] + 'o';
-            } else {
-                // Suited hands - higher card is first
+            } else if (i > j) {
+                // Suited hands on the right
                 textSpan.textContent = ranks[j] + ranks[i] + 's';
+            } else {
+                // Offsuit hands on the left
+                textSpan.textContent = ranks[i] + ranks[j] + 'o';
             }
             cell.appendChild(textSpan);
 
