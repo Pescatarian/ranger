@@ -136,21 +136,21 @@
         }
 
         .controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 1000;
-        }
+    position: fixed;
+    top: 20px;
+    right: 30px; /* Increased from 20px for more space from edge */
+    display: flex;
+    gap: 15px; /* Increased from 10px for better button spacing */
+    z-index: 1000;
+}
 
-     .top-controls {
+ .top-controls {
     width: calc(100% - 40px);
     margin: 10px 20px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start; /* Changed from space-between */
     align-items: center;
-    gap: 20px;
+    gap: 30px; /* Increased from 20px */
 }
 
 .weight-control {
@@ -158,21 +158,23 @@
     align-items: center;
     gap: 10px;
     color: #4CAF50;
-    min-width: 200px; /* Add minimum width */
+    min-width: 250px; /* Increased from 200px */
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
 .stats-container {
     display: flex;
-    gap: 20px;
+    gap: 30px; /* Increased from 20px */
     align-items: center;
-    margin: 0 20px; /* Add margin */
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
 .color-weight-group {
     display: flex;
     align-items: center;
-    gap: 8px; /* Increased from 5px */
-    flex-wrap: nowrap; /* Prevent wrapping */
+    gap: 10px; /* Increased from 8px */
+    flex-wrap: nowrap;
+    white-space: nowrap; /* Added to prevent text wrapping */
 }
 
 .stat-box {
