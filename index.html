@@ -144,21 +144,20 @@
             z-index: 1000;
         }
 
-       .top-controls {
+     .top-controls {
             width: calc(100% - 40px);
             margin: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
-}
+            gap: 20px;  /* Increased from 10px to 20px */
+        }
 
         .weight-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #4CAF50;
+            flex-shrink: 1;  /* Allow weight control to shrink if needed */
+            min-width: 0;    /* Allow proper shrinking */
         }
+        
 .color-weight-group {
     display: flex;
     align-items: center;
@@ -175,10 +174,11 @@
     cursor: pointer;
 }
      .stats-container {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
+            display: flex;
+            gap: 20px;  /* Increased from 10px to 20px */
+            align-items: center;
+            flex-shrink: 0;  /* Prevent stats from shrinking */
+}
         .stat-box {
             display: flex;
             align-items: center;
