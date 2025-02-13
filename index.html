@@ -89,23 +89,22 @@
             align-items: center;
         }
 
-        .sidebar h2 {
-            color: #4CAF50;
-            margin-top: 60px;
-            width: 100%;
-            padding-left: 20px;
-        }
+       .sidebar h2 {
+    color: #4CAF50;
+    margin-top: 20px;  /* Reduced from 60px to 20px */
+    width: 100%;
+    padding-left: 20px;
+}
 
-        .range-grid {
-            display: grid;
-            grid-template-columns: repeat(13, 1fr);
-            gap: 4px;
-            margin: 20px;
-            width: calc(100% - 40px);
-            aspect-ratio: 1;
-            margin-bottom: 20px;
-        }
-
+.range-grid {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr);
+    gap: 4px;
+    margin: 10px 20px;  /* Reduced top margin from 20px to 10px */
+    width: calc(100% - 40px);
+    aspect-ratio: 1;
+    margin-bottom: 20px;
+}
         .range-cell {
             aspect-ratio: 1;
             background-color: #1a1a1a;
@@ -327,11 +326,11 @@
             if (i === j) {
                 // Pocket pairs
                 textSpan.textContent = ranks[i] + ranks[j];
-            } else if (i > j) {
-                // Suited hands on the right
+            } else if (i < j) {
+                // Suited hands on the right side
                 textSpan.textContent = ranks[j] + ranks[i] + 's';
             } else {
-                // Offsuit hands on the left
+                // Offsuit hands on the left side
                 textSpan.textContent = ranks[i] + ranks[j] + 'o';
             }
             cell.appendChild(textSpan);
