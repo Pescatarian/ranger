@@ -115,6 +115,8 @@
             font-size: 14px;
             cursor: pointer;
             color: #4CAF50;
+            position: relative;
+            overflow: hidden;
         }
 
         .range-cell:hover {
@@ -122,8 +124,20 @@
         }
 
         .range-cell.selected {
-            background-color: #4CAF50;
             color: white;
+            position: relative;
+        }
+
+        .range-cell.selected::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: var(--weight-height, 100%);
+            background-color: #4CAF50;
+            z-index: -1;
+            transition: height 0.3s ease;
         }
 
         .controls {
@@ -155,6 +169,26 @@
         .cell[draggable="true"] {
             cursor: move;
         }
+
+        /* Weight Control Styles */
+        .weight-control {
+            width: calc(100% - 40px);
+            margin: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #4CAF50;
+        }
+
+        .weight-input {
+            width: 60px;
+            background: #1a1a1a;
+            color: #4CAF50;
+            border: 1px solid #444;
+            padding: 5px;
+            border-radius: 4px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -169,6 +203,12 @@
     <div class="sidebar" id="sidebar">
         <h2>Range Builder</h2>
         <div class="range-grid" id="rangeGrid"></div>
+        <div class="weight-control">
+            <label for="weightInput">Weight:</label>
+            <input type="number" id="weightInput" value="100" min="0" max="100" 
+                   class="weight-input" onchange="updateWeight(this.value)">
+            <span>%</span>
+        </div>
         <textarea id="rangeText" class="range-text" placeholder="Selected hands will appear here..."></textarea>
         <button class="button save-button" onclick="saveToCell()">Save to Cell</button>
     </div>
@@ -178,6 +218,7 @@
         let isRangeBuilderOpen = false;
         let selectedCell = null;
         const cellData = new Map();
+        let currentWeight = 100;
 
         function createGrid() {
             const grid = document.getElementById('grid');
@@ -218,11 +259,11 @@
                     const cell = document.createElement('div');
                     cell.className = 'range-cell';
                     
-                    if (i <= j) {  // Upper right triangle including diagonal
+                    if (i <= j) {
                         const hand = ranks[i] + ranks[j] + (i === j ? '' : 'o');
                         cell.textContent = hand;
                         cell.onclick = () => toggleRangeCell(cell);
-                    } else {  // Lower left triangle
+                    } else {
                         const hand = ranks[j] + ranks[i] + 's';
                         cell.textContent = hand;
                         cell.onclick = () => toggleRangeCell(cell);
@@ -231,6 +272,20 @@
                     rangeGrid.appendChild(cell);
                 }
             }
+        }
+
+        function updateWeight(value) {
+            currentWeight = Math.min(Math.max(0, value), 100);
+            document.getElementById('weightInput').value = currentWeight;
+            updateSelectedCellsWeight();
+        }
+
+        function updateSelectedCellsWeight() {
+            const selectedCells = document.querySelectorAll('.range-cell.selected');
+            selectedCells.forEach(cell => {
+                cell.style.setProperty('--weight-height', `${currentWeight}%`);
+                cell.dataset.weight = currentWeight;
+            });
         }
 
         function toggleViewMode() {
@@ -255,12 +310,19 @@
 
         function toggleRangeCell(cell) {
             cell.classList.toggle('selected');
+            if(cell.classList.contains('selected')) {
+                cell.style.setProperty('--weight-height', `${currentWeight}%`);
+                cell.dataset.weight = currentWeight;
+            } else {
+                cell.style.removeProperty('--weight-height');
+                delete cell.dataset.weight;
+            }
             updateRangeText();
         }
 
         function updateRangeText() {
             const selected = [...document.querySelectorAll('.range-cell.selected')]
-                .map(cell => cell.textContent)
+                .map(cell => `${cell.textContent}:${cell.dataset.weight || 100}`)
                 .join(', ');
             document.getElementById('rangeText').value = selected;
         }
