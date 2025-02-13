@@ -74,9 +74,9 @@
             transform: scale(1.05);
         }
 
-     /* Range Builder Sidebar */
+    /* Range Builder Sidebar */
 .sidebar {
-    width: 560px;  /* Reduced to better fit content */
+    width: 600px;
     background-color: #2d2d2d;
     padding: 20px;
     border-left: 1px solid #444;
@@ -93,20 +93,22 @@
 .sidebar h2 {
     color: #4CAF50;
     margin: 0 0 20px 0;
-    width: 520px;  /* Match grid width */
+    width: 100%;
+    padding-left: 20px;
 }
 
+/* CRITICAL GRID SECTION - DO NOT MODIFY */
 .range-grid {
     display: grid;
-    grid-template-columns: repeat(13, 40px);  /* Fixed size cells */
-    gap: 0;
-    width: 520px;  /* Fixed width */
+    grid-template-columns: repeat(13, 1fr);
+    gap: 4px;
+    width: 520px;
+    aspect-ratio: 1;
     margin-bottom: 20px;
 }
 
 .range-cell {
-    width: 40px;
-    height: 40px;
+    aspect-ratio: 1;
     background-color: #1a1a1a;
     border: 1px solid #444;
     display: flex;
@@ -118,6 +120,7 @@
     position: relative;
     overflow: hidden;
 }
+/* END CRITICAL GRID SECTION */
 
 .range-cell:hover {
     background-color: #2d2d2d;
@@ -144,12 +147,13 @@
     z-index: 1000;
 }
 
+/* UPDATED CONTROLS SECTION */
 .top-controls {
-    width: 520px;  /* Match grid width */
+    width: 520px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin: 10px auto;
 }
 
 .weight-control {
@@ -163,12 +167,14 @@
     display: flex;
     gap: 20px;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .color-weight-group {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: nowrap;
     white-space: nowrap;
 }
 
@@ -217,28 +223,30 @@
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
 .clear-button:hover {
     background-color: #45a049;
 }
 
+/* UPDATED TEXT AND BUTTON SECTION */
 .range-text {
-    width: 520px;  /* Match grid width */
+    width: 520px;
     height: 40px;
     background-color: #1a1a1a;
     color: #4CAF50;
     border: 1px solid #444;
     padding: 10px;
-    margin: 20px 0;
+    margin: 20px auto;
     font-family: Arial, sans-serif;
     resize: none;
     box-sizing: border-box;
 }
 
 .save-button {
-    width: 520px;  /* Match grid width */
-    margin-top: 5px;
+    width: 520px;
+    margin: 5px auto;
 }
 
 .cell[draggable="true"] {
