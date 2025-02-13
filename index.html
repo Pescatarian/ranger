@@ -3,411 +3,79 @@
 <head>
     <title>Ranger</title>
     <style>
-        :root {
-            --cell-size: 100px;
-            --grid-color: #2d2d2d;
-            --cell-color: #1a1a1a;
-            --text-color: #4CAF50;
-            --border-color: #444;
-            --hover-color: rgba(76, 175, 80, 0.1);
-        }
-
         body {
             background-color: #1a1a1a;
-            color: var(--text-color);
+            color: #4CAF50;
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Main Grid Container */
-        .main-container {
-            flex: 1;
             padding: 20px;
         }
 
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(8, var(--cell-size));
+            grid-template-columns: repeat(8, 100px);
             gap: 1px;
-            background-color: var(--grid-color);
+            background-color: #2d2d2d;
             padding: 1px;
             width: fit-content;
-            margin-bottom: 20px;
+            margin: 20px;
         }
 
         .cell {
-            width: var(--cell-size);
-            height: var(--cell-size);
-            background-color: var(--cell-color);
-            border: 1px solid var(--border-color);
+            width: 100px;
+            height: 100px;
+            background-color: #1a1a1a;
+            border: 1px solid #444;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .cell:hover {
-            background-color: var(--hover-color);
-        }
-
-        .cell-id {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            font-size: 12px;
-            color: var(--text-color);
-        }
-
-        .cell-content {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Preview Popup */
-        .preview-popup {
-            position: fixed;
-            display: none;
-            background-color: #333;
-            border: 2px solid var(--text-color);
-            padding: 5px;
-            z-index: 1000;
-            pointer-events: none;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        .preview-popup img {
-            max-width: 300px;
-            max-height: 300px;
-        }
-
-        /* Range Builder Sidebar */
-        .sidebar {
-            width: 300px;
-            background-color: var(--grid-color);
-            padding: 20px;
-            border-left: 1px solid var(--border-color);
-            display: none;
-        }
-
-        .sidebar.active {
-            display: block;
-        }
-
-        .range-builder {
-            display: grid;
-            grid-template-columns: repeat(13, 1fr);
-            gap: 2px;
-            margin-bottom: 20px;
-        }
-
-        .range-cell {
-            aspect-ratio: 1;
-            background-color: var(--cell-color);
-            border: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .range-cell.selected {
-            background-color: var(--text-color);
-            color: white;
-        }
-
-        /* Controls */
-        .controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
         }
 
         .button {
             padding: 8px 16px;
-            background-color: var(--text-color);
+            background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .button:hover {
-            background-color: #45a049;
-        }
-
-        /* Range Text Input */
-        .range-text {
-            width: 100%;
-            height: 100px;
-            background-color: var(--cell-color);
-            border: 1px solid var(--border-color);
-            color: white;
-            padding: 10px;
-            margin-top: 10px;
-            resize: vertical;
-        }
-
-        .edit-mode .cell {
-            cursor: grab;
-        }
-
-        .edit-mode .cell:active {
-            cursor: grabbing;
+            margin: 5px;
         }
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <div class="controls">
-            <button class="button" onclick="toggleMode()">View Mode</button>
-            <button class="button" onclick="toggleRangeBuilder()">Range Builder</button>
-        </div>
-        <div class="grid-container" id="grid">
-            <!-- Grid will be generated by JavaScript -->
-        </div>
-        <div class="preview-popup" id="preview"></div>
-    </div>
-
-    <div class="sidebar" id="sidebar">
-        <h2>Range Builder</h2>
-        <div class="range-builder" id="rangeBuilder">
-            <!-- Range builder grid will be generated by JavaScript -->
-        </div>
-        <textarea class="range-text" id="rangeText" placeholder="Paste range text here..."></textarea>
-        <button class="button" onclick="saveRange()">Save to Cell</button>
-    </div>
+    <button class="button" onclick="toggleMode()">View Mode</button>
+    <button class="button" onclick="toggleRangeBuilder()">Range Builder</button>
+    
+    <div class="grid-container" id="grid"></div>
 
     <script>
-        let isEditMode = false;
-        let selectedCell = null;
-        let draggedCell = null;
-        const cellData = new Map();
-
-        // Initialize the grid
-        function createGrid(rows, cols) {
+        function createGrid() {
             const grid = document.getElementById('grid');
-            grid.innerHTML = '';
-
-            for (let i = 0; i < rows; i++) {
-                for (let j = 0; j < cols; j++) {
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
                     const cellId = `${String.fromCharCode(65 + j)}${i + 1}`;
-                    
-                    const cellContent = document.createElement('div');
-                    cellContent.className = 'cell-content';
-                    
-                    const cellIdSpan = document.createElement('span');
-                    cellIdSpan.className = 'cell-id';
-                    cellIdSpan.textContent = cellId;
-                    
-                    cell.appendChild(cellIdSpan);
-                    cell.appendChild(cellContent);
-                    cell.dataset.id = cellId;
-
-                    // Add event listeners
-                    cell.addEventListener('mouseover', showPreview);
-                    cell.addEventListener('mouseout', hidePreview);
-                    cell.addEventListener('click', selectCell);
-                    cell.addEventListener('dragstart', handleDragStart);
-                    cell.addEventListener('dragover', handleDragOver);
-                    cell.addEventListener('drop', handleDrop);
-                    
-                    cell.setAttribute('draggable', true);
+                    cell.textContent = cellId;
                     grid.appendChild(cell);
                 }
             }
         }
 
-        // Preview functionality
-        function showPreview(e) {
-            const cell = e.currentTarget;
-            const data = cellData.get(cell.dataset.id);
-            if (!data) return;
-
-            const preview = document.getElementById('preview');
-            if (data.type === 'image') {
-                preview.innerHTML = `<img src="${data.content}">`;
-            } else {
-                preview.textContent = data.content;
-            }
-
-            preview.style.display = 'block';
-            updatePreviewPosition(e);
-        }
-
-        function hidePreview() {
-            document.getElementById('preview').style.display = 'none';
-        }
-
-        function updatePreviewPosition(e) {
-            const preview = document.getElementById('preview');
-            const rect = preview.getBoundingClientRect();
-            const offset = 20;
-
-            let x = e.pageX + offset;
-            let y = e.pageY + offset;
-
-            if (x + rect.width > window.innerWidth) {
-                x = e.pageX - rect.width - offset;
-            }
-            if (y + rect.height > window.innerHeight) {
-                y = e.pageY - rect.height - offset;
-            }
-
-            preview.style.left = x + 'px';
-            preview.style.top = y + 'px';
-        }
-
-        // Mode toggle
         function toggleMode() {
-            isEditMode = !isEditMode;
-            document.body.classList.toggle('edit-mode');
-            const button = document.querySelector('.controls .button');
-            button.textContent = isEditMode ? 'Edit Mode' : 'View Mode';
+            // Mode toggle functionality will go here
+            console.log('Mode toggled');
         }
 
-        // Range builder
         function toggleRangeBuilder() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('active');
+            // Range builder toggle functionality will go here
+            console.log('Range builder toggled');
         }
 
-        function createRangeBuilder() {
-            const builder = document.getElementById('rangeBuilder');
-            const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
-            const suits = ['s', 'o'];
-
-            for (let i = 0; i < ranks.length; i++) {
-                for (let j = i; j < ranks.length; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'range-cell';
-                    const hand = ranks[i] + ranks[j] + (i === j ? '' : suits[i < j ? 0 : 1]);
-                    cell.textContent = hand;
-                    cell.addEventListener('click', () => toggleRangeCell(cell));
-                    builder.appendChild(cell);
-                }
-            }
-        }
-
-        function toggleRangeCell(cell) {
-            cell.classList.toggle('selected');
-            updateRangeText();
-        }
-
-        function updateRangeText() {
-            const selected = [...document.querySelectorAll('.range-cell.selected')]
-                .map(cell => cell.textContent)
-                .join(', ');
-            document.getElementById('rangeText').value = selected;
-        }
-
-        function parseRangeText(text) {
-            const hands = text.split(/[,\s]+/).filter(Boolean);
-            document.querySelectorAll('.range-cell').forEach(cell => {
-                cell.classList.toggle('selected', hands.includes(cell.textContent));
-            });
-        }
-
-        // Cell selection and data management
-        function selectCell(e) {
-            if (!isEditMode) return;
-            const cell = e.currentTarget;
-            if (selectedCell) {
-                selectedCell.style.borderColor = '';
-            }
-            selectedCell = cell;
-            cell.style.borderColor = var(--text-color);
-        }
-
-        function saveRange() {
-            if (!selectedCell) {
-                alert('Please select a cell first');
-                return;
-            }
-
-            const text = document.getElementById('rangeText').value;
-            cellData.set(selectedCell.dataset.id, {
-                type: 'text',
-                content: text
-            });
-
-            // Update cell content indicator
-            const content = selectedCell.querySelector('.cell-content');
-            content.textContent = '📝';
-        }
-
-        // Drag and drop
-        function handleDragStart(e) {
-            if (!isEditMode) {
-                e.preventDefault();
-                return;
-            }
-            draggedCell = e.target;
-            e.dataTransfer.effectAllowed = 'move';
-        }
-
-        function handleDragOver(e) {
-            if (!isEditMode) return;
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-        }
-
-        function handleDrop(e) {
-            if (!isEditMode) return;
-            e.preventDefault();
-            const targetCell = e.target.closest('.cell');
-            if (draggedCell && targetCell && draggedCell !== targetCell) {
-                // Swap cell data
-                const draggedId = draggedCell.dataset.id;
-                const targetId = targetCell.dataset.id;
-                const draggedData = cellData.get(draggedId);
-                const targetData = cellData.get(targetId);
-                
-                if (draggedData) cellData.set(targetId, draggedData);
-                else cellData.delete(targetId);
-                
-                if (targetData) cellData.set(draggedId, targetData);
-                else cellData.delete(draggedId);
-
-                // Update visual indicators
-                updateCellContent(draggedCell);
-                updateCellContent(targetCell);
-            }
-        }
-
-        function updateCellContent(cell) {
-            const content = cell.querySelector('.cell-content');
-            const data = cellData.get(cell.dataset.id);
-            content.textContent = data ? '📝' : '';
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            createGrid(8, 8);
-            createRangeBuilder();
-
-            // Range text paste handling
-            document.getElementById('rangeText').addEventListener('paste', (e) => {
-                e.preventDefault();
-                const text = e.clipboardData.getData('text');
-                document.getElementById('rangeText').value = text;
-                parseRangeText(text);
-            });
-        });
+        // Create grid when page loads
+        document.addEventListener('DOMContentLoaded', createGrid);
     </script>
 </body>
 </html>
