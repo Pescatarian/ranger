@@ -97,14 +97,14 @@
     padding-left: 20px;
 }
 
-/* CRITICAL GRID SECTION - DO NOT MODIFY */
 .range-grid {
     display: grid;
     grid-template-columns: repeat(13, 1fr);
     gap: 4px;
-    width: 520px;
+    width: 100%;
     aspect-ratio: 1;
     margin-bottom: 20px;
+    box-sizing: border-box;
 }
 
 .range-cell {
@@ -120,7 +120,6 @@
     position: relative;
     overflow: hidden;
 }
-/* END CRITICAL GRID SECTION */
 
 .range-cell:hover {
     background-color: #2d2d2d;
@@ -147,13 +146,14 @@
     z-index: 1000;
 }
 
-/* UPDATED CONTROLS SECTION */
 .top-controls {
-    width: 520px;
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 10px auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+    margin-bottom: 20px;
 }
 
 .weight-control {
@@ -230,23 +230,23 @@
     background-color: #45a049;
 }
 
-/* UPDATED TEXT AND BUTTON SECTION */
 .range-text {
-    width: 520px;
+    width: 100%;
     height: 40px;
     background-color: #1a1a1a;
     color: #4CAF50;
     border: 1px solid #444;
     padding: 10px;
-    margin: 20px auto;
+    margin: 20px 0;
     font-family: Arial, sans-serif;
     resize: none;
     box-sizing: border-box;
 }
 
 .save-button {
-    width: 520px;
-    margin: 5px auto;
+    width: 100%;
+    margin-top: 5px;
+    box-sizing: border-box;
 }
 
 .cell[draggable="true"] {
