@@ -126,6 +126,7 @@
         .range-cell.selected {
             color: white;
             position: relative;
+            z-index: 1;
         }
 
         .range-cell.selected::before {
@@ -138,6 +139,11 @@
             background-color: #4CAF50;
             z-index: -1;
             transition: height 0.3s ease;
+        }
+
+        .range-cell span {
+            z-index: 2;
+            position: relative;
         }
 
         .controls {
@@ -259,16 +265,17 @@
                     const cell = document.createElement('div');
                     cell.className = 'range-cell';
                     
+                    const textSpan = document.createElement('span');
                     if (i <= j) {
                         const hand = ranks[i] + ranks[j] + (i === j ? '' : 'o');
-                        cell.textContent = hand;
+                        textSpan.textContent = hand;
                         cell.onclick = () => toggleRangeCell(cell);
                     } else {
                         const hand = ranks[j] + ranks[i] + 's';
-                        cell.textContent = hand;
+                        textSpan.textContent = hand;
                         cell.onclick = () => toggleRangeCell(cell);
                     }
-                    
+                    cell.appendChild(textSpan);
                     rangeGrid.appendChild(cell);
                 }
             }
