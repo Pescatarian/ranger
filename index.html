@@ -205,17 +205,18 @@
         }
 
         .clear-button {
-            padding: 8px 16px;
-            background-color: #444;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+    padding: 8px 16px;
+    background-color: #2d4d2f; /* Darker green base */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
 
-        .clear-button:hover {
-            background-color: #666;
+.clear-button:hover {
+    background-color: #3a633c; /* Slightly lighter green on hover */
+}
         }
 
         .range-text {
@@ -315,34 +316,36 @@
         }
     }
 
-    function createRangeGrid() {
-        const rangeGrid = document.getElementById('rangeGrid');
-        const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
-        
-        for (let i = 0; i < ranks.length; i++) {
-            for (let j = 0; j < ranks.length; j++) {
-                const cell = document.createElement('div');
-                cell.className = 'range-cell';
-                
-                const textSpan = document.createElement('span');
-                if (i >= j) {
-                    const hand = ranks[i] + ranks[j] + (i === j ? '' : 'o');
-                    textSpan.textContent = hand;
-                } else {
-                    const hand = ranks[j] + ranks[i] + 's';
-                    textSpan.textContent = hand;
-                }
-                cell.appendChild(textSpan);
-
-                cell.addEventListener('mousedown', startRangeSelection);
-                cell.addEventListener('mouseover', updateRangeSelection);
-                
-                rangeGrid.appendChild(cell);
+   function createRangeGrid() {
+    const rangeGrid = document.getElementById('rangeGrid');
+    const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+    
+    for (let i = 0; i < ranks.length; i++) {
+        for (let j = 0; j < ranks.length; j++) {
+            const cell = document.createElement('div');
+            cell.className = 'range-cell';
+            
+            const textSpan = document.createElement('span');
+            if (i >= j) {
+                // For pairs and offsuit hands, higher card should be first
+                const hand = i === j ? ranks[i] + ranks[j] : ranks[i] + ranks[j] + 'o';
+                textSpan.textContent = hand;
+            } else {
+                // For suited hands, higher card should be first
+                const hand = ranks[i] + ranks[j] + 's';
+                textSpan.textContent = hand;
             }
+            cell.appendChild(textSpan);
+
+            cell.addEventListener('mousedown', startRangeSelection);
+            cell.addEventListener('mouseover', updateRangeSelection);
+            
+            rangeGrid.appendChild(cell);
         }
-        
-        document.addEventListener('mouseup', endRangeSelection);
     }
+    
+    document.addEventListener('mouseup', endRangeSelection);
+}
 
    function updateStats() {
     const selectedCells = document.querySelectorAll('.range-cell.selected');
