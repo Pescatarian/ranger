@@ -284,15 +284,6 @@
         function updateWeight(value) {
             currentWeight = Math.min(Math.max(0, value), 100);
             document.getElementById('weightInput').value = currentWeight;
-            updateSelectedCellsWeight();
-        }
-
-        function updateSelectedCellsWeight() {
-            const selectedCells = document.querySelectorAll('.range-cell.selected');
-            selectedCells.forEach(cell => {
-                cell.style.setProperty('--weight-height', `${currentWeight}%`);
-                cell.dataset.weight = currentWeight;
-            });
         }
 
         function toggleViewMode() {
@@ -328,10 +319,23 @@
         }
 
         function updateRangeText() {
-            const selected = [...document.querySelectorAll('.range-cell.selected')]
-                .map(cell => `${cell.textContent}:${cell.dataset.weight || 100}`)
-                .join(', ');
-            document.getElementById('rangeText').value = selected;
+            // Group hands by weight
+            const selectedCells = [...document.querySelectorAll('.range-cell.selected')];
+            const handsByWeight = {};
+            
+            selectedCells.forEach(cell => {
+                const weight = cell.dataset.weight || 100;
+                if (!handsByWeight[weight]) {
+                    handsByWeight[weight] = [];
+                }
+                handsByWeight[weight].push(cell.querySelector('span').textContent);
+            });
+            
+            // Format each group with the requested syntax
+            const formattedGroups = Object.entries(handsByWeight)
+                .map(([weight, hands]) => `[${weight}]${hands.join(',')}[/${weight}]`);
+            
+            document.getElementById('rangeText').value = formattedGroups.join(',');
         }
 
         function selectCell(e) {
