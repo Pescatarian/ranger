@@ -53,10 +53,6 @@
             box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
         }
 
-        .grid-container.hidden {
-            display: none;
-        }
-
         /* Range Builder Sidebar */
         .sidebar {
             width: 400px;
@@ -64,10 +60,20 @@
             padding: 20px;
             border-left: 1px solid #444;
             display: none;
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            overflow-y: auto;
         }
 
         .sidebar.active {
             display: block;
+        }
+
+        .sidebar h2 {
+            color: #4CAF50;
+            margin-top: 60px;
         }
 
         .range-grid {
@@ -97,12 +103,27 @@
             background-color: #4CAF50;
             color: white;
         }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .grid-container.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="main-container">
-        <button id="viewModeBtn" class="button active" onclick="toggleViewMode()">View Mode</button>
-        <button id="rangeBuilderBtn" class="button" onclick="toggleRangeBuilder()">Range Builder</button>
+        <div class="controls">
+            <button id="viewModeBtn" class="button active" onclick="toggleViewMode()">View Mode</button>
+            <button id="rangeBuilderBtn" class="button" onclick="toggleRangeBuilder()">Range Builder</button>
+        </div>
         <div class="grid-container" id="grid"></div>
     </div>
 
@@ -114,6 +135,28 @@
     <script>
         let isViewMode = true;
         let isRangeBuilderOpen = false;
+
+        function toggleViewMode() {
+            isViewMode = true;
+            isRangeBuilderOpen = false;
+            
+            document.getElementById('viewModeBtn').classList.add('active');
+            document.getElementById('rangeBuilderBtn').classList.remove('active');
+            
+            document.getElementById('grid').classList.remove('hidden');
+            document.getElementById('sidebar').classList.remove('active');
+        }
+
+        function toggleRangeBuilder() {
+            isRangeBuilderOpen = !isRangeBuilderOpen;
+            isViewMode = !isRangeBuilderOpen;
+            
+            document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
+            document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
+            
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('grid').classList.toggle('hidden', isRangeBuilderOpen);
+        }
 
         function createGrid() {
             const grid = document.getElementById('grid');
@@ -142,28 +185,6 @@
                     rangeGrid.appendChild(cell);
                 }
             }
-        }
-
-        function toggleViewMode() {
-            isViewMode = true;
-            isRangeBuilderOpen = false;
-            
-            document.getElementById('viewModeBtn').classList.add('active');
-            document.getElementById('rangeBuilderBtn').classList.remove('active');
-            
-            document.getElementById('grid').classList.remove('hidden');
-            document.getElementById('sidebar').classList.remove('active');
-        }
-
-        function toggleRangeBuilder() {
-            isRangeBuilderOpen = !isRangeBuilderOpen;
-            isViewMode = !isRangeBuilderOpen;
-            
-            document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
-            document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
-            
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('grid').classList.toggle('hidden', isRangeBuilderOpen);
         }
 
         function toggleRangeCell(cell) {
