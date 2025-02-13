@@ -172,6 +172,28 @@
             color: #4CAF50;
         }
 
+        .stats-container {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stat-box {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #4CAF50;
+        }
+
+        .stat-value {
+            background: #1a1a1a;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            min-width: 50px;
+            text-align: center;
+        }
+
         .weight-input {
             width: 60px;
             background: #1a1a1a;
@@ -236,6 +258,16 @@
                 <input type="number" id="weightInput" value="100" min="0" max="100" 
                        class="weight-input" onchange="updateWeight(this.value)">
                 <span>%</span>
+            </div>
+            <div class="stats-container">
+                <div class="stat-box">
+                    <span>Range:</span>
+                    <span id="rangePercent" class="stat-value">0%</span>
+                </div>
+                <div class="stat-box">
+                    <span>Combos:</span>
+                    <span id="comboCount" class="stat-value">0</span>
+                </div>
             </div>
             <button class="clear-button" onclick="clearSelection()">Clear</button>
         </div>
@@ -312,29 +344,38 @@
         document.addEventListener('mouseup', endRangeSelection);
     }
 
+    function updateStats() {
+        const totalCombos = 169; // Total possible combinations in a 13x13 grid
+        const selectedCells = document.querySelectorAll('.range-cell.selected');
+        const selectedCount = selectedCells.length;
+        
+        // Calculate range percentage
+        const rangePercentage = (selectedCount / totalCombos * 100).toFixed(1);
+        
+        // Update the display
+        document.getElementById('rangePercent').textContent = rangePercentage + '%';
+        document.getElementById('comboCount').textContent = selectedCount;
+    }
+
     function clearSelection() {
-        // Clear all selected cells
         document.querySelectorAll('.range-cell.selected').forEach(cell => {
             cell.classList.remove('selected');
             cell.style.removeProperty('--weight-height');
             delete cell.dataset.weight;
         });
-        
-        // Clear the text area
         document.getElementById('rangeText').value = '';
+        updateStats();
     }
 
     function handleRangeTextChange(e) {
         const text = e.target.value.trim();
         
-        // Clear all current selections
         document.querySelectorAll('.range-cell.selected').forEach(cell => {
             cell.classList.remove('selected');
             cell.style.removeProperty('--weight-height');
             delete cell.dataset.weight;
         });
         
-        // If there's text, parse it and select corresponding hands
         if (text) {
             const weightGroups = text.match(/\[\d+\][^[]+\[\/\d+\]/g) || [];
             weightGroups.forEach(group => {
@@ -352,6 +393,7 @@
                 });
             });
         }
+        updateStats();
     }
 
     function startRangeSelection(e) {
@@ -411,6 +453,7 @@
             delete cell.dataset.weight;
         }
         updateRangeText();
+        updateStats();
     }
 
     function updateRangeText() {
