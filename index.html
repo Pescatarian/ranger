@@ -408,7 +408,7 @@
     }
 }
 
-  function toggleRangeCell(cell) {
+ function toggleRangeCell(cell) {
     if (!cell.dataset.selections) {
         cell.dataset.selections = JSON.stringify([]);
     }
@@ -418,8 +418,13 @@
     const totalCurrentWeight = selections.reduce((sum, s) => sum + s.weight, 0);
 
     if (existingSelectionIndex >= 0) {
-        // If same color exists, update its weight
-        selections[existingSelectionIndex].weight = currentWeight;
+        // If same color exists and same weight, remove it (deselect)
+        if (selections[existingSelectionIndex].weight === currentWeight) {
+            selections.splice(existingSelectionIndex, 1);
+        } else {
+            // If different weight, update the weight
+            selections[existingSelectionIndex].weight = currentWeight;
+        }
     } else {
         // If adding new color
         if (totalCurrentWeight + currentWeight > 100) {
