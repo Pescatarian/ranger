@@ -720,6 +720,17 @@ function loadSavedColors() {
             currentColors[i - 1] = color;
             currentWeights[i - 1] = weight;
         }
+        
+ function updateWeight(value, rowIndex) {
+    // Adjust rowIndex to be zero-based (subtract 1)
+    const adjustedIndex = rowIndex - 1;
+    currentWeights[adjustedIndex] = Math.min(Math.max(0, parseInt(value)), 100);
+    document.getElementById(`weightInput${rowIndex}`).value = currentWeights[adjustedIndex];
+    activeRow = adjustedIndex;
+    // Auto-save when weight changes
+    saveColorSettings(adjustedIndex);
+    updateStats();  // Update stats when weight changes
+       }
     }
 }
 
