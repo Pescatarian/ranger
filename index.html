@@ -417,7 +417,7 @@
     </div>
 
     <script>
-        let isViewMode = true;
+let isViewMode = true;
 let isRangeBuilderOpen = false;
 let selectedCell = null;
 const cellData = new Map();
@@ -699,10 +699,7 @@ function handleRangeTextChange(e) {
     }
     updateStats();
 } 
-        
-function startRangeSelection(e) {
-    // ... rest of the code
-} 
+
 function startRangeSelection(e) {
     isMouseDown = true;
     const cell = e.target.closest('.range-cell');
