@@ -3,148 +3,149 @@
 <head>
     <title>Ranger</title>
     <style>
-        body {
-            background-color: #1a1a1a;
-            color: #4CAF50;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            user-select: none;
-        }
+       body {
+    background-color: #1a1a1a;
+    color: #4CAF50;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    user-select: none;
+}
 
-        .main-container {
-            flex: 1;
-            padding: 20px;
-        }
+.main-container {
+    flex: 1;
+    padding: 20px;
+}
 
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(8, 100px);
-            gap: 1px;
-            background-color: #2d2d2d;
-            padding: 1px;
-            width: fit-content;
-            aspect-ratio: 1;
-        }
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(8, 100px);
+    gap: 1px;
+    background-color: #2d2d2d;
+    padding: 1px;
+    width: fit-content;
+    aspect-ratio: 1;
+}
 
-        .cell {
-            width: 100px;
-            height: 100px;
-            background-color: #1a1a1a;
-            border: 1px solid #444;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            cursor: pointer;
-        }
+.cell {
+    width: 100px;
+    height: 100px;
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+}
 
-        .cell-content {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+.cell-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-        .cell-id {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            font-size: 12px;
-            opacity: 0.7;
-        }
+.cell-id {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    font-size: 12px;
+    opacity: 0.7;
+}
 
-        .button {
-            padding: 8px 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-            transition: all 0.3s ease;
-        }
+.button {
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 5px;
+    transition: all 0.3s ease;
+}
 
-        .button.active {
-            background-color: #45a049;
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
-            border: 2px solid #fff;
-            transform: scale(1.05);
-        }
+.button.active {
+    background-color: #45a049;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    border: 2px solid #fff;
+    transform: scale(1.05);
+}
 
-        /* Range Builder Sidebar */
-        .sidebar {
-            width: 600px;
-            background-color: #2d2d2d;
-            padding: 20px;
-            border-left: 1px solid #444;
-            display: none;
-            position: fixed;
-            right: 0;
-            top: 0;
-            height: 100vh;
-            flex-direction: column;
-            align-items: center;
-        }
+/* Range Builder Sidebar */
+.sidebar {
+    width: 600px;
+    background-color: #2d2d2d;
+    padding: 20px;
+    border-left: 1px solid #444;
+    display: none;
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    flex-direction: column;
+    align-items: center;
+}
 
-       .sidebar h2 {
-            color: #4CAF50;
-            margin-top: 20px;  /* Reduced from 60px to 20px */
-            width: 100%;
-            padding-left: 20px;
-    }
+.sidebar h2 {
+    color: #4CAF50;
+    margin-top: 20px;
+    width: 100%;
+    padding-left: 20px;
+}
 
 .range-grid {
     display: grid;
     grid-template-columns: repeat(13, 1fr);
     gap: 4px;
-    margin: 10px 20px;  /* Reduced top margin from 20px to 10px */
+    margin: 10px 20px;
     width: calc(100% - 40px);
     aspect-ratio: 1;
     margin-bottom: 20px;
 }
-        .range-cell {
-            aspect-ratio: 1;
-            background-color: #1a1a1a;
-            border: 1px solid #444;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            cursor: pointer;
-            color: #4CAF50;
-            position: relative;
-            overflow: hidden;
-        }
 
-        .range-cell:hover {
-            background-color: #2d2d2d;
-        }
+.range-cell {
+    aspect-ratio: 1;
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    color: #4CAF50;
+    position: relative;
+    overflow: hidden;
+}
 
-                .range-cell.selected {
-                    color: white;
-                    position: relative;
-                    z-index: 1;
-                    transition: background 0.3s ease;
-            }
-    
-        .range-cell span {
-            z-index: 2;
-            position: relative;
-        }
+.range-cell:hover {
+    background-color: #2d2d2d;
+}
 
-        .controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 1000;
-        }
+.range-cell.selected {
+    color: white;
+    position: relative;
+    z-index: 1;
+    transition: background 0.3s ease;
+}
 
-     .top-controls {
+.range-cell span {
+    z-index: 2;
+    position: relative;
+}
+
+.controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.top-controls {
     width: calc(100% - 40px);
     margin: 10px 20px;
     display: flex;
@@ -158,21 +159,21 @@
     align-items: center;
     gap: 10px;
     color: #4CAF50;
-    min-width: 200px; /* Add minimum width */
+    min-width: 200px;
 }
 
 .stats-container {
     display: flex;
     gap: 20px;
     align-items: center;
-    margin: 0 20px; /* Add margin */
+    margin: 0 20px;
 }
 
 .color-weight-group {
     display: flex;
     align-items: center;
-    gap: 8px; /* Increased from 5px */
-    flex-wrap: nowrap; /* Prevent wrapping */
+    gap: 8px;
+    flex-wrap: nowrap;
 }
 
 .stat-box {
@@ -180,39 +181,39 @@
     align-items: center;
     gap: 5px;
     color: #4CAF50;
-    white-space: nowrap; /* Prevent wrapping */
+    white-space: nowrap;
 }
 
-       .color-input {
-            width: 40px;
-            height: 30px;
-            padding: 0;
-            border: 1px solid #444;
-            border-radius: 4px;
-            background: #1a1a1a;
-            cursor: pointer;
-        }
-    
-         .stat-value {
-            background: #1a1a1a;
-            padding: 5px 10px;
-            border-radius: 4px;
-            border: 1px solid #444;
-            min-width: 50px;
-            text-align: center;
-        }
+.color-input {
+    width: 40px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #1a1a1a;
+    cursor: pointer;
+}
 
-        .weight-input {
-            width: 60px;
-            background: #1a1a1a;
-            color: #4CAF50;
-            border: 1px solid #444;
-            padding: 5px;
-            border-radius: 4px;
-            text-align: center;
-        }
+.stat-value {
+    background: #1a1a1a;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    min-width: 50px;
+    text-align: center;
+}
 
- .clear-button {
+.weight-input {
+    width: 60px;
+    background: #1a1a1a;
+    color: #4CAF50;
+    border: 1px solid #444;
+    padding: 5px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.clear-button {
     padding: 8px 16px;
     background-color: #4CAF50;
     color: white;
@@ -220,14 +221,14 @@
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-left: auto; /* Push to the right */
-    flex-shrink: 0; /* Prevent shrinking */
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .clear-button:hover {
     background-color: #45a049;
 }
-         
+
 .range-text {
     width: calc(100% - 40px);
     height: 40px;
@@ -235,7 +236,7 @@
     color: #4CAF50;
     border: 1px solid #444;
     padding: 10px;
-    margin-top: 30px;  /* Increased from 20px to 30px */
+    margin-top: 30px;
     font-family: Arial, sans-serif;
     resize: none;
 }
@@ -245,9 +246,33 @@
     margin-top: 5px;
 }
 
-         .cell[draggable="true"] {
-            cursor: move;
-        }
+.cell[draggable="true"] {
+    cursor: move;
+}
+
+/* ONLY NEW ADDITIONS */
+.control-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.button-container {
+    width: 520px;
+    display: flex;
+    justify-content: space-between;
+    margin: 10px auto;
+}
+
+.save-color-btn {
+    padding: 4px 8px;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
     </style>
 </head>
 
@@ -260,36 +285,79 @@
         <div class="grid-container" id="grid"></div>
     </div>
 
-    <div class="sidebar" id="sidebar">
-        <h2>Range Builder</h2>
-        <div class="range-grid" id="rangeGrid"></div>
-        <div class="top-controls">
+    <div class="main-container">
+    <div class="controls">
+        <button id="viewModeBtn" class="button active" onclick="toggleViewMode()">View Mode</button>
+        <button id="rangeBuilderBtn" class="button" onclick="toggleRangeBuilder()">Range Builder</button>
+    </div>
+    <div class="grid-container" id="grid"></div>
+</div>
+
+<div class="sidebar" id="sidebar">
+    <h2>Range Builder</h2>
+    <div class="range-grid" id="rangeGrid"></div>
+    
+    <!-- First Control Row -->
+    <div class="top-controls">
+        <div class="control-row">
             <div class="weight-control">
                 <div class="color-weight-group">
                     <label>Color:</label>
-                    <input type="color" id="colorPicker" value="#4CAF50" class="color-input">
-                    <label for="weightInput">Weight:</label>
-                    <input type="number" id="weightInput" value="100" min="0" max="100" 
-                           class="weight-input" onchange="updateWeight(this.value)">
+                    <input type="color" id="colorPicker1" value="#4CAF50" class="color-input">
+                    <label for="weightInput1">Weight:</label>
+                    <input type="number" id="weightInput1" value="100" min="0" max="100" 
+                           class="weight-input" onchange="updateWeight(this.value, 1)">
                     <span>%</span>
                 </div>
             </div>
             <div class="stats-container">
                 <div class="stat-box">
                     <span>Range:</span>
-                    <span id="rangePercent" class="stat-value">0%</span>
+                    <span id="rangePercent1" class="stat-value">0%</span>
                 </div>
                 <div class="stat-box">
                     <span>Combos:</span>
-                    <span id="comboCount" class="stat-value">0</span>
+                    <span id="comboCount1" class="stat-value">0</span>
                 </div>
             </div>
-            <button class="clear-button" onclick="clearSelection()">Clear</button>
+            <button class="save-color-btn" onclick="saveColor(1)">💾</button>
         </div>
-        <textarea id="rangeText" class="range-text" 
-                  oninput="handleRangeTextChange(event)"></textarea>
-        <button class="button save-button" onclick="saveToCell()">Save to Cell</button>
+
+        <!-- Second Control Row -->
+        <div class="control-row">
+            <div class="weight-control">
+                <div class="color-weight-group">
+                    <label>Color:</label>
+                    <input type="color" id="colorPicker2" value="#4CAF50" class="color-input">
+                    <label for="weightInput2">Weight:</label>
+                    <input type="number" id="weightInput2" value="100" min="0" max="100" 
+                           class="weight-input" onchange="updateWeight(this.value, 2)">
+                    <span>%</span>
+                </div>
+            </div>
+            <div class="stats-container">
+                <div class="stat-box">
+                    <span>Range:</span>
+                    <span id="rangePercent2" class="stat-value">0%</span>
+                </div>
+                <div class="stat-box">
+                    <span>Combos:</span>
+                    <span id="comboCount2" class="stat-value">0</span>
+                </div>
+            </div>
+            <button class="save-color-btn" onclick="saveColor(2)">💾</button>
+        </div>
     </div>
+
+    <textarea id="rangeText" class="range-text" 
+              oninput="handleRangeTextChange(event)"></textarea>
+    
+    <!-- Bottom Buttons Container -->
+    <div class="button-container">
+        <button class="button save-button" onclick="saveToCell()">Save to Cell</button>
+        <button class="clear-button" onclick="clearSelection()">Clear</button>
+    </div>
+</div>
     <script>
     let isViewMode = true;
     let isRangeBuilderOpen = false;
