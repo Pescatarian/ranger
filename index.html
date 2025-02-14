@@ -153,14 +153,13 @@
             margin: 10px auto;
         }
 
-        .control-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 5px 0;
-        }
-
+  .weight-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #4CAF50;
+    min-width: 210px;  /* Match stats-container width */
+}
         .weight-control {
             display: flex;
             align-items: center;
@@ -169,14 +168,14 @@
             min-width: 200px;
         }
 
-       .stats-container {
+ .stats-container {
     display: flex;
     gap: 20px;
     align-items: center;
-    margin: 0 20px;
-    min-width: 200px;  /* Add minimum width to prevent overlap */
+    margin: 0;
+    min-width: 210px;  /* Just enough to prevent the small overlap */
 }
-
+        
 .color-weight-group {
     display: flex;
     align-items: center;
@@ -185,13 +184,14 @@
     white-space: nowrap;  /* Prevent text wrapping */
 }
 
-        .stat-box {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #4CAF50;
-            white-space: nowrap;
-        }
+ .stat-box {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #4CAF50;
+    white-space: nowrap;
+    min-width: 85px;  /* Ensure enough space for Range% */
+}
 
         .color-input {
             width: 40px;
@@ -260,20 +260,6 @@
             flex: 1;
         }
 
-       /* Make save button more visible */
-.save-color-btn {
-    padding: 4px 8px;
-    background: #2d2d2d;
-    border: 1px solid #444;
-    color: #4CAF50;  /* Change color to match theme */
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 16px;  /* Make emoji more visible */
-}
-
-.save-color-btn:hover {
-    background: #3d3d3d;
-}
     </style>
 </head>
 <body>
@@ -727,12 +713,6 @@ function updateCellContent(cellId) {
     const content = cell.querySelector('.cell-content');
     const data = cellData.get(cellId);
     content.innerHTML = data ? '📝' : '';
-}
-
-function saveColor(rowIndex) {
-    const color = currentColors[rowIndex - 1];
-    const weight = currentWeights[rowIndex - 1];
-    localStorage.setItem(`savedColor${rowIndex}`, JSON.stringify({ color, weight }));
 }
 
 function loadSavedColors() {
