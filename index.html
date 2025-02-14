@@ -590,6 +590,10 @@ function updateStats() {
 }
 
 function toggleRangeCell(cell) {
+    // First check if the clicked row toggle is active
+    const activeRowToggle = document.querySelector(`.row-toggle[data-row="${activeRow + 1}"]`);
+    if (!activeRowToggle?.classList.contains('active')) return;
+
     if (!cell.dataset.selections) {
         cell.dataset.selections = JSON.stringify([]);
     }
