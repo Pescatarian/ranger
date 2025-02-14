@@ -598,31 +598,26 @@ function toggleRangeCell(cell) {
     const currentColor = currentColors[activeRow];
     const currentWeight = currentWeights[activeRow];
     
-    const existingSelectionIndex = selections.findIndex(s => s.color === currentColor);
-    const totalCurrentWeight = selections.reduce((sum, s) => sum + s.weight, 0);
+    // Find if this row already has a selection
+    const existingSelectionIndex = selections.findIndex(s => 
+        currentColors.indexOf(s.color) === activeRow
+    );
 
     if (existingSelectionIndex >= 0) {
+        // If clicking again with same weight, remove it
         if (selections[existingSelectionIndex].weight === currentWeight) {
             selections.splice(existingSelectionIndex, 1);
         } else {
-            selections[existingSelectionIndex].weight = currentWeight;
+            // Just update the color, keep the weight
+            selections[existingSelectionIndex].color = currentColor;
         }
     } else {
-        if (totalCurrentWeight + currentWeight > 100) {
-            const remainingWeight = 100 - currentWeight;
-            const ratio = remainingWeight / totalCurrentWeight;
-            selections = selections.map(s => ({
-                ...s,
-                weight: Math.round(s.weight * ratio)
-            }));
-        }
+        // Add new selection for this row
         selections.push({
             color: currentColor,
-            weight: currentWeight
+            weight: currentWeight,
         });
     }
-
-    selections = selections.filter(s => s.weight > 0);
     
     cell.dataset.selections = JSON.stringify(selections);
     updateCellVisual(cell);
@@ -645,6 +640,9 @@ function updateCellVisual(cell) {
         const {color, weight} = selections[0];
         cell.style.background = `linear-gradient(to right, ${color} ${weight}%, #1a1a1a ${weight}%)`;
     } else {
+        // Sort selections by row index for consistent gradient ordering
+        selections.sort((a, b) => currentColors.indexOf(a.color) - currentColors.indexOf(b.color));
+        
         let gradientString = 'linear-gradient(to right, ';
         let currentPosition = 0;
         
