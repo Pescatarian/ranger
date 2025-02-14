@@ -214,11 +214,12 @@
     transition: all 0.3s ease;
     margin-right: 10px;
     padding: 0;
+    font-size: 0;
 }
 
 .row-toggle.active {
     border-color: #4CAF50;
-    background-color: #2d2d2d;
+    background-color: #4CAF50;
 }
 
 .weight-control {
@@ -290,12 +291,12 @@
 /* Bottom Controls */
 .range-text {
     width: 520px;
-    height: 40px;
+    height: 60px;
     background-color: #1a1a1a;
     color: #4CAF50;
     border: 1px solid #444;
     padding: 10px;
-    margin: 20px auto;
+    margin: 10px auto;
     font-family: Arial, sans-serif;
     resize: none;
 }
@@ -303,16 +304,12 @@
 .button-container {
     width: 520px;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     margin: 10px auto;
     gap: 10px;
 }
 
-.save-button {
-    flex: 1;
-}
-
-.clear-button {
+.save-button, .clear-button {
     padding: 8px 16px;
     background-color: #4CAF50;
     color: white;
@@ -322,7 +319,7 @@
     transition: all 0.3s ease;
 }
 
-.clear-button:hover {
+.save-button:hover, .clear-button:hover {
     background-color: #45a049;
 }
 
