@@ -169,18 +169,21 @@
             min-width: 200px;
         }
 
-        .stats-container {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
+       .stats-container {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin: 0 20px;
+    min-width: 200px;  /* Add minimum width to prevent overlap */
+}
 
-        .color-weight-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: nowrap;
-        }
+.color-weight-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    white-space: nowrap;  /* Prevent text wrapping */
+}
 
         .stat-box {
             display: flex;
@@ -257,19 +260,20 @@
             flex: 1;
         }
 
-        .save-color-btn {
-            padding: 4px 8px;
-            background: #2d2d2d;
-            border: 1px solid #444;
-            color: white;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-        }
+       /* Make save button more visible */
+.save-color-btn {
+    padding: 4px 8px;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    color: #4CAF50;  /* Change color to match theme */
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;  /* Make emoji more visible */
+}
 
-        .save-color-btn:hover {
-            background: #3d3d3d;
-        }
+.save-color-btn:hover {
+    background: #3d3d3d;
+}
     </style>
 </head>
 <body>
@@ -309,7 +313,6 @@
                         <span id="comboCount1" class="stat-value">0</span>
                     </div>
                 </div>
-                <button class="save-color-btn" onclick="saveColor(1)">💾</button>
             </div>
 
             <!-- Second Control Row -->
@@ -334,8 +337,7 @@
                         <span id="comboCount2" class="stat-value">0</span>
                     </div>
                 </div>
-                <button class="save-color-btn" onclick="saveColor(2)">💾</button>
-            </div>
+          </div>
         </div>
 
         <textarea id="rangeText" class="range-text" 
@@ -427,6 +429,8 @@ function updateColor(e) {
     if (/^#[0-9A-F]{6}$/i.test(color)) {
         currentColors[rowIndex] = color;
         activeRow = rowIndex;
+        // Auto-save when color changes
+        saveColorSettings(rowIndex);
     } else {
         console.warn('Invalid color format:', color);
         e.target.value = currentColors[rowIndex];
@@ -437,6 +441,15 @@ function updateWeight(value, rowIndex) {
     currentWeights[rowIndex] = Math.min(Math.max(0, value), 100);
     document.getElementById(`weightInput${rowIndex + 1}`).value = currentWeights[rowIndex];
     activeRow = rowIndex;
+    // Auto-save when weight changes
+    saveColorSettings(rowIndex);
+}
+
+// New combined save function
+function saveColorSettings(rowIndex) {
+    const color = currentColors[rowIndex];
+    const weight = currentWeights[rowIndex];
+    localStorage.setItem(`savedColor${rowIndex + 1}`, JSON.stringify({ color, weight }));
 }
 
 function updateStats() {
