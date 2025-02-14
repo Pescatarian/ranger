@@ -330,9 +330,7 @@
 .row-toggle:hover:not(.active) {
     background-color: #3d3d3d;
 }
-
     </style>
-
 </head>
 <body>
     <div class="main-container">
@@ -419,8 +417,7 @@
     </div>
 
     <script>
-      
- let isViewMode = true;
+        let isViewMode = true;
 let isRangeBuilderOpen = false;
 let selectedCell = null;
 const cellData = new Map();
@@ -679,8 +676,195 @@ function handleRangeTextChange(e) {
     
     document.querySelectorAll('.range-cell').forEach(cell => {
         cell.dataset.selections = JSON.stringify([]);
-        updateCellVis
+        updateCellVisual(cell);
+    });
+    
+    if (text) {
+        const weightGroups = text.match(/\[\d+:[#\w]+\][^[]+\[\/\d+\]/g) || [];
+        weightGroups.forEach(group => {
+            const [_, weight, color] = group.match(/\[(\d+):([#\w]+)\]/);
+            const hands = group.match(/\]([^[]+)\[/)[1].split(',');
+            
+            hands.forEach(hand => {
+                const cell = [...document.querySelectorAll('.range-cell')]
+                    .find(cell => cell.querySelector('span').textContent.trim() === hand.trim());
+                if (cell) {
+                    const selections = JSON.parse(cell.dataset.selections || '[]');
+                    selections.push({color, weight: parseInt(weight)});
+                    cell.dataset.selections = JSON.stringify(selections);
+                    updateCellVisual(cell);
+                }
+            });
+        });
+    }
+    updateStats();
+} 
+        
+function startRangeSelection(e) {
+    // ... rest of the code
+} 
+function startRangeSelection(e) {
+    isMouseDown = true;
+    const cell = e.target.closest('.range-cell');
+    const selections = JSON.parse(cell.dataset.selections || '[]');
+    isSelecting = !selections.some(s => s.color === currentColors[activeRow]);
+    toggleRangeCell(cell);
+}
+
+function updateRangeSelection(e) {
+    if (!isMouseDown || isSelecting === null) return;
+    const cell = e.target.closest('.range-cell');
+    if (!cell) return;
+    
+    const selections = JSON.parse(cell.dataset.selections || '[]');
+    const hasCurrentColor = selections.some(s => s.color === currentColors[activeRow]);
+    
+    if (hasCurrentColor !== isSelecting) {
+        toggleRangeCell(cell);
+    }
+}
+
+function endRangeSelection() {
+    isMouseDown = false;
+    isSelecting = null;
+}
+
+function toggleViewMode() {
+    isViewMode = true;
+    isRangeBuilderOpen = false;
+    
+    document.getElementById('viewModeBtn').classList.add('active');
+    document.getElementById('rangeBuilderBtn').classList.remove('active');
+    
+    document.getElementById('sidebar').style.display = 'none';
+}
+
+function toggleRangeBuilder() {
+    isRangeBuilderOpen = !isRangeBuilderOpen;
+    isViewMode = !isRangeBuilderOpen;
+    
+    document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
+    document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
+    
+    document.getElementById('sidebar').style.display = isRangeBuilderOpen ? 'flex' : 'none';
+}
+
+function updateRangeText() {
+    const cells = [...document.querySelectorAll('.range-cell')];
+    const selectionsByColorAndWeight = {};
+    
+    cells.forEach(cell => {
+        const selections = JSON.parse(cell.dataset.selections || '[]');
+        selections.forEach(({color, weight}) => {
+            const key = `${color}_${weight}`;
+            if (!selectionsByColorAndWeight[key]) {
+                selectionsByColorAndWeight[key] = [];
+            }
+            selectionsByColorAndWeight[key].push(cell.querySelector('span').textContent);
+        });
+    });
+    
+    const formattedGroups = Object.entries(selectionsByColorAndWeight)
+        .map(([key, hands]) => {
+            const [color, weight] = key.split('_');
+            return `[${weight}:${color}]${hands.join(',')}[/${weight}]`;
+        });
+    
+    document.getElementById('rangeText').value = formattedGroups.join(',');
+}
+
+function selectCell(e) {
+    if (!isViewMode) return;
+    if (selectedCell) {
+        selectedCell.style.border = '1px solid #444';
+    }
+    selectedCell = e.currentTarget;
+    selectedCell.style.border = '2px solid #4CAF50';
+}
+
+function saveToCell() {
+    if (!selectedCell) {
+        alert('Please select a cell first');
+        return;
+    }
+    
+    const rangeText = document.getElementById('rangeText').value;
+    if (rangeText && !rangeText.match(/^\[[\d]+:[#\w]+\][^[]+\[\/\d+\](,\[[\d]+:[#\w]+\][^[]+\[\/\d+\])*$/)) {
+        alert('Invalid range format');
+        return;
+    }
+    
+    cellData.set(selectedCell.dataset.id, rangeText);
+    const content = selectedCell.querySelector('.cell-content');
+    content.innerHTML = '📝';
+    
+    toggleRangeBuilder();
+}
+
+function handleDragStart(e) {
+    if (!isViewMode) return;
+    e.dataTransfer.setData('text/plain', e.target.dataset.id);
+}
+
+function handleDragOver(e) {
+    if (!isViewMode) return;
+    e.preventDefault();
+}
+
+function handleDrop(e) {
+    if (!isViewMode) return;
+    e.preventDefault();
+    const sourceId = e.dataTransfer.getData('text/plain');
+    const targetId = e.target.closest('.cell').dataset.id;
+    
+    const sourceData = cellData.get(sourceId);
+    const targetData = cellData.get(targetId);
+    
+    if (sourceData) cellData.set(targetId, sourceData);
+    if (targetData) cellData.set(sourceId, targetData);
+    
+    updateCellContent(sourceId);
+    updateCellContent(targetId);
+}
+
+function updateCellContent(cellId) {
+    const cell = document.querySelector(`[data-id="${cellId}"]`);
+    const content = cell.querySelector('.cell-content');
+    const data = cellData.get(cellId);
+    content.innerHTML = data ? '📝' : '';
+}
+
+function loadSavedColors() {
+    for (let i = 1; i <= 2; i++) {
+        const saved = localStorage.getItem(`savedColor${i}`);
+        if (saved) {
+            const { color, weight } = JSON.parse(saved);
+            document.getElementById(`colorPicker${i}`).value = color;
+            document.getElementById(`weightInput${i}`).value = weight;
+            currentColors[i - 1] = color;
+            currentWeights[i - 1] = weight;
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    createGrid();
+    createRangeGrid();
+    toggleViewMode();
+    
+    document.getElementById('colorPicker1').addEventListener('input', updateColor);
+    document.getElementById('colorPicker2').addEventListener('input', updateColor);
+    
+    document.querySelectorAll('.view-button').forEach(button => {
+        button.addEventListener('click', handleViewChange);
+    });
+    
+    document.querySelectorAll('.row-toggle').forEach(button => {
+        button.addEventListener('click', handleRowToggle);
+    });
+    
+    loadSavedColors();
 });
 </script>
 </body>
-</html>
+</html>    
