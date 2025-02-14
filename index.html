@@ -332,6 +332,7 @@
 }
 
     </style>
+
 </head>
 <body>
     <div class="main-container">
@@ -357,7 +358,7 @@
         <!-- Control Rows Container -->
         <div class="top-controls">
             <!-- First Control Row -->
-            <div class="control-row">
+            <div class="control-row active">
                 <button class="row-toggle active" data-row="1">Row 1</button>
                 <div class="weight-control">
                     <div class="color-weight-group">
@@ -387,7 +388,7 @@
                 <div class="weight-control">
                     <div class="color-weight-group">
                         <label>Color:</label>
-                        <input type="color" id="colorPicker2" value="#4CAF50" class="color-input">
+                        <input type="color" id="colorPicker2" value="#FF0000" class="color-input">
                         <label for="weightInput2">Weight:</label>
                         <input type="number" id="weightInput2" value="100" min="0" max="100" 
                                class="weight-input" onchange="updateWeight(this.value, 2)">
@@ -416,9 +417,9 @@
             <button class="clear-button" onclick="clearSelection()">Clear</button>
         </div>
     </div>
-</body>
 
     <script>
+      
 let isViewMode = true;
 let isRangeBuilderOpen = false;
 let selectedCell = null;
