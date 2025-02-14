@@ -598,25 +598,17 @@ function toggleRangeCell(cell) {
     const currentColor = currentColors[activeRow];
     const currentWeight = currentWeights[activeRow];
     
-    // Find if this row already has a selection
-    const existingSelectionIndex = selections.findIndex(s => 
-        currentColors.indexOf(s.color) === activeRow
-    );
+    const otherRowSelections = selections.filter(s => currentColors.indexOf(s.color) !== activeRow);
+    const existingSelection = selections.find(s => currentColors.indexOf(s.color) === activeRow);
 
-    if (existingSelectionIndex >= 0) {
-        // If clicking again with same weight, remove it
-        if (selections[existingSelectionIndex].weight === currentWeight) {
-            selections.splice(existingSelectionIndex, 1);
+    if (existingSelection) {
+        if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
+            selections = otherRowSelections;
         } else {
-            // Just update the color, keep the weight
-            selections[existingSelectionIndex].color = currentColor;
+            selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
         }
     } else {
-        // Add new selection for this row
-        selections.push({
-            color: currentColor,
-            weight: currentWeight,
-        });
+        selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
     }
     
     cell.dataset.selections = JSON.stringify(selections);
