@@ -268,7 +268,46 @@
     -moz-appearance: none;     /* Add this */
     appearance: none;          /* Add this */
 }
+        
+.recent-colors {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    background: #2d2d2d;
+    padding: 4px;
+    border-radius: 4px;
+    z-index: 1000;
+}
 
+.color-input:focus + .recent-colors,
+.recent-colors:hover {
+    display: flex;
+}
+
+.color-swatch {
+    width: 25px;
+    height: 25px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #444;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+}
+
+/* Update existing .stat-box to include position: relative */
+.stat-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    color: #4CAF50;
+    white-space: nowrap;
+}
 .weight-input {
     width: 50px;
     background: #1a1a1a;
@@ -444,7 +483,8 @@ let activeRow = 0;
 let isMouseDown = false;
 let isSelecting = null;
 let currentView = 'all';
-
+let recentColors = JSON.parse(localStorage.getItem('recentColors') || '[]');
+        
 function createGrid() {
     const grid = document.getElementById('grid');
     for (let i = 0; i < 8; i++) {
@@ -516,9 +556,21 @@ function updateWeight(value, rowIndex) {
 function updateColor(e) {
     const rowIndex = e.target.id === 'colorPicker1' ? 0 : 1;
     const color = e.target.value;
+    
     if (/^#[0-9A-F]{6}$/i.test(color)) {
         currentColors[rowIndex] = color;
         activeRow = rowIndex;
+        
+        // Add color to recent colors if it's not already there
+        if (!recentColors.includes(color)) {
+            recentColors.unshift(color);
+            if (recentColors.length > 5) { // Keep only last 5 colors
+                recentColors.pop();
+            }
+            localStorage.setItem('recentColors', JSON.stringify(recentColors));
+            updateColorList();
+        }
+        
         saveColorSettings(rowIndex);
         updateRangeDisplay(currentView);
     } else {
@@ -527,6 +579,30 @@ function updateColor(e) {
     }
 }
 
+function updateColorList() {
+    const colorPickers = document.querySelectorAll('.color-input');
+    colorPickers.forEach(picker => {
+        // Clear existing list
+        let list = picker.nextElementSibling;
+        if (!list || !list.classList.contains('recent-colors')) {
+            list = document.createElement('div');
+            list.classList.add('recent-colors');
+            picker.parentNode.insertBefore(list, picker.nextSibling);
+        }
+        
+        list.innerHTML = '';
+        recentColors.forEach(color => {
+            const swatch = document.createElement('div');
+            swatch.classList.add('color-swatch');
+            swatch.style.backgroundColor = color;
+            swatch.addEventListener('click', () => {
+                picker.value = color;
+                picker.dispatchEvent(new Event('input'));
+            });
+            list.appendChild(swatch);
+        });
+    });
+}
 function handleViewChange(e) {
     document.querySelectorAll('.view-button').forEach(btn => btn.classList.remove('active'));
     e.target.classList.add('active');
@@ -855,7 +931,7 @@ function loadSavedColors() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+ document.addEventListener('DOMContentLoaded', () => {
     createGrid();
     createRangeGrid();
     toggleViewMode();
@@ -872,7 +948,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     loadSavedColors();
+    updateColorList(); // Add this line
 });
+        
 </script>
 </body>
 </html>
