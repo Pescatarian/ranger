@@ -103,20 +103,22 @@
 .view-controls {
     width: 520px;
     display: flex;
-    gap: 10px;
-    margin: 5px auto;
-    padding: 5px 0;
+    gap: 8px;
+    margin: 3px auto; /* Reduced from 5px to tighten up spacing */
+    padding: 3px 0;
     justify-content: center;
 }
 
 .view-button {
-    padding: 8px 16px;
+    padding: 6px 12px; /* Reduced from 8px to make buttons smaller */
+    min-width: 70px; /* Set consistent width for all buttons */
     background-color: #2d2d2d;
     color: #4CAF50;
     border: 1px solid #444;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
+    text-align: center; /* Ensure text is centered */
 }
 
 .view-button.active {
@@ -226,51 +228,55 @@
     padding: 0;
     font-size: 0;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .row-toggle.active::after {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     background-color: #4CAF50;
     border-radius: 50%;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
 }
 
 .weight-control {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px; /* Reduced from 10px */
     white-space: nowrap;
     flex-wrap: nowrap;
     width: 300px;
-    margin-left: 10px;
+    margin-left: 8px; /* Reduced from 10px */
 }
 
 .stats-container {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 8px; /* Reduced from 10px */
     margin: 0;
     min-width: 210px;
     margin-left: auto;
+    padding-right: 8px; /* Added to keep within grid */
 }
 
 .color-weight-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px; /* Reduced from 8px */
     flex-wrap: nowrap;
     white-space: nowrap;
 }
 
 /* Input and Stats Styles */
 .color-input {
-    width: 40px;
-    height: 30px;
+    width: 25px; /* Reduced from 40px */
+    height: 25px; /* Reduced from 30px */
     padding: 0;
     border: 1px solid #444;
     border-radius: 4px;
@@ -281,7 +287,7 @@
 .stat-box {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 3px; /* Reduced from 5px */
     color: #4CAF50;
     white-space: nowrap;
     min-width: 85px;
@@ -289,19 +295,19 @@
 
 .stat-value {
     background: #1a1a1a;
-    padding: 5px 10px;
+    padding: 4px 8px; /* Reduced from 5px 10px */
     border-radius: 4px;
     border: 1px solid #444;
-    min-width: 50px;
+    min-width: 45px; /* Reduced from 50px */
     text-align: center;
 }
 
 .weight-input {
-    width: 60px;
+    width: 50px; /* Reduced from 60px */
     background: #1a1a1a;
     color: #4CAF50;
     border: 1px solid #444;
-    padding: 5px;
+    padding: 4px; /* Reduced from 5px */
     border-radius: 4px;
     text-align: center;
 }
@@ -375,12 +381,12 @@
     <div class="sidebar" id="sidebar">
         <h2>Range Builder</h2>
         
-        <!-- View Mode Controls -->
-        <div class="view-controls">
-            <button class="view-button active" data-view="all">Show All</button>
-            <button class="view-button" data-view="row1">Show Row 1</button>
-            <button class="view-button" data-view="row2">Show Row 2</button>
-        </div>
+      <!-- View Mode Controls -->
+<div class="view-controls">
+    <button class="view-button active" data-view="all">Show All</button>
+    <button class="view-button" data-view="row1">Show 1</button>
+    <button class="view-button" data-view="row2">Show 2</button>
+</div>
 
         <div class="range-grid" id="rangeGrid"></div>
         
@@ -440,11 +446,11 @@
         <textarea id="rangeText" class="range-text" 
                   oninput="handleRangeTextChange(event)"></textarea>
         
-        <!-- Bottom Buttons Container -->
-        <div class="button-container">
-            <button class="button save-button" onclick="saveToCell()">Save to Cell</button>
-            <button class="clear-button" onclick="clearSelection()">Clear</button>
-        </div>
+      <!-- Bottom Buttons Container -->
+<div class="button-container">
+    <button class="save-button" onclick="saveToCell()">Save to Cell</button>
+    <button class="clear-button" onclick="clearSelection()">Clear</button>
+</div>
     </div>
 
     <script>
