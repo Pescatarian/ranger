@@ -104,21 +104,21 @@
     width: 520px;
     display: flex;
     gap: 8px;
-    margin: 3px auto; /* Reduced from 5px to tighten up spacing */
+    margin: 3px auto;
     padding: 3px 0;
     justify-content: center;
 }
 
 .view-button {
-    padding: 6px 12px; /* Reduced from 8px to make buttons smaller */
-    min-width: 70px; /* Set consistent width for all buttons */
+    padding: 6px 12px;
+    min-width: 70px;
     background-color: #2d2d2d;
     color: #4CAF50;
     border: 1px solid #444;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
-    text-align: center; /* Ensure text is centered */
+    text-align: center;
 }
 
 .view-button.active {
@@ -126,17 +126,17 @@
     color: white;
     border-color: white;
 }
-
 /* Range Grid */
 .range-grid {
     display: grid;
     grid-template-columns: repeat(13, 1fr);
-    gap: 1px; /* Already minimal */
-    margin: 8px auto; /* Reduced from 10px */
+    gap: 1px;
+    margin: 8px auto;
     width: 520px;
     aspect-ratio: 1;
-    margin-bottom: 8px; /* Reduced from 10px */
+    margin-bottom: 8px;
 }
+
 .range-cell {
     aspect-ratio: 1;
     background-color: #1a1a1a;
@@ -182,9 +182,9 @@
     width: 520px;
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Reduced from 15px */
-    margin: 10px auto; /* Reduced from 15px */
-    padding: 8px; /* Reduced from 10px */
+    gap: 8px;
+    margin: 10px auto;
+    padding: 8px;
     background-color: #1a1a1a;
     border-radius: 4px;
 }
@@ -193,8 +193,8 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    width: 520px; /* Explicit width to match grid */
-    padding: 4px 0; /* Reduced from 8px */
+    width: 520px;
+    padding: 4px 0;
     border-radius: 4px;
     transition: all 0.3s ease;
     opacity: 0.7;
@@ -204,18 +204,15 @@
     opacity: 1;
 }
 
-/* Add these new rules */
+/* Color and Weight Controls */
 .color-weight-group {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 6px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
 }
 
-.color-weight-group label:first-child {
-    display: none;
-}
-
-/* Row Toggle Buttons */
 .row-toggle {
     width: 20px;
     height: 20px;
@@ -248,35 +245,28 @@
 .weight-control {
     display: flex;
     align-items: center;
-    gap: 8px; /* Reduced from 10px */
+    gap: 8px;
     white-space: nowrap;
     flex-wrap: nowrap;
     width: 300px;
-    margin-left: 8px; /* Reduced from 10px */
+    margin-left: 8px;
 }
 
+/* Stats Container */
 .stats-container {
     display: flex;
     align-items: center;
-    gap: 8px; /* Reduced from 10px */
+    gap: 15px;
     margin: 0;
-    min-width: 210px;
-    margin-left: auto;
-    padding-right: 8px; /* Added to keep within grid */
-}
-
-.color-weight-group {
-    display: flex;
-    align-items: center;
-    gap: 6px; /* Reduced from 8px */
-    flex-wrap: nowrap;
-    white-space: nowrap;
+    width: 520px;
+    justify-content: flex-end;
+    padding-right: 0;
 }
 
 /* Input and Stats Styles */
 .color-input {
-    width: 25px; /* Reduced from 40px */
-    height: 25px; /* Reduced from 30px */
+    width: 25px;
+    height: 25px;
     padding: 0;
     border: 1px solid #444;
     border-radius: 4px;
@@ -287,27 +277,31 @@
 .stat-box {
     display: flex;
     align-items: center;
-    gap: 3px; /* Reduced from 5px */
+    gap: 3px;
     color: #4CAF50;
     white-space: nowrap;
-    min-width: 85px;
+}
+
+.stat-box:first-child span:first-child::before {
+    content: '%';
+    margin-right: 2px;
 }
 
 .stat-value {
     background: #1a1a1a;
-    padding: 4px 8px; /* Reduced from 5px 10px */
+    padding: 4px 8px;
     border-radius: 4px;
     border: 1px solid #444;
-    min-width: 45px; /* Reduced from 50px */
+    min-width: 45px;
     text-align: center;
 }
 
 .weight-input {
-    width: 50px; /* Reduced from 60px */
+    width: 50px;
     background: #1a1a1a;
     color: #4CAF50;
     border: 1px solid #444;
-    padding: 4px; /* Reduced from 5px */
+    padding: 4px;
     border-radius: 4px;
     text-align: center;
 }
@@ -320,7 +314,7 @@
     color: #4CAF50;
     border: 1px solid #444;
     padding: 8px;
-    margin: 3px auto; /* Reduced from 5px */
+    margin: 3px auto;
     font-family: Arial, sans-serif;
     resize: none;
 }
@@ -329,21 +323,21 @@
     width: 520px;
     display: flex;
     justify-content: space-between;
-    margin: 3px auto; /* Reduced from 5px */
+    margin: 3px auto;
     gap: 10px;
 }
 
 .save-button, .clear-button {
-    width: 100px; /* Made smaller and equal */
-    height: 35px; /* Explicit height */
-    padding: 0; /* Remove padding to ensure exact size */
+    width: 100px;
+    height: 35px;
+    padding: 0;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
     color: white;
     font-weight: bold;
-    line-height: 35px; /* Center text vertically */
+    line-height: 35px;
 }
 
 .save-button {
@@ -367,7 +361,7 @@
 .row-toggle:hover:not(.active) {
     background-color: #3d3d3d;
 }
-    </style>
+     </style>
 </head>
 <body>
     <div class="main-container">
