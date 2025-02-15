@@ -249,6 +249,17 @@
     gap: 3px;
     color: #4CAF50;
     white-space: nowrap;
+    margin-right: 15px;  /* Add spacing between stat boxes */
+}
+
+.weight-input {
+    background-color: #1a1a1a;
+    color: white;
+    border: 1px solid #444;
+    width: 45px;
+    height: 25px;
+    text-align: center;
+    padding: 0 5px;
 }
 
 /* Color Picker Styles */
@@ -348,11 +359,11 @@
 .button-container {
     width: 520px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;  /* Change from flex-end to flex-start */
     margin: 3px auto;
     gap: 10px;
 }
-
+        
 .save-button, .clear-button {
     width: 100px;
     height: 35px;
