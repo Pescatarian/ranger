@@ -199,8 +199,8 @@
     padding: 4px 0;
     border-radius: 4px;
     background-color: #1a1a1a;
-    gap: 12px; /* Equal spacing between all groups */
-    opacity: 0.7; /* Add this line */
+    gap: 12px;
+    opacity: 0.7;
 }
         
 .control-row.active {
@@ -241,17 +241,18 @@
     top: 50%;
     left: 50%;
 }
-  
+
 /* Stat Boxes and Groups */
 .stat-box {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 3px; /* Consistent spacing between label and value */
+    gap: 3px;
     color: #4CAF50;
     white-space: nowrap;
 }
 
- /* Excel color picker */
+/* Excel color picker */
 .color-picker-panel {
     position: fixed;
     background: #2d2d2d;
@@ -308,111 +309,7 @@
 
 .color-swatch:hover {
     transform: scale(1.1);
-    border-color: #fff;
-}
-
-.color-options {
-    margin-top: 12px;
-}
-
-.option-button {
-    width: 100%;
-    padding: 8px;
-    background: #2d2d2d;
-    border: 1px solid #444;
-    color: #fff;
-    cursor: pointer;
-    text-align: left;
-    border-radius: 2px;
-    margin-bottom: 4px;
-}
-
-.option-button:hover {
-    background: #3d3d3d;
-}
-
-/* Add this to show the panel when active */
-.color-picker-panel.active {
-    display: block;
-}
-
-/* Update existing .stat-box to include position: relative */
-.stat-box {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    color: #4CAF50;
-    white-space: nowrap;
-}
-.weight-input {
-    width: 50px;
-    background: #1a1a1a;
-    color: #4CAF50;
-    border: 1px solid #444;
-    padding: 4px;
-    border-radius: 4px;
-    text-align: center;
-}
-
-.stat-value {
-    background: #1a1a1a;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #444;
-    min-width: 45px;
-    text-align: center;
-}
-
-/* Bottom Controls */
-.range-text {
-    width: 520px;
-    height: 80px;
-    background-color: #1a1a1a;
-    color: #4CAF50;
-    border: 1px solid #444;
-    padding: 8px;
-    margin: 3px auto;
-    font-family: Arial, sans-serif;
-    resize: none;
-    box-sizing: border-box;
-}
-
-.button-container {
-    width: 520px;
-    display: flex;
-    justify-content: space-between;
-    margin: 3px auto;
-    gap: 10px;
-}
-
-.save-button, .clear-button {
-    width: 100px;
-    height: 35px;
-    padding: 0;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    color: white;
-    font-weight: bold;
-    line-height: 35px;
-}
-
-.save-button {
-    background-color: #4CAF50;
-}
-
-.clear-button {
-    background-color: #ff4444;
-}
-
-.save-button:hover {
-    background-color: #45a049;
-}
-
-.clear-button:hover {
-    background-color: #ff3333;
+    border-color: #
 }
 
 /* Hover Effects */
@@ -420,8 +317,10 @@
 .row-toggle:hover:not(.active) {
     background-color: #3d3d3d;
 }
-     </style>
+    </style>
 </head>
+<body>
+
 <body>
     <div class="main-container">
         <div class="controls">
@@ -551,9 +450,9 @@
             <button class="clear-button" onclick="clearSelection()">Clear</button>
         </div>
     </div>
-</body>
 
- <script>
+    <script>
+        
 // Variables and Constants
 let isViewMode = true;
 let isRangeBuilderOpen = false;
@@ -652,7 +551,6 @@ function createColorSwatch(color, rowIndex) {
     swatch.dataset.rowIndex = rowIndex;
     return swatch;
 }
-
 function selectColor(color, rowIndex) {
     // Update color immediately
     currentColors[rowIndex] = color;
@@ -1088,6 +986,70 @@ function handleRangeTextChange(e) {
     updateStats();
 }
 
+// Cell Handling Functions
+function selectCell(e) {
+    if (!isViewMode) return;
+    if (selectedCell) {
+        selectedCell.style.border = '1px solid #444';
+    }
+    selectedCell = e.currentTarget;
+    selectedCell.style.border = '2px solid #4CAF50';
+}
+
+function saveToCell() {
+    if (!selectedCell) {
+        alert('Please select a cell first');
+        return;
+    }
+    
+    const rangeText = document.getElementById('rangeText').value;
+    if (rangeText && !rangeText.match(/^\[[\d]+:[#\w]+\][^[]+\[\/\d+\](,\[[\d]+:[#\w]+\][^[]+\[\/\d+\])*$/)) {
+        alert('Invalid range format');
+        return;
+    }
+    
+    cellData.set(selectedCell.dataset.id, rangeText);
+    const content = selectedCell.querySelector('.cell-content');
+    content.innerHTML = '📝';
+    
+    toggleRangeBuilder();
+}
+
+function clearSelection() {
+    document.querySelectorAll('.range-cell').forEach(cell => {
+        cell.dataset.selections = JSON.stringify([]);
+        updateCellVisual(cell);
+    });
+    document.getElementById('rangeText').value = '';
+    updateStats();
+}
+
+function handleDragStart(e) {
+    if (!isViewMode) return;
+    e.dataTransfer.setData('text/plain', e.target.dataset.id);
+}
+
+function handleDragOver(e) {
+    if (!isViewMode) return;
+    e.preventDefault();
+}
+
+function handleDrop(e) {
+    if (!isViewMode) return;
+    e.preventDefault();
+    const sourceId = e.dataTransfer.getData('text/plain');
+    const targetId = e.target.closest('.cell').dataset.id;
+    
+    const sourceData = cellData.get(sourceId);
+    const targetData = cellData.get(targetId);
+    
+    if (sourceData) cellData.set(targetId, sourceData);
+    if (targetData) cellData.set(sourceId, targetData);
+    
+    updateCellContent(sourceId);
+    updateCellContent(targetId);
+}
+
 function updateCellContent(cellId) {
     const cell = document.querySelector(`[data-id="${cellId}"]`);
     const content = cell.querySelector('.cell-content');
@@ -1095,7 +1057,37 @@ function updateCellContent(cellId) {
     content.innerHTML = data ? '📝' : '';
 }
 
-// Keep only this one DOMContentLoaded event listener
+// Weight and Color Settings Functions
+function updateWeight(value, rowIndex) {
+    const adjustedIndex = rowIndex - 1;
+    currentWeights[adjustedIndex] = Math.min(Math.max(0, parseInt(value)), 100);
+    document.getElementById(`weightInput${rowIndex}`).value = currentWeights[adjustedIndex];
+    activeRow = adjustedIndex;
+    saveColorSettings(adjustedIndex);
+    updateStats();
+}
+
+function saveColorSettings(rowIndex) {
+    const color = currentColors[rowIndex];
+    const weight = currentWeights[rowIndex];
+    localStorage.setItem(`savedColor${rowIndex + 1}`, JSON.stringify({ color, weight }));
+}
+
+function loadSavedColors() {
+    for (let i = 1; i <= 2; i++) {
+        const saved = localStorage.getItem(`savedColor${i}`);
+        if (saved) {
+            const { color, weight } = JSON.parse(saved);
+            const button = document.getElementById(`colorPicker${i}`);
+            button.querySelector('.current-color').style.backgroundColor = color;
+            document.getElementById(`weightInput${i}`).value = weight;
+            currentColors[i - 1] = color;
+            currentWeights[i - 1] = weight;
+        }
+    }
+}
+
+// Initialization
 document.addEventListener('DOMContentLoaded', () => {
     createGrid();
     createRangeGrid();
