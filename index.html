@@ -275,6 +275,19 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
+.color-picker-panel.active {
+    display: block;
+}
+
+.color-picker-header {
+    padding: 4px;
+    cursor: move;
+    text-align: center;
+    border-bottom: 1px solid #444;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
 .color-section {
     margin-bottom: 16px;
     padding-bottom: 16px;
@@ -325,22 +338,51 @@
 .color-swatch-button {
     width: 25px;
     height: 25px;
-    padding: 0;
+    padding: 2px;
     border: 1px solid #444;
-    background: none;
+    background: #1a1a1a;
     cursor: pointer;
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .current-color {
     width: 100%;
     height: 100%;
-    display: block;
+    border: 1px solid rgba(255,255,255,0.2);
 }
 
+.color-options {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.option-button {
+    padding: 4px 8px;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: white;
+    cursor: pointer;
+    flex: 1;
+}
+
+/* Adjust the color swatch button to match Excel style */
+.color-swatch-button {
+    width: 25px;
+    height: 25px;
+    padding: 2px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    cursor: pointer;
+    position: relative;
+}
+
+.current-color {
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+        
 /* Range Text Box */
 .range-text {
     width: 520px;
@@ -403,130 +445,127 @@
     </div>
 
     <div class="sidebar" id="sidebar">
-        <h2>Range Builder</h2>
-        
-        <!-- View Mode Controls -->
-        <div class="view-controls">
-            <button class="view-button active" data-view="all">Show All</button>
-            <button class="view-button" data-view="row1">Show 1</button>
-            <button class="view-button" data-view="row2">Show 2</button>
-        </div>
-
-        <div class="range-grid" id="rangeGrid"></div>
-        
-        <!-- Control Rows Container -->
-        <div class="top-controls">
-            <!-- First Control Row -->
-            <div class="control-row active">
-                <button class="row-toggle active" data-row="1">Row 1</button>
-                
-                <div class="stat-box">
-                    <span>Color</span>
-                    <div class="color-picker-container">
-                        <button class="color-swatch-button" id="colorPicker1">
-                            <span class="current-color" style="background-color: #4CAF50"></span>
-                        </button>
-                        <div class="color-picker-panel">
-                            <div class="color-section">
-                                <div class="section-label">Theme Colors</div>
-                                <div class="theme-colors-grid"></div>
-                            </div>
-                            <div class="color-section">
-                                <div class="section-label">Standard Colors</div>
-                                <div class="standard-colors-grid"></div>
-                            </div>
-                            <div class="color-section">
-                                <div class="section-label">Recent Colors</div>
-                                <div class="recent-colors-grid"></div>
-                            </div>
-                            <div class="color-options">
-                                <button class="option-button no-fill">No Fill</button>
-                                <button class="option-button more-colors">More Colors...</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="stat-box">
-                    <span>W%</span>
-                    <input type="number" id="weightInput1" value="100" min="0" max="100" 
-                           class="weight-input stat-value" onchange="updateWeight(this.value, 1)">
-                </div>
-                
-                <div class="stat-box">
-                    <span>Range</span>
-                    <span id="rangePercent1" class="stat-value">0</span>
-                </div>
-                
-                <div class="stat-box">
-                    <span>Combos</span>
-                    <span id="comboCount1" class="stat-value">0</span>
-                </div>
-            </div>
-
-            <!-- Second Control Row -->
-            <div class="control-row">
-                <button class="row-toggle" data-row="2">Row 2</button>
-                
-                <div class="stat-box">
-                    <span>Color</span>
-                    <div class="color-picker-container">
-                        <button class="color-swatch-button" id="colorPicker2">
-                            <span class="current-color" style="background-color: #FF0000"></span>
-                        </button>
-                        <div class="color-picker-panel">
-                             <div class="color-picker-header">⋮⋮</div>
-                             <div class="color-section">
-                                 <div class="section-label">Theme Colors</div>
-                                 <div class="theme-colors-grid"></div>
-                              </div>
-    <div class="color-section">
-        <div class="section-label">Standard Colors</div>
-        <div class="standard-colors-grid"></div>
-    </div>
-                            <div class="color-section">
-                                <div class="section-label">Standard Colors</div>
-                                <div class="standard-colors-grid"></div>
-                            </div>
-                            <div class="color-section">
-                                <div class="section-label">Recent Colors</div>
-                                <div class="recent-colors-grid"></div>
-                            </div>
-                            <div class="color-options">
-                                <button class="option-button no-fill">No Fill</button>
-                                <button class="option-button more-colors">More Colors...</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="stat-box">
-                    <span>W%</span>
-                    <input type="number" id="weightInput2" value="100" min="0" max="100" 
-                           class="weight-input stat-value" onchange="updateWeight(this.value, 2)">
-                </div>
-                
-                <div class="stat-box">
-                    <span>Range</span>
-                    <span id="rangePercent2" class="stat-value">0</span>
-                </div>
-                
-                <div class="stat-box">
-                    <span>Combos</span>
-                    <span id="comboCount2" class="stat-value">0</span>
-                </div>
-            </div>
-        </div>
+    <h2>Range Builder</h2>
     
-        <textarea id="rangeText" class="range-text" 
-                  oninput="handleRangeTextChange(event)"></textarea>
-        
-        <!-- Bottom Buttons Container -->
-        <div class="button-container">
-            <button class="save-button" onclick="saveToCell()">Save to Cell</button>
-            <button class="clear-button" onclick="clearSelection()">Clear</button>
+    <!-- View Mode Controls -->
+    <div class="view-controls">
+        <button class="view-button active" data-view="all">Show All</button>
+        <button class="view-button" data-view="row1">Show 1</button>
+        <button class="view-button" data-view="row2">Show 2</button>
+    </div>
+
+    <div class="range-grid" id="rangeGrid"></div>
+    
+    <!-- Control Rows Container -->
+    <div class="top-controls">
+        <!-- First Control Row -->
+        <div class="control-row active">
+            <button class="row-toggle active" data-row="1">Row 1</button>
+            
+            <div class="stat-box">
+                <span>Color</span>
+                <div class="color-picker-container">
+                    <button class="color-swatch-button" id="colorPicker1">
+                        <span class="current-color" style="background-color: #4CAF50"></span>
+                    </button>
+                    <div class="color-picker-panel">
+                        <div class="color-picker-header">⋮⋮</div>
+                        <div class="color-section">
+                            <div class="section-label">Theme Colors</div>
+                            <div class="theme-colors-grid"></div>
+                        </div>
+                        <div class="color-section">
+                            <div class="section-label">Standard Colors</div>
+                            <div class="standard-colors-grid"></div>
+                        </div>
+                        <div class="color-section">
+                            <div class="section-label">Recent Colors</div>
+                            <div class="recent-colors-grid"></div>
+                        </div>
+                        <div class="color-options">
+                            <button class="option-button no-fill">No Fill</button>
+                            <button class="option-button more-colors">More Colors...</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-box">
+                <span>W%</span>
+                <input type="number" id="weightInput1" value="100" min="0" max="100" 
+                       class="weight-input stat-value" onchange="updateWeight(this.value, 1)">
+            </div>
+            
+            <div class="stat-box">
+                <span>Range</span>
+                <span id="rangePercent1" class="stat-value">0</span>
+            </div>
+            
+            <div class="stat-box">
+                <span>Combos</span>
+                <span id="comboCount1" class="stat-value">0</span>
+            </div>
+        </div>
+
+        <!-- Second Control Row -->
+        <div class="control-row">
+            <button class="row-toggle" data-row="2">Row 2</button>
+            
+            <div class="stat-box">
+                <span>Color</span>
+                <div class="color-picker-container">
+                    <button class="color-swatch-button" id="colorPicker2">
+                        <span class="current-color" style="background-color: #FF0000"></span>
+                    </button>
+                    <div class="color-picker-panel">
+                        <div class="color-picker-header">⋮⋮</div>
+                        <div class="color-section">
+                            <div class="section-label">Theme Colors</div>
+                            <div class="theme-colors-grid"></div>
+                        </div>
+                        <div class="color-section">
+                            <div class="section-label">Standard Colors</div>
+                            <div class="standard-colors-grid"></div>
+                        </div>
+                        <div class="color-section">
+                            <div class="section-label">Recent Colors</div>
+                            <div class="recent-colors-grid"></div>
+                        </div>
+                        <div class="color-options">
+                            <button class="option-button no-fill">No Fill</button>
+                            <button class="option-button more-colors">More Colors...</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-box">
+                <span>W%</span>
+                <input type="number" id="weightInput2" value="100" min="0" max="100" 
+                       class="weight-input stat-value" onchange="updateWeight(this.value, 2)">
+            </div>
+            
+            <div class="stat-box">
+                <span>Range</span>
+                <span id="rangePercent2" class="stat-value">0</span>
+            </div>
+            
+            <div class="stat-box">
+                <span>Combos</span>
+                <span id="comboCount2" class="stat-value">0</span>
+            </div>
         </div>
     </div>
+
+    <textarea id="rangeText" class="range-text" 
+              oninput="handleRangeTextChange(event)"></textarea>
+    
+    <!-- Bottom Buttons Container -->
+    <div class="button-container">
+        <button class="save-button" onclick="saveToCell()">Save to Cell</button>
+        <button class="clear-button" onclick="clearSelection()">Clear</button>
+    </div>
+</div>
 
     <script>
         
