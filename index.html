@@ -192,16 +192,18 @@
 
 .control-row {
     display: flex;
-    justify-content: flex-start; /* Changed from space-between */
     align-items: center;
+    justify-content: flex-start;
     width: 520px;
     padding: 4px 8px;
     border-radius: 4px;
     transition: all 0.3s ease;
     opacity: 0.7;
     box-sizing: border-box;
-    background-color: #1a1a1a;  /* Add this for the dark background only in the rows */
+    background-color: #1a1a1a;
+    gap: 15px; /* Consistent gap between all groups */
 }
+
 
 .control-row.active {
     opacity: 1;
@@ -211,18 +213,15 @@
 .color-weight-group {
     display: flex;
     align-items: center;
-    gap: 6px;
-    flex-wrap: nowrap;
+    gap: 3px; /* Changed to match group spacing */
     white-space: nowrap;
 }
 
 .weight-control {
     display: flex;
     align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-    flex-wrap: nowrap;
-    margin-left: 8px;
+    gap: 15px; /* Added consistent group spacing */
+    margin: 0;
 }
 
 .row-toggle {
@@ -235,7 +234,7 @@
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-right: 10px;
+    margin: 0; /* Removed margin-right */
     padding: 0;
     font-size: 0;
     position: relative;
@@ -264,17 +263,16 @@
 .stats-container {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-left: auto; /* This will push it to the right */
+    gap: 15px; /* Matches main group spacing */
+    margin-left: auto; /* This pushes stats to the right */
 }
-
+        
 .stat-box {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 3px; /* Same gap as color-weight-group */
     color: #4CAF50;
     white-space: nowrap;
-    min-width: 100px; /* Ensure consistent width */
 }
         
 /* Input and Stats Styles */
