@@ -126,6 +126,7 @@
     color: white;
     border-color: white;
 }
+
 /* Range Grid */
 .range-grid {
     display: grid;
@@ -184,20 +185,21 @@
     flex-direction: column;
     gap: 8px;
     margin: 10px auto;
-    padding: 8px;
+    padding: 0;
     background-color: #1a1a1a;
     border-radius: 4px;
 }
 
 .control-row {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
     width: 520px;
-    padding: 4px 0;
+    padding: 4px 8px;
     border-radius: 4px;
     transition: all 0.3s ease;
     opacity: 0.7;
+    box-sizing: border-box;
 }
 
 .control-row.active {
@@ -258,9 +260,6 @@
     align-items: center;
     gap: 15px;
     margin: 0;
-    width: 520px;
-    justify-content: flex-end;
-    padding-right: 0;
 }
 
 /* Input and Stats Styles */
@@ -269,9 +268,10 @@
     height: 25px;
     padding: 0;
     border: 1px solid #444;
-    border-radius: 4px;
+    border-radius: 50%;
     background: #1a1a1a;
     cursor: pointer;
+    overflow: hidden;
 }
 
 .stat-box {
@@ -317,6 +317,7 @@
     margin: 3px auto;
     font-family: Arial, sans-serif;
     resize: none;
+    box-sizing: border-box;
 }
 
 .button-container {
