@@ -81,7 +81,7 @@
 .sidebar {
     width: 600px;
     background-color: #2d2d2d;
-    padding: 20px;
+    padding: 10px;
     border-left: 1px solid #444;
     display: none;
     position: fixed;
@@ -104,7 +104,7 @@
     width: 520px;
     display: flex;
     gap: 10px;
-    margin: 10px auto;
+    margin: 5px auto;
     padding: 5px 0;
     justify-content: center;
 }
@@ -133,7 +133,7 @@
     margin: 10px 20px;
     width: 520px;
     aspect-ratio: 1;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .range-cell {
@@ -215,6 +215,8 @@
     margin-right: 10px;
     padding: 0;
     font-size: 0;
+    text-indent: -9999px; /* Ensures no text shows */
+    overflow: hidden; /* Extra safety for text hiding */
 }
 
 .row-toggle.active {
@@ -291,12 +293,12 @@
 /* Bottom Controls */
 .range-text {
     width: 520px;
-    height: 60px;
+    height: 80px;
     background-color: #1a1a1a;
     color: #4CAF50;
     border: 1px solid #444;
     padding: 10px;
-    margin: 10px auto;
+    margin: 5px auto;
     font-family: Arial, sans-serif;
     resize: none;
 }
@@ -305,7 +307,7 @@
     width: 520px;
     display: flex;
     justify-content: center;
-    margin: 10px auto;
+    margin: 5px auto;
     gap: 10px;
 }
 
