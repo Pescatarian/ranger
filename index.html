@@ -129,13 +129,12 @@
 .range-grid {
     display: grid;
     grid-template-columns: repeat(13, 1fr);
-    gap: 2px;
-    margin: 10px 20px;
+    gap: 1px; /* Already minimal */
+    margin: 8px auto; /* Reduced from 10px */
     width: 520px;
     aspect-ratio: 1;
-    margin-bottom: 10px;
+    margin-bottom: 8px; /* Reduced from 10px */
 }
-
 .range-cell {
     aspect-ratio: 1;
     background-color: #1a1a1a;
@@ -181,9 +180,9 @@
     width: 520px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin: 15px auto;
-    padding: 10px;
+    gap: 8px; /* Reduced from 15px */
+    margin: 10px auto; /* Reduced from 15px */
+    padding: 8px; /* Reduced from 10px */
     background-color: #1a1a1a;
     border-radius: 4px;
 }
@@ -192,8 +191,8 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    width: 100%;
-    padding: 8px 0;
+    width: 520px; /* Explicit width to match grid */
+    padding: 4px 0; /* Reduced from 8px */
     border-radius: 4px;
     transition: all 0.3s ease;
     opacity: 0.7;
@@ -314,8 +313,8 @@
     background-color: #1a1a1a;
     color: #4CAF50;
     border: 1px solid #444;
-    padding: 10px;
-    margin: 5px auto;
+    padding: 8px;
+    margin: 3px auto; /* Reduced from 5px */
     font-family: Arial, sans-serif;
     resize: none;
 }
@@ -324,20 +323,23 @@
     width: 520px;
     display: flex;
     justify-content: space-between;
-    margin: 10px auto;
+    margin: 3px auto; /* Reduced from 5px */
     gap: 10px;
 }
 
 .save-button, .clear-button {
-    width: 120px;
-    padding: 8px 16px;
+    width: 100px; /* Made smaller and equal */
+    height: 35px; /* Explicit height */
+    padding: 0; /* Remove padding to ensure exact size */
     border: none;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
     color: white;
     font-weight: bold;
+    line-height: 35px; /* Center text vertically */
 }
+
 .save-button {
     background-color: #4CAF50;
 }
