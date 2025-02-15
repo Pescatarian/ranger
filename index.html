@@ -250,7 +250,6 @@
     color: #4CAF50;
     white-space: nowrap;
 }
-
        
 .color-picker-container {
     position: relative;
@@ -276,10 +275,7 @@
 }
 
 .color-picker-panel {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    margin-top: 4px;
+    position: fixed;
     background: #2d2d2d;
     border: 1px solid #444;
     border-radius: 4px;
@@ -288,6 +284,20 @@
     display: none;
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.color-picker-header {
+    cursor: move;
+    padding: 4px;
+    text-align: center;
+    color: #666;
+    border-bottom: 1px solid #444;
+    margin-bottom: 8px;
+    user-select: none;
+}
+
+.color-picker-header:hover {
+    color: #fff;
 }
 
 .color-section {
@@ -575,7 +585,10 @@ let isMouseDown = false;
 let isSelecting = null;
 let currentView = 'all';
 let recentColors = JSON.parse(localStorage.getItem('recentColors') || '[]');
-
+let colorPickerPosition = JSON.parse(localStorage.getItem('colorPickerPosition') || '{"x": 0, "y": 0}');
+let isDragging = false;
+let dragStartX, dragStartY;
+        
 // Add these new color palette arrays
 const themeColors = [
     ['#FFFFFF', '#000000', '#E7E6E6', '#44546A', '#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5', '#70AD47'],
@@ -589,6 +602,79 @@ const themeColors = [
 const standardColors = [
     '#C00000', '#FF0000', '#FFC000', '#FFD966', '#92D050', '#00B050', '#00B0F0', '#0070C0', '#002060', '#7030A0'
 ];
+
+function positionColorPicker(panel, button) {
+    const buttonRect = button.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    // If we have a saved position, use it
+    if (colorPickerPosition.x !== 0 || colorPickerPosition.y !== 0) {
+        panel.style.position = 'fixed';
+        panel.style.left = `${colorPickerPosition.x}px`;
+        panel.style.top = `${colorPickerPosition.y}px`;
+        return;
+    }
+
+    // Otherwise, calculate the best position
+    let left = buttonRect.left;
+    let top = buttonRect.bottom + 5;
+
+    // Check if panel would go off the bottom of the screen
+    if (top + panelRect.height > viewportHeight) {
+        top = buttonRect.top - panelRect.height - 5;
+    }
+
+    // Check if panel would go off the right of the screen
+    if (left + panelRect.width > viewportWidth) {
+        left = viewportWidth - panelRect.width - 5;
+    }
+
+    panel.style.position = 'fixed';
+    panel.style.left = `${left}px`;
+    panel.style.top = `${top}px`;
+}
+
+// Add dragging functionality
+function initializeDragging() {
+    document.querySelectorAll('.color-picker-panel').forEach(panel => {
+        // Add draggable header
+        const header = document.createElement('div');
+        header.className = 'color-picker-header';
+        header.innerHTML = '⋮⋮'; // Drag handle icon
+        panel.insertBefore(header, panel.firstChild);
+
+        header.addEventListener('mousedown', startDragging);
+    });
+}
+
+function startDragging(e) {
+    const panel = e.target.closest('.color-picker-panel');
+    isDragging = true;
+    dragStartX = e.clientX - panel.offsetLeft;
+    dragStartY = e.clientY - panel.offsetTop;
+
+    const moveHandler = (e) => {
+        if (isDragging) {
+            const x = e.clientX - dragStartX;
+            const y = e.clientY - dragStartY;
+            panel.style.left = `${x}px`;
+            panel.style.top = `${y}px`;
+            colorPickerPosition = { x, y };
+            localStorage.setItem('colorPickerPosition', JSON.stringify(colorPickerPosition));
+        }
+    };
+
+    const upHandler = () => {
+        isDragging = false;
+        document.removeEventListener('mousemove', moveHandler);
+        document.removeEventListener('mouseup', upHandler);
+    };
+
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', upHandler);
+}
         
 function createGrid() {
     const grid = document.getElementById('grid');
@@ -671,10 +757,15 @@ function handleColorPickerClick(e) {
     // Toggle current panel
     panel.classList.toggle('active');
 
-    // Generate colors if not already done
-    if (!panel.dataset.initialized) {
-        generateColorPalette(panel, rowIndex);
-        panel.dataset.initialized = 'true';
+    if (panel.classList.contains('active')) {
+        // Position the panel
+        positionColorPicker(panel, button);
+
+        // Generate colors if not already done
+        if (!panel.dataset.initialized) {
+            generateColorPalette(panel, rowIndex);
+            panel.dataset.initialized = 'true';
+        }
     }
 
     // Close panel when clicking outside
@@ -1113,6 +1204,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     loadSavedColors();
+    initializeDragging(); // Add this line
 });
         
 </script>
