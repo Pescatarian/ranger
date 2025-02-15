@@ -252,51 +252,98 @@
 }
 
        
-/* Input Styles */
-.color-input {
+.color-picker-container {
+    position: relative;
+    display: inline-block;
+}
+
+.color-swatch-button {
     width: 25px;
     height: 25px;
-    padding: 0;
-    border: none;
-    background: #1a1a1a;
+    padding: 2px;
+    border: 1px solid #444;
+    background: #2d2d2d;
     cursor: pointer;
-    overflow: hidden;
-    min-width: 25px;    /* Add this */
-    min-height: 25px;   /* Add this */
-    box-sizing: border-box;  /* Add this */
-    -webkit-appearance: none;  /* Add this */
-    -moz-appearance: none;     /* Add this */
-    appearance: none;          /* Add this */
+    border-radius: 4px;
 }
-        
-.recent-colors {
+
+.current-color {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: currentColor;
+    border-radius: 2px;
+}
+
+.color-picker-panel {
     position: absolute;
     top: 100%;
     left: 0;
-    display: none;
-    flex-direction: column;
-    gap: 2px;
+    margin-top: 4px;
     background: #2d2d2d;
-    padding: 4px;
+    border: 1px solid #444;
     border-radius: 4px;
+    padding: 8px;
+    width: 300px;
+    display: none;
     z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
-.color-input:focus + .recent-colors,
-.recent-colors:hover {
-    display: flex;
+.color-section {
+    margin-bottom: 12px;
+}
+
+.section-label {
+    color: #fff;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.theme-colors-grid,
+.standard-colors-grid,
+.recent-colors-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 2px;
 }
 
 .color-swatch {
-    width: 25px;
-    height: 25px;
-    border-radius: 4px;
-    cursor: pointer;
+    width: 100%;
+    aspect-ratio: 1;
     border: 1px solid #444;
+    cursor: pointer;
+    border-radius: 2px;
 }
 
 .color-swatch:hover {
-    transform: scale(1.1);
+    border-color: #fff;
+}
+
+.color-options {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.option-button {
+    width: 100%;
+    padding: 6px;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 2px;
+}
+
+.option-button:hover {
+    background: #3d3d3d;
+}
+
+/* Add this to show the panel when active */
+.color-picker-panel.active {
+    display: block;
 }
 
 /* Update existing .stat-box to include position: relative */
@@ -414,7 +461,29 @@
                 
                 <div class="stat-box">
                     <span>Color</span>
-                    <input type="color" id="colorPicker1" value="#4CAF50" class="color-input stat-value">
+                    <div class="color-picker-container">
+                        <button class="color-swatch-button" id="colorPicker1">
+                            <span class="current-color" style="background-color: #4CAF50"></span>
+                        </button>
+                        <div class="color-picker-panel">
+                            <div class="color-section">
+                                <div class="section-label">Theme Colors</div>
+                                <div class="theme-colors-grid"></div>
+                            </div>
+                            <div class="color-section">
+                                <div class="section-label">Standard Colors</div>
+                                <div class="standard-colors-grid"></div>
+                            </div>
+                            <div class="color-section">
+                                <div class="section-label">Recent Colors</div>
+                                <div class="recent-colors-grid"></div>
+                            </div>
+                            <div class="color-options">
+                                <button class="option-button no-fill">No Fill</button>
+                                <button class="option-button more-colors">More Colors...</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="stat-box">
@@ -440,7 +509,29 @@
                 
                 <div class="stat-box">
                     <span>Color</span>
-                    <input type="color" id="colorPicker2" value="#FF0000" class="color-input stat-value">
+                    <div class="color-picker-container">
+                        <button class="color-swatch-button" id="colorPicker2">
+                            <span class="current-color" style="background-color: #FF0000"></span>
+                        </button>
+                        <div class="color-picker-panel">
+                            <div class="color-section">
+                                <div class="section-label">Theme Colors</div>
+                                <div class="theme-colors-grid"></div>
+                            </div>
+                            <div class="color-section">
+                                <div class="section-label">Standard Colors</div>
+                                <div class="standard-colors-grid"></div>
+                            </div>
+                            <div class="color-section">
+                                <div class="section-label">Recent Colors</div>
+                                <div class="recent-colors-grid"></div>
+                            </div>
+                            <div class="color-options">
+                                <button class="option-button no-fill">No Fill</button>
+                                <button class="option-button more-colors">More Colors...</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="stat-box">
@@ -484,6 +575,20 @@ let isMouseDown = false;
 let isSelecting = null;
 let currentView = 'all';
 let recentColors = JSON.parse(localStorage.getItem('recentColors') || '[]');
+
+// Add these new color palette arrays
+const themeColors = [
+    ['#FFFFFF', '#000000', '#E7E6E6', '#44546A', '#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5', '#70AD47'],
+    ['#F2F2F2', '#7F7F7F', '#D0CECE', '#D6DCE4', '#D9E2F3', '#FBE5D6', '#EDEDED', '#FFF2CC', '#DEEBF7', '#E2EFD9'],
+    ['#D8D8D8', '#595959', '#AEAAAA', '#ACB9CA', '#B4C6E7', '#F7CBAC', '#DBDBDB', '#FFE699', '#BDD7EE', '#C6E0B4'],
+    ['#BFBFBF', '#3F3F3F', '#757070', '#8496B0', '#8EAADB', '#F4B183', '#C9C9C9', '#FFD966', '#9CC3E5', '#A9D18E'],
+    ['#A5A5A5', '#262626', '#3A3838', '#323F4F', '#2F5496', '#C55A11', '#7B7B7B', '#BF9000', '#2E75B5', '#538135'],
+    ['#7F7F7F', '#0C0C0C', '#171717', '#222A35', '#1F3864', '#833C0C', '#525252', '#7F6000', '#1F4E79', '#375623']
+];
+
+const standardColors = [
+    '#C00000', '#FF0000', '#FFC000', '#FFD966', '#92D050', '#00B050', '#00B0F0', '#0070C0', '#002060', '#7030A0'
+];
         
 function createGrid() {
     const grid = document.getElementById('grid');
@@ -553,56 +658,114 @@ function updateWeight(value, rowIndex) {
     updateStats();
 }
 
-function updateColor(e) {
-    const rowIndex = e.target.id === 'colorPicker1' ? 0 : 1;
-    const color = e.target.value;
-    
-    if (/^#[0-9A-F]{6}$/i.test(color)) {
-        currentColors[rowIndex] = color;
-        activeRow = rowIndex;
-        
-        // Add color to recent colors if it's not already there
-        if (!recentColors.includes(color)) {
-            recentColors.unshift(color);
-            if (recentColors.length > 5) { // Keep only last 5 colors
-                recentColors.pop();
-            }
-            localStorage.setItem('recentColors', JSON.stringify(recentColors));
-            updateColorList();
-        }
-        
-        saveColorSettings(rowIndex);
-        updateRangeDisplay(currentView);
-    } else {
-        console.warn('Invalid color format:', color);
-        e.target.value = currentColors[rowIndex];
+function handleColorPickerClick(e) {
+    const button = e.currentTarget;
+    const panel = button.nextElementSibling;
+    const rowIndex = button.id === 'colorPicker1' ? 0 : 1;
+
+    // Close any other open panels
+    document.querySelectorAll('.color-picker-panel').forEach(p => {
+        if (p !== panel) p.classList.remove('active');
+    });
+
+    // Toggle current panel
+    panel.classList.toggle('active');
+
+    // Generate colors if not already done
+    if (!panel.dataset.initialized) {
+        generateColorPalette(panel, rowIndex);
+        panel.dataset.initialized = 'true';
     }
+
+    // Close panel when clicking outside
+    const closePanel = (event) => {
+        if (!panel.contains(event.target) && event.target !== button) {
+            panel.classList.remove('active');
+            document.removeEventListener('click', closePanel);
+        }
+    };
+    
+    setTimeout(() => {
+        document.addEventListener('click', closePanel);
+    }, 0);
 }
 
-function updateColorList() {
-    const colorPickers = document.querySelectorAll('.color-input');
-    colorPickers.forEach(picker => {
-        // Clear existing list
-        let list = picker.nextElementSibling;
-        if (!list || !list.classList.contains('recent-colors')) {
-            list = document.createElement('div');
-            list.classList.add('recent-colors');
-            picker.parentNode.insertBefore(list, picker.nextSibling);
-        }
-        
-        list.innerHTML = '';
-        recentColors.forEach(color => {
-            const swatch = document.createElement('div');
-            swatch.classList.add('color-swatch');
-            swatch.style.backgroundColor = color;
-            swatch.addEventListener('click', () => {
-                picker.value = color;
-                picker.dispatchEvent(new Event('input'));
-            });
-            list.appendChild(swatch);
+function generateColorPalette(panel, rowIndex) {
+    // Generate theme colors
+    const themeGrid = panel.querySelector('.theme-colors-grid');
+    themeColors.forEach(row => {
+        row.forEach(color => {
+            const swatch = createColorSwatch(color, rowIndex);
+            themeGrid.appendChild(swatch);
         });
     });
+
+    // Generate standard colors
+    const standardGrid = panel.querySelector('.standard-colors-grid');
+    standardColors.forEach(color => {
+        const swatch = createColorSwatch(color, rowIndex);
+        standardGrid.appendChild(swatch);
+    });
+
+    // Update recent colors
+    updateRecentColors(panel, rowIndex);
 }
+
+function createColorSwatch(color, rowIndex) {
+    const swatch = document.createElement('div');
+    swatch.className = 'color-swatch';
+    swatch.style.backgroundColor = color;
+    swatch.addEventListener('click', () => selectColor(color, rowIndex));
+    return swatch;
+}
+
+function selectColor(color, rowIndex) {
+    // Update the current color display
+    const button = document.getElementById(`colorPicker${rowIndex + 1}`);
+    button.querySelector('.current-color').style.backgroundColor = color;
+
+    // Update the color in your existing system
+    currentColors[rowIndex] = color;
+    
+    // Add to recent colors if not already there
+    if (!recentColors.includes(color)) {
+        recentColors.unshift(color);
+        if (recentColors.length > 10) {
+            recentColors.pop();
+        }
+        localStorage.setItem('recentColors', JSON.stringify(recentColors));
+    }
+
+    // Update the display
+    updateRangeDisplay(currentView);
+    saveColorSettings(rowIndex);
+
+    // Close the panel
+    const panel = button.nextElementSibling;
+    panel.classList.remove('active');
+
+    // Update recent colors in all panels
+    document.querySelectorAll('.color-picker-panel').forEach(panel => {
+        updateRecentColors(panel);
+    });
+}
+
+function updateRecentColors(panel) {
+    const recentGrid = panel.querySelector('.recent-colors-grid');
+    recentGrid.innerHTML = '';
+    
+    if (recentColors.length === 0) {
+        recentGrid.closest('.color-section').style.display = 'none';
+        return;
+    }
+
+    recentGrid.closest('.color-section').style.display = 'block';
+    recentColors.forEach(color => {
+        const swatch = createColorSwatch(color, panel.closest('.control-row').dataset.row - 1);
+        recentGrid.appendChild(swatch);
+    });
+}
+
 function handleViewChange(e) {
     document.querySelectorAll('.view-button').forEach(btn => btn.classList.remove('active'));
     e.target.classList.add('active');
@@ -923,7 +1086,8 @@ function loadSavedColors() {
         const saved = localStorage.getItem(`savedColor${i}`);
         if (saved) {
             const { color, weight } = JSON.parse(saved);
-            document.getElementById(`colorPicker${i}`).value = color;
+            const button = document.getElementById(`colorPicker${i}`);
+            button.querySelector('.current-color').style.backgroundColor = color;
             document.getElementById(`weightInput${i}`).value = weight;
             currentColors[i - 1] = color;
             currentWeights[i - 1] = weight;
@@ -931,13 +1095,14 @@ function loadSavedColors() {
     }
 }
 
- document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     createGrid();
     createRangeGrid();
     toggleViewMode();
     
-    document.getElementById('colorPicker1').addEventListener('input', updateColor);
-    document.getElementById('colorPicker2').addEventListener('input', updateColor);
+    // Replace color picker event listeners
+    document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
+    document.getElementById('colorPicker2').addEventListener('click', handleColorPickerClick);
     
     document.querySelectorAll('.view-button').forEach(button => {
         button.addEventListener('click', handleViewChange);
@@ -948,7 +1113,6 @@ function loadSavedColors() {
     });
     
     loadSavedColors();
-    updateColorList(); // Add this line
 });
         
 </script>
