@@ -386,53 +386,68 @@
         
         <!-- Control Rows Container -->
         <div class="top-controls">
-        <!-- First Control Row -->
-<div class="control-row active">
-    <button class="row-toggle active" data-row="1">Row 1</button>
-    <div class="weight-control">
-        <div class="color-weight-group">
-            <label>Color</label>
-            <input type="color" id="colorPicker1" value="#4CAF50" class="color-input">
-            <span>W%</span>
-            <input type="number" id="weightInput1" value="100" min="0" max="100" 
-                   class="weight-input" onchange="updateWeight(this.value, 1)">
-        </div>
-    </div>
-    <div class="stats-container">
-        <div class="stat-box">
-            <span>%Range</span>
-            <span id="rangePercent1" class="stat-value">0</span>
-        </div>
-        <div class="stat-box">
-            <span>Combos</span>
-            <span id="comboCount1" class="stat-value">0</span>
-        </div>
-    </div>
-</div>
+            <!-- First Control Row -->
+            <div class="control-row active">
+                <!-- Group 1: Row selector -->
+                <button class="row-toggle active" data-row="1">Row 1</button>
+                
+                <!-- Group 2: Color + box -->
+                <div class="control-group">
+                    <label>Color</label>
+                    <input type="color" id="colorPicker1" value="#4CAF50" class="color-input">
+                </div>
+                
+                <!-- Group 3: W% + box -->
+                <div class="control-group">
+                    <span>W%</span>
+                    <input type="number" id="weightInput1" value="100" min="0" max="100" 
+                           class="weight-input" onchange="updateWeight(this.value, 1)">
+                </div>
+                
+                <!-- Group 4: %Range + box -->
+                <div class="control-group">
+                    <span>%Range</span>
+                    <span id="rangePercent1" class="stat-value">0</span>
+                </div>
+                
+                <!-- Group 5: Combos + box -->
+                <div class="control-group">
+                    <span>Combos</span>
+                    <span id="comboCount1" class="stat-value">0</span>
+                </div>
+            </div>
 
-<!-- Second Control Row -->
-<div class="control-row">
-    <button class="row-toggle" data-row="2">Row 2</button>
-    <div class="weight-control">
-        <div class="color-weight-group">
-            <label>Color</label>
-            <input type="color" id="colorPicker2" value="#FF0000" class="color-input">
-            <span>W%</span>
-            <input type="number" id="weightInput2" value="100" min="0" max="100" 
-                   class="weight-input" onchange="updateWeight(this.value, 2)">
+            <!-- Second Control Row -->
+            <div class="control-row">
+                <!-- Group 1: Row selector -->
+                <button class="row-toggle" data-row="2">Row 2</button>
+                
+                <!-- Group 2: Color + box -->
+                <div class="control-group">
+                    <label>Color</label>
+                    <input type="color" id="colorPicker2" value="#FF0000" class="color-input">
+                </div>
+                
+                <!-- Group 3: W% + box -->
+                <div class="control-group">
+                    <span>W%</span>
+                    <input type="number" id="weightInput2" value="100" min="0" max="100" 
+                           class="weight-input" onchange="updateWeight(this.value, 2)">
+                </div>
+                
+                <!-- Group 4: %Range + box -->
+                <div class="control-group">
+                    <span>%Range</span>
+                    <span id="rangePercent2" class="stat-value">0</span>
+                </div>
+                
+                <!-- Group 5: Combos + box -->
+                <div class="control-group">
+                    <span>Combos</span>
+                    <span id="comboCount2" class="stat-value">0</span>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="stats-container">
-        <div class="stat-box">
-            <span>%Range</span>
-            <span id="rangePercent2" class="stat-value">0</span>
-        </div>
-        <div class="stat-box">
-            <span>Combos</span>
-            <span id="comboCount2" class="stat-value">0</span>
-        </div>
-    </div>
-</div>
     
         <textarea id="rangeText" class="range-text" 
                   oninput="handleRangeTextChange(event)"></textarea>
