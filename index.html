@@ -397,14 +397,14 @@
         
         <!-- Control Rows Container -->
         <div class="top-controls">
-           <!-- First Control Row -->
+        <!-- First Control Row -->
 <div class="control-row active">
     <button class="row-toggle active" data-row="1">Row 1</button>
     <div class="weight-control">
         <div class="color-weight-group">
             <label>Color</label>
             <input type="color" id="colorPicker1" value="#4CAF50" class="color-input">
-            <label for="weightInput1" class="weight-icon">W%</label>
+            <span>W%</span>
             <input type="number" id="weightInput1" value="100" min="0" max="100" 
                    class="weight-input" onchange="updateWeight(this.value, 1)">
         </div>
@@ -428,7 +428,7 @@
         <div class="color-weight-group">
             <label>Color</label>
             <input type="color" id="colorPicker2" value="#FF0000" class="color-input">
-            <label for="weightInput2" class="weight-icon">W%</label>
+            <span>W%</span>
             <input type="number" id="weightInput2" value="100" min="0" max="100" 
                    class="weight-input" onchange="updateWeight(this.value, 2)">
         </div>
