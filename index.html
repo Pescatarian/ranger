@@ -375,12 +375,12 @@
     <div class="sidebar" id="sidebar">
         <h2>Range Builder</h2>
         
-      <!-- View Mode Controls -->
-<div class="view-controls">
-    <button class="view-button active" data-view="all">Show All</button>
-    <button class="view-button" data-view="row1">Show 1</button>
-    <button class="view-button" data-view="row2">Show 2</button>
-</div>
+        <!-- View Mode Controls -->
+        <div class="view-controls">
+            <button class="view-button active" data-view="all">Show All</button>
+            <button class="view-button" data-view="row1">Show 1</button>
+            <button class="view-button" data-view="row2">Show 2</button>
+        </div>
 
         <div class="range-grid" id="rangeGrid"></div>
         
@@ -401,8 +401,8 @@
                 </div>
                 <div class="stats-container">
                     <div class="stat-box">
-                        <span>Range:</span>
-                        <span id="rangePercent1" class="stat-value">0%</span>
+                        <span>Range</span>
+                        <span id="rangePercent1" class="stat-value">0</span>
                     </div>
                     <div class="stat-box">
                         <span>Combos:</span>
@@ -426,8 +426,8 @@
                 </div>
                 <div class="stats-container">
                     <div class="stat-box">
-                        <span>Range:</span>
-                        <span id="rangePercent2" class="stat-value">0%</span>
+                        <span>Range</span>
+                        <span id="rangePercent2" class="stat-value">0</span>
                     </div>
                     <div class="stat-box">
                         <span>Combos:</span>
@@ -440,12 +440,13 @@
         <textarea id="rangeText" class="range-text" 
                   oninput="handleRangeTextChange(event)"></textarea>
         
-      <!-- Bottom Buttons Container -->
-<div class="button-container">
-    <button class="save-button" onclick="saveToCell()">Save to Cell</button>
-    <button class="clear-button" onclick="clearSelection()">Clear</button>
-</div>
+        <!-- Bottom Buttons Container -->
+        <div class="button-container">
+            <button class="save-button" onclick="saveToCell()">Save to Cell</button>
+            <button class="clear-button" onclick="clearSelection()">Clear</button>
+        </div>
     </div>
+</body>
 
     <script>
 let isViewMode = true;
