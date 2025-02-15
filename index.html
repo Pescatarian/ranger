@@ -192,7 +192,7 @@
 
 .control-row {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start; /* Changed from space-between */
     align-items: center;
     width: 520px;
     padding: 4px 8px;
@@ -221,7 +221,6 @@
     gap: 8px;
     white-space: nowrap;
     flex-wrap: nowrap;
-    width: 300px;
     margin-left: 8px;
 }
 
@@ -275,9 +274,17 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    margin: 0;
+    margin-left: auto; /* This will push it to the right */
 }
 
+.stat-box {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    color: #4CAF50;
+    white-space: nowrap;
+    min-width: 100px; /* Ensure consistent width */
+}
 /* Input and Stats Styles */
 .color-input {
     width: 25px;
@@ -287,13 +294,6 @@
     background: #1a1a1a;
     cursor: pointer;
     overflow: hidden;
-}
-.stat-box {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    color: #4CAF50;
-    white-space: nowrap;
 }
 
 .stat-value {
