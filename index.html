@@ -230,6 +230,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 0 0 1px #1a1a1a, 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.row-toggle.active {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 1px #1a1a1a, 0 1px 3px rgba(76,175,80,0.6);
 }
 
 .row-toggle.active::after {
@@ -242,6 +248,7 @@
     transform: translate(-50%, -50%);
     top: 50%;
     left: 50%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 .weight-control {
