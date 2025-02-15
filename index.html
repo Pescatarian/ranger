@@ -190,7 +190,6 @@
     border-radius: 4px;
 }
 
-/* Row Controls */
 .control-row {
     display: flex;
     align-items: center;
@@ -252,7 +251,7 @@
     white-space: nowrap;
 }
 
-/* Excel color picker */
+/* Color Picker Styles */
 .color-picker-panel {
     position: fixed;
     background: #2d2d2d;
@@ -309,7 +308,69 @@
 
 .color-swatch:hover {
     transform: scale(1.1);
-    border-color: #
+    border-color: #fff;
+}
+
+.color-swatch-button {
+    width: 25px;
+    height: 25px;
+    padding: 0;
+    border: 1px solid #444;
+    background: none;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.current-color {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Range Text Box */
+.range-text {
+    width: 520px;
+    height: 80px;
+    background-color: #1a1a1a;
+    color: #4CAF50;
+    border: 1px solid #444;
+    padding: 8px;
+    margin: 3px auto;
+    font-family: Arial, sans-serif;
+    resize: none;
+    box-sizing: border-box;
+}
+
+/* Bottom Buttons */
+.button-container {
+    width: 520px;
+    display: flex;
+    justify-content: flex-end;
+    margin: 3px auto;
+    gap: 10px;
+}
+
+.save-button, .clear-button {
+    width: 100px;
+    height: 35px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    line-height: 35px;
+}
+
+.save-button {
+    background-color: #4CAF50;
+}
+
+.clear-button {
+    background-color: #ff4444;
 }
 
 /* Hover Effects */
