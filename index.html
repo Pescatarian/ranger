@@ -190,20 +190,17 @@
     border-radius: 4px;
 }
 
+/* Row Controls */
 .control-row {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     width: 520px;
     padding: 4px 8px;
     border-radius: 4px;
-    transition: all 0.3s ease;
-    opacity: 0.7;
-    box-sizing: border-box;
     background-color: #1a1a1a;
-    gap: 15px; /* Consistent gap between all groups */
+    gap: 15px; /* Equal spacing between all groups */
 }
-
 
 .control-row.active {
     opacity: 1;
@@ -224,6 +221,7 @@
     margin: 0;
 }
 
+/* Row Toggle Button */
 .row-toggle {
     min-width: 20px;
     min-height: 20px;
@@ -234,7 +232,6 @@
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin: 0; /* Removed margin-right */
     padding: 0;
     font-size: 0;
     position: relative;
@@ -259,23 +256,28 @@
     left: 50%;
 }
   
-/* Stats Container */
-.stats-container {
-    display: flex;
-    align-items: center;
-    gap: 15px; /* Matches main group spacing */
-    margin-left: auto; /* This pushes stats to the right */
-}
-        
+/* Stat Boxes and Groups */
 .stat-box {
     display: flex;
     align-items: center;
-    gap: 3px; /* Same gap as color-weight-group */
+    gap: 3px; /* Consistent spacing between label and value */
     color: #4CAF50;
     white-space: nowrap;
 }
+
+.color-weight-group {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Equal spacing between color and weight groups */
+}
+
+.stats-container {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Equal spacing between stat boxes */
+}
         
-/* Input and Stats Styles */
+/* Input Styles */
 .color-input {
     width: 25px;
     height: 25px;
@@ -286,15 +288,6 @@
     overflow: hidden;
 }
 
-.stat-value {
-    background: #1a1a1a;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #444;
-    min-width: 45px;
-    text-align: center;
-}
-
 .weight-input {
     width: 50px;
     background: #1a1a1a;
@@ -302,6 +295,15 @@
     border: 1px solid #444;
     padding: 4px;
     border-radius: 4px;
+    text-align: center;
+}
+
+.stat-value {
+    background: #1a1a1a;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    min-width: 45px;
     text-align: center;
 }
 
@@ -388,30 +390,25 @@
         <div class="top-controls">
             <!-- First Control Row -->
             <div class="control-row active">
-                <!-- Group 1: Row selector -->
                 <button class="row-toggle active" data-row="1">Row 1</button>
                 
-                <!-- Group 2: Color + box -->
-                <div class="control-group">
-                    <label>Color</label>
-                    <input type="color" id="colorPicker1" value="#4CAF50" class="color-input">
+                <div class="stat-box">
+                    <span>Color</span>
+                    <input type="color" id="colorPicker1" value="#4CAF50" class="color-input stat-value">
                 </div>
                 
-                <!-- Group 3: W% + box -->
-                <div class="control-group">
+                <div class="stat-box">
                     <span>W%</span>
                     <input type="number" id="weightInput1" value="100" min="0" max="100" 
-                           class="weight-input" onchange="updateWeight(this.value, 1)">
+                           class="weight-input stat-value" onchange="updateWeight(this.value, 1)">
                 </div>
                 
-                <!-- Group 4: %Range + box -->
-                <div class="control-group">
+                <div class="stat-box">
                     <span>%Range</span>
                     <span id="rangePercent1" class="stat-value">0</span>
                 </div>
                 
-                <!-- Group 5: Combos + box -->
-                <div class="control-group">
+                <div class="stat-box">
                     <span>Combos</span>
                     <span id="comboCount1" class="stat-value">0</span>
                 </div>
@@ -419,30 +416,25 @@
 
             <!-- Second Control Row -->
             <div class="control-row">
-                <!-- Group 1: Row selector -->
                 <button class="row-toggle" data-row="2">Row 2</button>
                 
-                <!-- Group 2: Color + box -->
-                <div class="control-group">
-                    <label>Color</label>
-                    <input type="color" id="colorPicker2" value="#FF0000" class="color-input">
+                <div class="stat-box">
+                    <span>Color</span>
+                    <input type="color" id="colorPicker2" value="#FF0000" class="color-input stat-value">
                 </div>
                 
-                <!-- Group 3: W% + box -->
-                <div class="control-group">
+                <div class="stat-box">
                     <span>W%</span>
                     <input type="number" id="weightInput2" value="100" min="0" max="100" 
-                           class="weight-input" onchange="updateWeight(this.value, 2)">
+                           class="weight-input stat-value" onchange="updateWeight(this.value, 2)">
                 </div>
                 
-                <!-- Group 4: %Range + box -->
-                <div class="control-group">
+                <div class="stat-box">
                     <span>%Range</span>
                     <span id="rangePercent2" class="stat-value">0</span>
                 </div>
                 
-                <!-- Group 5: Combos + box -->
-                <div class="control-group">
+                <div class="stat-box">
                     <span>Combos</span>
                     <span id="comboCount2" class="stat-value">0</span>
                 </div>
