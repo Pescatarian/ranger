@@ -250,101 +250,81 @@
     color: #4CAF50;
     white-space: nowrap;
 }
-       
-.color-picker-container {
-    position: relative;
-    display: inline-block;
-}
 
-.color-swatch-button {
-    width: 25px;
-    height: 25px;
-    padding: 2px;
-    border: 1px solid #444;
-    background: #2d2d2d;
-    cursor: pointer;
-    border-radius: 4px;
-}
-
-.current-color {
-    display: block;
-    width: 100%;
-    height: 100%;
-    background: currentColor;
-    border-radius: 2px;
-}
-
+ /* Excel color picker */
 .color-picker-panel {
     position: fixed;
     background: #2d2d2d;
     border: 1px solid #444;
     border-radius: 4px;
-    padding: 8px;
-    width: 300px;
+    padding: 12px;
+    width: 280px;
     display: none;
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
-.color-picker-header {
-    cursor: move;
-    padding: 4px;
-    text-align: center;
-    color: #666;
-    border-bottom: 1px solid #444;
-    margin-bottom: 8px;
-    user-select: none;
-}
-
-.color-picker-header:hover {
-    color: #fff;
-}
-
 .color-section {
-    margin-bottom: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #444;
+}
+
+.color-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 .section-label {
     color: #fff;
     font-size: 12px;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    font-weight: 500;
 }
 
 .theme-colors-grid,
-.standard-colors-grid,
+.standard-colors-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 3px;
+}
+
 .recent-colors-grid {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
-    gap: 2px;
+    gap: 3px;
+    margin-top: 4px;
 }
 
 .color-swatch {
     width: 100%;
     aspect-ratio: 1;
-    border: 1px solid #444;
+    border: 1px solid rgba(255,255,255,0.1);
     cursor: pointer;
     border-radius: 2px;
+    transition: transform 0.1s ease;
 }
 
 .color-swatch:hover {
+    transform: scale(1.1);
     border-color: #fff;
 }
 
 .color-options {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    margin-top: 12px;
 }
 
 .option-button {
     width: 100%;
-    padding: 6px;
+    padding: 8px;
     background: #2d2d2d;
     border: 1px solid #444;
     color: #fff;
     cursor: pointer;
     text-align: left;
     border-radius: 2px;
+    margin-bottom: 4px;
 }
 
 .option-button:hover {
@@ -573,11 +553,13 @@
     </div>
 </body>
 
-    <script>
+ <script>
+// Variables and Constants
 let isViewMode = true;
 let isRangeBuilderOpen = false;
 let selectedCell = null;
 const cellData = new Map();
+const MAX_RECENT_COLORS = 10;
 let currentWeights = [100, 100];
 let currentColors = ['#4CAF50', '#FF0000'];
 let activeRow = 0;
@@ -588,8 +570,8 @@ let recentColors = JSON.parse(localStorage.getItem('recentColors') || '[]');
 let colorPickerPosition = JSON.parse(localStorage.getItem('colorPickerPosition') || '{"x": 0, "y": 0}');
 let isDragging = false;
 let dragStartX, dragStartY;
-        
-// Add these new color palette arrays
+
+// Color Palettes
 const themeColors = [
     ['#FFFFFF', '#000000', '#E7E6E6', '#44546A', '#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5', '#70AD47'],
     ['#F2F2F2', '#7F7F7F', '#D0CECE', '#D6DCE4', '#D9E2F3', '#FBE5D6', '#EDEDED', '#FFF2CC', '#DEEBF7', '#E2EFD9'],
@@ -603,6 +585,136 @@ const standardColors = [
     '#C00000', '#FF0000', '#FFC000', '#FFD966', '#92D050', '#00B050', '#00B0F0', '#0070C0', '#002060', '#7030A0'
 ];
 
+// Color Picker Core Functions
+function handleColorPickerClick(e) {
+    const button = e.currentTarget;
+    const panel = button.nextElementSibling;
+    const rowIndex = button.id === 'colorPicker1' ? 0 : 1;
+
+    // Close any other open panels
+    document.querySelectorAll('.color-picker-panel').forEach(p => {
+        if (p !== panel) p.classList.remove('active');
+    });
+
+    // Toggle current panel
+    panel.classList.toggle('active');
+
+    if (panel.classList.contains('active')) {
+        // Position the panel
+        positionColorPicker(panel, button);
+
+        // Generate colors if not already done
+        if (!panel.dataset.initialized) {
+            generateColorPalette(panel, rowIndex);
+            panel.dataset.initialized = 'true';
+        }
+    }
+
+    // Close panel when clicking outside
+    const closePanel = (event) => {
+        if (!panel.contains(event.target) && event.target !== button) {
+            panel.classList.remove('active');
+            document.removeEventListener('click', closePanel);
+        }
+    };
+    
+    setTimeout(() => {
+        document.addEventListener('click', closePanel);
+    }, 0);
+}
+
+function generateColorPalette(panel, rowIndex) {
+    // Generate theme colors
+    const themeGrid = panel.querySelector('.theme-colors-grid');
+    themeColors.forEach(row => {
+        row.forEach(color => {
+            const swatch = createColorSwatch(color, rowIndex);
+            themeGrid.appendChild(swatch);
+        });
+    });
+
+    // Generate standard colors
+    const standardGrid = panel.querySelector('.standard-colors-grid');
+    standardColors.forEach(color => {
+        const swatch = createColorSwatch(color, rowIndex);
+        standardGrid.appendChild(swatch);
+    });
+
+    // Update recent colors
+    updateRecentColorsPanel(panel);
+}
+
+function createColorSwatch(color, rowIndex) {
+    const swatch = document.createElement('div');
+    swatch.className = 'color-swatch';
+    swatch.style.backgroundColor = color;
+    swatch.dataset.color = color;
+    swatch.dataset.rowIndex = rowIndex;
+    return swatch;
+}
+
+function selectColor(color, rowIndex) {
+    // Update color immediately
+    currentColors[rowIndex] = color;
+    
+    // Update visual immediately
+    const button = document.getElementById(`colorPicker${rowIndex + 1}`);
+    button.querySelector('.current-color').style.backgroundColor = color;
+
+    // Add to recent colors efficiently
+    addToRecentColors(color);
+    
+    // Update everything else
+    updateRangeDisplay(currentView);
+    saveColorSettings(rowIndex);
+
+    // Close panel
+    const panel = button.nextElementSibling;
+    panel.classList.remove('active');
+}
+
+function addToRecentColors(color) {
+    // Remove if already exists
+    const index = recentColors.indexOf(color);
+    if (index > -1) {
+        recentColors.splice(index, 1);
+    }
+    
+    // Add to front
+    recentColors.unshift(color);
+    
+    // Keep only MAX_RECENT_COLORS
+    if (recentColors.length > MAX_RECENT_COLORS) {
+        recentColors.pop();
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('recentColors', JSON.stringify(recentColors));
+    
+    // Update all panels
+    document.querySelectorAll('.color-picker-panel').forEach(updateRecentColorsPanel);
+}
+
+function updateRecentColorsPanel(panel) {
+    const recentGrid = panel.querySelector('.recent-colors-grid');
+    const section = recentGrid.closest('.color-section');
+    
+    if (recentColors.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    recentGrid.innerHTML = '';
+    
+    const rowIndex = panel.closest('.control-row').dataset.row - 1;
+    recentColors.forEach(color => {
+        const swatch = createColorSwatch(color, rowIndex);
+        recentGrid.appendChild(swatch);
+    });
+}
+
+// Position and Dragging Functions
 function positionColorPicker(panel, button) {
     const buttonRect = button.getBoundingClientRect();
     const panelRect = panel.getBoundingClientRect();
@@ -636,7 +748,6 @@ function positionColorPicker(panel, button) {
     panel.style.top = `${top}px`;
 }
 
-// Add dragging functionality
 function initializeDragging() {
     document.querySelectorAll('.color-picker-panel').forEach(panel => {
         // Add draggable header
@@ -675,7 +786,8 @@ function startDragging(e) {
     document.addEventListener('mousemove', moveHandler);
     document.addEventListener('mouseup', upHandler);
 }
-        
+
+// Grid Creation Functions
 function createGrid() {
     const grid = document.getElementById('grid');
     for (let i = 0; i < 8; i++) {
@@ -735,209 +847,8 @@ function createRangeGrid() {
     document.addEventListener('mouseup', endRangeSelection);
 }
 
-function updateWeight(value, rowIndex) {
-    const adjustedIndex = rowIndex - 1;
-    currentWeights[adjustedIndex] = Math.min(Math.max(0, parseInt(value)), 100);
-    document.getElementById(`weightInput${rowIndex}`).value = currentWeights[adjustedIndex];
-    activeRow = adjustedIndex;
-    saveColorSettings(adjustedIndex);
-    updateStats();
-}
-
-function handleColorPickerClick(e) {
-    const button = e.currentTarget;
-    const panel = button.nextElementSibling;
-    const rowIndex = button.id === 'colorPicker1' ? 0 : 1;
-
-    // Close any other open panels
-    document.querySelectorAll('.color-picker-panel').forEach(p => {
-        if (p !== panel) p.classList.remove('active');
-    });
-
-    // Toggle current panel
-    panel.classList.toggle('active');
-
-    if (panel.classList.contains('active')) {
-        // Position the panel
-        positionColorPicker(panel, button);
-
-        // Generate colors if not already done
-        if (!panel.dataset.initialized) {
-            generateColorPalette(panel, rowIndex);
-            panel.dataset.initialized = 'true';
-        }
-    }
-
-    // Close panel when clicking outside
-    const closePanel = (event) => {
-        if (!panel.contains(event.target) && event.target !== button) {
-            panel.classList.remove('active');
-            document.removeEventListener('click', closePanel);
-        }
-    };
-    
-    setTimeout(() => {
-        document.addEventListener('click', closePanel);
-    }, 0);
-}
-
-function generateColorPalette(panel, rowIndex) {
-    // Generate theme colors
-    const themeGrid = panel.querySelector('.theme-colors-grid');
-    themeColors.forEach(row => {
-        row.forEach(color => {
-            const swatch = createColorSwatch(color, rowIndex);
-            themeGrid.appendChild(swatch);
-        });
-    });
-
-    // Generate standard colors
-    const standardGrid = panel.querySelector('.standard-colors-grid');
-    standardColors.forEach(color => {
-        const swatch = createColorSwatch(color, rowIndex);
-        standardGrid.appendChild(swatch);
-    });
-
-    // Update recent colors
-    updateRecentColors(panel, rowIndex);
-}
-
-function createColorSwatch(color, rowIndex) {
-    const swatch = document.createElement('div');
-    swatch.className = 'color-swatch';
-    swatch.style.backgroundColor = color;
-    swatch.addEventListener('click', () => selectColor(color, rowIndex));
-    return swatch;
-}
-
-function selectColor(color, rowIndex) {
-    // Update the current color display
-    const button = document.getElementById(`colorPicker${rowIndex + 1}`);
-    button.querySelector('.current-color').style.backgroundColor = color;
-
-    // Update the color in your existing system
-    currentColors[rowIndex] = color;
-    
-    // Add to recent colors if not already there
-    if (!recentColors.includes(color)) {
-        recentColors.unshift(color);
-        if (recentColors.length > 10) {
-            recentColors.pop();
-        }
-        localStorage.setItem('recentColors', JSON.stringify(recentColors));
-    }
-
-    // Update the display
-    updateRangeDisplay(currentView);
-    saveColorSettings(rowIndex);
-
-    // Close the panel
-    const panel = button.nextElementSibling;
-    panel.classList.remove('active');
-
-    // Update recent colors in all panels
-    document.querySelectorAll('.color-picker-panel').forEach(panel => {
-        updateRecentColors(panel);
-    });
-}
-
-function updateRecentColors(panel) {
-    const recentGrid = panel.querySelector('.recent-colors-grid');
-    recentGrid.innerHTML = '';
-    
-    if (recentColors.length === 0) {
-        recentGrid.closest('.color-section').style.display = 'none';
-        return;
-    }
-
-    recentGrid.closest('.color-section').style.display = 'block';
-    recentColors.forEach(color => {
-        const swatch = createColorSwatch(color, panel.closest('.control-row').dataset.row - 1);
-        recentGrid.appendChild(swatch);
-    });
-}
-
-function handleViewChange(e) {
-    document.querySelectorAll('.view-button').forEach(btn => btn.classList.remove('active'));
-    e.target.classList.add('active');
-    
-    currentView = e.target.dataset.view;
-    updateRangeDisplay(currentView);
-}
-
-function handleRowToggle(e) {
-    document.querySelectorAll('.row-toggle').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.control-row').forEach(row => row.classList.remove('active'));
-    
-    e.target.classList.add('active');
-    e.target.closest('.control-row').classList.add('active');
-    
-    activeRow = parseInt(e.target.dataset.row) - 1;
-}
-
-function updateRangeDisplay(view) {
-    const cells = document.querySelectorAll('.range-cell');
-    
-    cells.forEach(cell => {
-        const selections = JSON.parse(cell.dataset.selections || '[]');
-        
-        switch(view) {
-            case 'row1':
-                cell.style.opacity = selections.some(s => s.color === currentColors[0]) ? '1' : '0.3';
-                break;
-            case 'row2':
-                cell.style.opacity = selections.some(s => s.color === currentColors[1]) ? '1' : '0.3';
-                break;
-            case 'all':
-                cell.style.opacity = '1';
-                break;
-        }
-    });
-}
-
-function saveColorSettings(rowIndex) {
-    const color = currentColors[rowIndex];
-    const weight = currentWeights[rowIndex];
-    localStorage.setItem(`savedColor${rowIndex + 1}`, JSON.stringify({ color, weight }));
-}
-
-function updateStats() {
-    const selectedCells = document.querySelectorAll('.range-cell');
-    let totalCombos = [0, 0];
-    
-    selectedCells.forEach(cell => {
-        const hand = cell.querySelector('span').textContent;
-        const selections = JSON.parse(cell.dataset.selections || '[]');
-        
-        if (selections.length === 0) return;
-        
-        let handCombos = 0;
-        if (hand.length === 2) {
-            handCombos = 6;
-        } else if (hand.endsWith('s')) {
-            handCombos = 4;
-        } else if (hand.endsWith('o')) {
-            handCombos = 12;
-        }
-        
-        selections.forEach(selection => {
-            const rowIndex = currentColors.indexOf(selection.color);
-            if (rowIndex !== -1) {
-                totalCombos[rowIndex] += handCombos * (selection.weight / 100);
-            }
-        });
-    });
-    
-    const totalPossibleCombos = 1326;
-    totalCombos.forEach((combos, index) => {
-        const rangePercentage = (combos / totalPossibleCombos * 100).toFixed(1);
-        document.getElementById(`rangePercent${index + 1}`).textContent = rangePercentage + '%';
-        document.getElementById(`comboCount${index + 1}`).textContent = Math.round(combos);
-    });
-}
-
+// Range Handling Functions
 function toggleRangeCell(cell) {
-    // First check if the clicked row toggle is active
     const activeRowToggle = document.querySelector(`.row-toggle[data-row="${activeRow + 1}"]`);
     if (!activeRowToggle?.classList.contains('active')) return;
 
@@ -983,7 +894,6 @@ function updateCellVisual(cell) {
         const {color, weight} = selections[0];
         cell.style.background = `linear-gradient(to right, ${color} ${weight}%, #1a1a1a ${weight}%)`;
     } else {
-        // Sort selections by row index for consistent gradient ordering
         selections.sort((a, b) => currentColors.indexOf(a.color) - currentColors.indexOf(b.color));
         
         let gradientString = 'linear-gradient(to right, ';
@@ -1003,13 +913,150 @@ function updateCellVisual(cell) {
     }
 }
 
-function clearSelection() {
-    document.querySelectorAll('.range-cell').forEach(cell => {
-        cell.dataset.selections = JSON.stringify([]);
-        updateCellVisual(cell);
+function updateStats() {
+    const selectedCells = document.querySelectorAll('.range-cell');
+    let totalCombos = [0, 0];
+    
+    selectedCells.forEach(cell => {
+        const hand = cell.querySelector('span').textContent;
+        const selections = JSON.parse(cell.dataset.selections || '[]');
+        
+        if (selections.length === 0) return;
+        
+        let handCombos = 0;
+        if (hand.length === 2) {
+            handCombos = 6;
+        } else if (hand.endsWith('s')) {
+            handCombos = 4;
+        } else if (hand.endsWith('o')) {
+            handCombos = 12;
+        }
+        
+        selections.forEach(selection => {
+            const rowIndex = currentColors.indexOf(selection.color);
+            if (rowIndex !== -1) {
+                totalCombos[rowIndex] += handCombos * (selection.weight / 100);
+            }
+        });
     });
-    document.getElementById('rangeText').value = '';
-    updateStats();
+    
+    const totalPossibleCombos = 1326;
+    totalCombos.forEach((combos, index) => {
+        const rangePercentage = (combos / totalPossibleCombos * 100).toFixed(1);
+        document.getElementById(`rangePercent${index + 1}`).textContent = rangePercentage + '%';
+        document.getElementById(`comboCount${index + 1}`).textContent = Math.round(combos);
+    });
+}
+
+// Event Handlers and Selection Functions
+function startRangeSelection(e) {
+    isMouseDown = true;
+    const cell = e.target.closest('.range-cell');
+    const selections = JSON.parse(cell.dataset.selections || '[]');
+    isSelecting = !selections.some(s => s.color === currentColors[activeRow]);
+    toggleRangeCell(cell);
+}
+
+function updateRangeSelection(e) {
+    if (!isMouseDown || isSelecting === null) return;
+    const cell = e.target.closest('.range-cell');
+    if (!cell) return;
+    
+    const selections = JSON.parse(cell.dataset.selections || '[]');
+    const hasCurrentColor = selections.some(s => s.color === currentColors[activeRow]);
+    
+    if (hasCurrentColor !== isSelecting) {
+        toggleRangeCell(cell);
+    }
+}
+
+function endRangeSelection() {
+    isMouseDown = false;
+    isSelecting = null;
+}
+
+function handleViewChange(e) {
+    document.querySelectorAll('.view-button').forEach(btn => btn.classList.remove('active'));
+    e.target.classList.add('active');
+    
+    currentView = e.target.dataset.view;
+    updateRangeDisplay(currentView);
+}
+
+function handleRowToggle(e) {
+    document.querySelectorAll('.row-toggle').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.control-row').forEach(row => row.classList.remove('active'));
+    
+    e.target.classList.add('active');
+    e.target.closest('.control-row').classList.add('active');
+    
+    activeRow = parseInt(e.target.dataset.row) - 1;
+}
+
+function updateRangeDisplay(view) {
+    const cells = document.querySelectorAll('.range-cell');
+    
+    cells.forEach(cell => {
+        const selections = JSON.parse(cell.dataset.selections || '[]');
+        
+        switch(view) {
+            case 'row1':
+                cell.style.opacity = selections.some(s => s.color === currentColors[0]) ? '1' : '0.3';
+                break;
+            case 'row2':
+                cell.style.opacity = selections.some(s => s.color === currentColors[1]) ? '1' : '0.3';
+                break;
+            case 'all':
+                cell.style.opacity = '1';
+                break;
+        }
+    });
+}
+
+// View Mode and Range Builder Toggle Functions
+function toggleViewMode() {
+    isViewMode = true;
+    isRangeBuilderOpen = false;
+    
+    document.getElementById('viewModeBtn').classList.add('active');
+    document.getElementById('rangeBuilderBtn').classList.remove('active');
+    
+    document.getElementById('sidebar').style.display = 'none';
+}
+
+function toggleRangeBuilder() {
+    isRangeBuilderOpen = !isRangeBuilderOpen;
+    isViewMode = !isRangeBuilderOpen;
+    
+    document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
+    document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
+    
+    document.getElementById('sidebar').style.display = isRangeBuilderOpen ? 'flex' : 'none';
+}
+
+// Cell and Range Text Functions
+function updateRangeText() {
+    const cells = [...document.querySelectorAll('.range-cell')];
+    const selectionsByColorAndWeight = {};
+    
+    cells.forEach(cell => {
+        const selections = JSON.parse(cell.dataset.selections || '[]');
+        selections.forEach(({color, weight}) => {
+            const key = `${color}_${weight}`;
+            if (!selectionsByColorAndWeight[key]) {
+                selectionsByColorAndWeight[key] = [];
+            }
+            selectionsByColorAndWeight[key].push(cell.querySelector('span').textContent);
+        });
+    });
+    
+    const formattedGroups = Object.entries(selectionsByColorAndWeight)
+        .map(([key, hands]) => {
+            const [color, weight] = key.split('_');
+            return `[${weight}:${color}]${hands.join(',')}[/${weight}]`;
+        });
+    
+    document.getElementById('rangeText').value = formattedGroups.join(',');
 }
 
 function handleRangeTextChange(e) {
@@ -1039,130 +1086,6 @@ function handleRangeTextChange(e) {
         });
     }
     updateStats();
-} 
-
-function startRangeSelection(e) {
-    isMouseDown = true;
-    const cell = e.target.closest('.range-cell');
-    const selections = JSON.parse(cell.dataset.selections || '[]');
-    isSelecting = !selections.some(s => s.color === currentColors[activeRow]);
-    toggleRangeCell(cell);
-}
-
-function updateRangeSelection(e) {
-    if (!isMouseDown || isSelecting === null) return;
-    const cell = e.target.closest('.range-cell');
-    if (!cell) return;
-    
-    const selections = JSON.parse(cell.dataset.selections || '[]');
-    const hasCurrentColor = selections.some(s => s.color === currentColors[activeRow]);
-    
-    if (hasCurrentColor !== isSelecting) {
-        toggleRangeCell(cell);
-    }
-}
-
-function endRangeSelection() {
-    isMouseDown = false;
-    isSelecting = null;
-}
-
-function toggleViewMode() {
-    isViewMode = true;
-    isRangeBuilderOpen = false;
-    
-    document.getElementById('viewModeBtn').classList.add('active');
-    document.getElementById('rangeBuilderBtn').classList.remove('active');
-    
-    document.getElementById('sidebar').style.display = 'none';
-}
-
-function toggleRangeBuilder() {
-    isRangeBuilderOpen = !isRangeBuilderOpen;
-    isViewMode = !isRangeBuilderOpen;
-    
-    document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
-    document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
-    
-    document.getElementById('sidebar').style.display = isRangeBuilderOpen ? 'flex' : 'none';
-}
-
-function updateRangeText() {
-    const cells = [...document.querySelectorAll('.range-cell')];
-    const selectionsByColorAndWeight = {};
-    
-    cells.forEach(cell => {
-        const selections = JSON.parse(cell.dataset.selections || '[]');
-        selections.forEach(({color, weight}) => {
-            const key = `${color}_${weight}`;
-            if (!selectionsByColorAndWeight[key]) {
-                selectionsByColorAndWeight[key] = [];
-            }
-            selectionsByColorAndWeight[key].push(cell.querySelector('span').textContent);
-        });
-    });
-    
-    const formattedGroups = Object.entries(selectionsByColorAndWeight)
-        .map(([key, hands]) => {
-            const [color, weight] = key.split('_');
-            return `[${weight}:${color}]${hands.join(',')}[/${weight}]`;
-        });
-    
-    document.getElementById('rangeText').value = formattedGroups.join(',');
-}
-
-function selectCell(e) {
-    if (!isViewMode) return;
-    if (selectedCell) {
-        selectedCell.style.border = '1px solid #444';
-    }
-    selectedCell = e.currentTarget;
-    selectedCell.style.border = '2px solid #4CAF50';
-}
-
-function saveToCell() {
-    if (!selectedCell) {
-        alert('Please select a cell first');
-        return;
-    }
-    
-    const rangeText = document.getElementById('rangeText').value;
-    if (rangeText && !rangeText.match(/^\[[\d]+:[#\w]+\][^[]+\[\/\d+\](,\[[\d]+:[#\w]+\][^[]+\[\/\d+\])*$/)) {
-        alert('Invalid range format');
-        return;
-    }
-    
-    cellData.set(selectedCell.dataset.id, rangeText);
-    const content = selectedCell.querySelector('.cell-content');
-    content.innerHTML = '📝';
-    
-    toggleRangeBuilder();
-}
-
-function handleDragStart(e) {
-    if (!isViewMode) return;
-    e.dataTransfer.setData('text/plain', e.target.dataset.id);
-}
-
-function handleDragOver(e) {
-    if (!isViewMode) return;
-    e.preventDefault();
-}
-
-function handleDrop(e) {
-    if (!isViewMode) return;
-    e.preventDefault();
-    const sourceId = e.dataTransfer.getData('text/plain');
-    const targetId = e.target.closest('.cell').dataset.id;
-    
-    const sourceData = cellData.get(sourceId);
-    const targetData = cellData.get(targetId);
-    
-    if (sourceData) cellData.set(targetId, sourceData);
-    if (targetData) cellData.set(sourceId, targetData);
-    
-    updateCellContent(sourceId);
-    updateCellContent(targetId);
 }
 
 function updateCellContent(cellId) {
@@ -1172,26 +1095,13 @@ function updateCellContent(cellId) {
     content.innerHTML = data ? '📝' : '';
 }
 
-function loadSavedColors() {
-    for (let i = 1; i <= 2; i++) {
-        const saved = localStorage.getItem(`savedColor${i}`);
-        if (saved) {
-            const { color, weight } = JSON.parse(saved);
-            const button = document.getElementById(`colorPicker${i}`);
-            button.querySelector('.current-color').style.backgroundColor = color;
-            document.getElementById(`weightInput${i}`).value = weight;
-            currentColors[i - 1] = color;
-            currentWeights[i - 1] = weight;
-        }
-    }
-}
-
+// Keep only this one DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', () => {
     createGrid();
     createRangeGrid();
     toggleViewMode();
     
-    // Replace color picker event listeners
+    // Color picker event listeners
     document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
     document.getElementById('colorPicker2').addEventListener('click', handleColorPickerClick);
     
@@ -1203,10 +1113,19 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', handleRowToggle);
     });
     
+    // Event delegation for color swatches
+    document.addEventListener('click', e => {
+        const swatch = e.target.closest('.color-swatch');
+        if (swatch) {
+            const color = swatch.dataset.color;
+            const rowIndex = parseInt(swatch.dataset.rowIndex);
+            selectColor(color, rowIndex);
+        }
+    });
+    
     loadSavedColors();
-    initializeDragging(); // Add this line
+    initializeDragging();
 });
-        
 </script>
 </body>
 </html>
