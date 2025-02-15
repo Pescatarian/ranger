@@ -261,13 +261,10 @@
 }
 .weight-icon {
     display: inline-block;
-    width: 16px;
-    height: 16px;
     margin: 0 5px;
-    background-image: url('weight-icon.PNG');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
     vertical-align: middle;
 }
         
@@ -406,7 +403,7 @@
         <div class="color-weight-group">
             <label>Color</label>
             <input type="color" id="colorPicker1" value="#4CAF50" class="color-input">
-            <label for="weightInput1" class="weight-icon"></label>
+            <label for="weightInput1" class="weight-icon">W%</label>
             <input type="number" id="weightInput1" value="100" min="0" max="100" 
                    class="weight-input" onchange="updateWeight(this.value, 1)">
         </div>
@@ -430,7 +427,7 @@
         <div class="color-weight-group">
             <label>Color</label>
             <input type="color" id="colorPicker2" value="#FF0000" class="color-input">
-            <label for="weightInput2" class="weight-icon"></label>
+            <label for="weightInput2" class="weight-icon">W%</label>
             <input type="number" id="weightInput2" value="100" min="0" max="100" 
                    class="weight-input" onchange="updateWeight(this.value, 2)">
         </div>
