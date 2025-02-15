@@ -268,8 +268,8 @@
     background: #2d2d2d;
     border: 1px solid #444;
     border-radius: 4px;
-    padding: 12px;
-    width: 280px;
+    padding: 8px;
+    width: 220px;
     display: none;
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0,0,0,0.5);
@@ -289,8 +289,8 @@
 }
 
 .color-section {
-    margin-bottom: 16px;
-    padding-bottom: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
     border-bottom: 1px solid #444;
 }
 
@@ -308,16 +308,11 @@
 }
 
 .theme-colors-grid,
-.standard-colors-grid {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 3px;
-}
-
+.standard-colors-grid,
 .recent-colors-grid {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
-    gap: 3px;
+    gap: 2px;
     margin-top: 4px;
 }
 
@@ -338,16 +333,21 @@
 .color-swatch-button {
     width: 25px;
     height: 25px;
-    padding: 2px;
+    padding: 0;
     border: 1px solid #444;
     background: #1a1a1a;
     cursor: pointer;
     position: relative;
+    overflow: hidden;
 }
 
 .current-color {
     width: 100%;
     height: 100%;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
     border: 1px solid rgba(255,255,255,0.2);
 }
 
@@ -364,23 +364,6 @@
     color: white;
     cursor: pointer;
     flex: 1;
-}
-
-/* Adjust the color swatch button to match Excel style */
-.color-swatch-button {
-    width: 25px;
-    height: 25px;
-    padding: 2px;
-    border: 1px solid #444;
-    background: #1a1a1a;
-    cursor: pointer;
-    position: relative;
-}
-
-.current-color {
-    width: 100%;
-    height: 100%;
-    border: 1px solid rgba(255,255,255,0.2);
 }
         
 /* Range Text Box */
