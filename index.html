@@ -207,10 +207,22 @@
 }
 
 /* Color and Weight Controls */
-.color-weight-group, .stats-container {
+.color-weight-group {
     display: flex;
     align-items: center;
-    gap: 20px; /* Consistent spacing */
+    gap: 6px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.weight-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+    width: 300px;
+    margin-left: 8px;
 }
 
 .row-toggle {
@@ -258,13 +270,6 @@
     vertical-align: middle;
 }
         
-.weight-control {
-    display: flex;
-    align-items: center;
-    gap: 20px; /* Match main spacing */
-    margin: 0 20px; /* Equal spacing on both sides */
-}
-
 /* Stats Container */
 .stats-container {
     display: flex;
@@ -286,8 +291,9 @@
 .stat-box {
     display: flex;
     align-items: center;
-    gap: 10px; /* Space between label and value */
-    min-width: 120px; /* Ensure consistent width */
+    gap: 3px;
+    color: #4CAF50;
+    white-space: nowrap;
 }
 
 .stat-value {
