@@ -1096,27 +1096,63 @@ function handleContextMenuAction(action, cell) {
             cell.querySelector('.cell-content').style.color = '';
             break;
         case 'Clear Range':
-            const content = cell.querySelector('.cell-content');
-            if (content.dataset.range) {
-                content.innerHTML = '';
-                content.dataset.range = '';
-                content.classList.remove('has-range'); // Add this line to remove the indicator
+            const clearContent = cell.querySelector('.cell-content');
+            if (clearContent.dataset.range) {
+                clearContent.innerHTML = '';
+                clearContent.dataset.range = '';
+                clearContent.classList.remove('has-range');
                 cellData.delete(cell.dataset.id);
             }
             break;
         case 'Cut':
+            const cutContent = cell.querySelector('.cell-content');
             clipboardData = {
-                text: cell.querySelector('.cell-content').textContent,
+                text: cutContent.textContent,
                 backgroundColor: cell.style.backgroundColor,
-                textColor: cell.querySelector('.cell-content').style.color
+                textColor: cutContent.style.color,
+                rangeData: cutContent.dataset.range || '',
+                hasRange: cutContent.classList.contains('has-range')
             };
-            cell.querySelector('.cell-content').textContent = '';
+            cutContent.innerHTML = '';
+            cutContent.dataset.range = '';
+            cutContent.classList.remove('has-range');
             cell.style.backgroundColor = '';
-            cell.querySelector('.cell-content').style.color = '';
+            cutContent.style.color = '';
             cellData.delete(cell.dataset.id);
             break;
-        // ... rest of the cases ...
+        case 'Copy':
+            const copyContent = cell.querySelector('.cell-content');
+            clipboardData = {
+                text: copyContent.textContent,
+                backgroundColor: cell.style.backgroundColor,
+                textColor: copyContent.style.color,
+                rangeData: copyContent.dataset.range || '',
+                hasRange: copyContent.classList.contains('has-range')
+            };
+            break;
+        case 'Paste':
+            if (clipboardData) {
+                const pasteContent = cell.querySelector('.cell-content');
+                pasteContent.textContent = clipboardData.text;
+                cell.style.backgroundColor = clipboardData.backgroundColor;
+                pasteContent.style.color = clipboardData.textColor;
+                
+                // Handle range data
+                if (clipboardData.rangeData) {
+                    pasteContent.dataset.range = clipboardData.rangeData;
+                    if (clipboardData.hasRange) {
+                        pasteContent.classList.add('has-range');
+                        addCellHover(cell); // Re-add hover functionality
+                    }
+                }
+                
+                if (clipboardData.text || clipboardData.rangeData) {
+                    cellData.set(cell.dataset.id, clipboardData.text);
+                }
+            }
+            break;
     }
+    // Close context menu after action
     document.querySelectorAll('.context-menu').forEach(m => m.remove());
 }
   
