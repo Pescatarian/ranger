@@ -851,12 +851,16 @@ function makeEditable(cell) {
             c.style.outline = 'none'
         );
         
-        // Highlight selected cell
-        cell.style.outline = '2px solid #4CAF50';
+        // Thicker highlight around all sides of the cell
+        cell.style.outline = '3px solid #4CAF50';
+        cell.style.outlineOffset = '-3px'; // This ensures the outline is inside the cell
         
         // Make cell editable immediately
         const content = cell.querySelector('.cell-content');
         const cellId = cell.querySelector('.cell-id');
+        
+        // Hide cell ID immediately when cell is selected
+        cellId.style.display = 'none';
         
         // Only create input if it doesn't exist
         if (!cell.querySelector('input')) {
@@ -879,10 +883,8 @@ function makeEditable(cell) {
                 const newText = input.value;
                 content.innerHTML = newText || '';
                 cellData.set(cell.dataset.id, newText);
-                if (newText) {
-                    cellId.style.display = 'none'; // Hide cell ID when there's text
-                } else {
-                    cellId.style.display = 'block'; // Show cell ID when empty
+                if (!newText) {
+                    cellId.style.display = 'block'; // Only show cell ID if cell is empty after editing
                 }
             };
             
@@ -1172,9 +1174,16 @@ function selectCell(e) {
     if (!isViewMode) return;
     if (selectedCell) {
         selectedCell.style.outline = 'none';
+        const prevCellId = selectedCell.querySelector('.cell-id');
+        if (!selectedCell.querySelector('.cell-content').textContent) {
+            prevCellId.style.display = 'block';
+        }
     }
     selectedCell = e.currentTarget;
-    selectedCell.style.outline = '2px solid #4CAF50';
+    selectedCell.style.outline = '3px solid #4CAF50';
+    selectedCell.style.outlineOffset = '-3px';
+    const cellId = selectedCell.querySelector('.cell-id');
+    cellId.style.display = 'none';
 }
 
 function saveToCell() {
