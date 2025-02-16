@@ -609,6 +609,7 @@ let recentColors = JSON.parse(localStorage.getItem('recentColors') || '[]');
 let colorPickerPosition = JSON.parse(localStorage.getItem('colorPickerPosition') || '{"x": 0, "y": 0}');
 let isDragging = false;
 let dragStartX, dragStartY;
+let clipboardData = null;
 
 // Color Palettes
 const themeColors = [
@@ -873,8 +874,9 @@ function makeEditable(cell) {
         selectedCell = cell;
     });
 
-    // Add keydown listener for delete/backspace
+    // Add keyboard shortcuts handler
     document.addEventListener('keydown', (e) => {
+        // Delete/Backspace handler
         if (selectedCell && (e.key === 'Delete' || e.key === 'Backspace') && !selectedCell.querySelector('input')) {
             e.preventDefault();
             const content = selectedCell.querySelector('.cell-content');
@@ -882,6 +884,48 @@ function makeEditable(cell) {
             content.textContent = '';
             cellId.style.display = 'block';
             cellData.delete(selectedCell.dataset.id);
+        }
+
+        // Copy/Cut/Paste handlers
+        if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
+            switch(e.key.toLowerCase()) {
+                case 'c':
+                    e.preventDefault();
+                    clipboardData = {
+                        text: selectedCell.querySelector('.cell-content').textContent,
+                        backgroundColor: selectedCell.style.backgroundColor,
+                        textColor: selectedCell.querySelector('.cell-content').style.color
+                    };
+                    break;
+                    
+                case 'x':
+                    e.preventDefault();
+                    clipboardData = {
+                        text: selectedCell.querySelector('.cell-content').textContent,
+                        backgroundColor: selectedCell.style.backgroundColor,
+                        textColor: selectedCell.querySelector('.cell-content').style.color
+                    };
+                    selectedCell.querySelector('.cell-content').textContent = '';
+                    selectedCell.style.backgroundColor = '';
+                    selectedCell.querySelector('.cell-content').style.color = '';
+                    selectedCell.querySelector('.cell-id').style.display = 'block';
+                    cellData.delete(selectedCell.dataset.id);
+                    break;
+                    
+                case 'v':
+                    e.preventDefault();
+                    if (clipboardData) {
+                        const content = selectedCell.querySelector('.cell-content');
+                        content.textContent = clipboardData.text;
+                        selectedCell.style.backgroundColor = clipboardData.backgroundColor;
+                        content.style.color = clipboardData.textColor;
+                        if (clipboardData.text) {
+                            selectedCell.querySelector('.cell-id').style.display = 'none';
+                        }
+                        cellData.set(selectedCell.dataset.id, clipboardData.text);
+                    }
+                    break;
+            }
         }
     }, { passive: false });
 
@@ -1086,26 +1130,40 @@ function showColorSubmenu(menuItem, isFillColor) {
 function handleContextMenuAction(action, cell) {
     switch(action) {
         case 'Cut':
-            navigator.clipboard.writeText(cell.querySelector('.cell-content').textContent);
+            clipboardData = {
+                text: cell.querySelector('.cell-content').textContent,
+                backgroundColor: cell.style.backgroundColor,
+                textColor: cell.querySelector('.cell-content').style.color
+            };
             cell.querySelector('.cell-content').textContent = '';
+            cell.style.backgroundColor = '';
+            cell.querySelector('.cell-content').style.color = '';
+            cell.querySelector('.cell-id').style.display = 'block';
             break;
         case 'Copy':
-            navigator.clipboard.writeText(cell.querySelector('.cell-content').textContent);
+            clipboardData = {
+                text: cell.querySelector('.cell-content').textContent,
+                backgroundColor: cell.style.backgroundColor,
+                textColor: cell.querySelector('.cell-content').style.color
+            };
             break;
         case 'Paste':
-            navigator.clipboard.readText().then(text => {
-                cell.querySelector('.cell-content').textContent = text;
-                // Hide cell ID if there's content
-                if (text) {
+            if (clipboardData) {
+                const content = cell.querySelector('.cell-content');
+                content.textContent = clipboardData.text;
+                cell.style.backgroundColor = clipboardData.backgroundColor;
+                content.style.color = clipboardData.textColor;
+                if (clipboardData.text) {
                     cell.querySelector('.cell-id').style.display = 'none';
                 }
-            });
+                cellData.set(cell.dataset.id, clipboardData.text);
+            }
             break;
     }
     // Close context menu after action
     document.querySelectorAll('.context-menu').forEach(m => m.remove());
 }
-        
+  
 // Range Handling Functions
 function toggleRangeCell(cell) {
     const activeRowToggle = document.querySelector(`.row-toggle[data-row="${activeRow + 1}"]`);
