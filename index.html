@@ -874,9 +874,8 @@ function makeEditable(cell) {
         selectedCell = cell;
     });
 
-    // Add keyboard shortcuts handler
+    // Add delete/backspace handler
     document.addEventListener('keydown', (e) => {
-        // Delete/Backspace handler
         if (selectedCell && (e.key === 'Delete' || e.key === 'Backspace') && !selectedCell.querySelector('input')) {
             e.preventDefault();
             const content = selectedCell.querySelector('.cell-content');
@@ -884,48 +883,6 @@ function makeEditable(cell) {
             content.textContent = '';
             cellId.style.display = 'block';
             cellData.delete(selectedCell.dataset.id);
-        }
-
-        // Copy/Cut/Paste handlers
-        if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
-            switch(e.key.toLowerCase()) {
-                case 'c':
-                    e.preventDefault();
-                    clipboardData = {
-                        text: selectedCell.querySelector('.cell-content').textContent,
-                        backgroundColor: selectedCell.style.backgroundColor,
-                        textColor: selectedCell.querySelector('.cell-content').style.color
-                    };
-                    break;
-                    
-                case 'x':
-                    e.preventDefault();
-                    clipboardData = {
-                        text: selectedCell.querySelector('.cell-content').textContent,
-                        backgroundColor: selectedCell.style.backgroundColor,
-                        textColor: selectedCell.querySelector('.cell-content').style.color
-                    };
-                    selectedCell.querySelector('.cell-content').textContent = '';
-                    selectedCell.style.backgroundColor = '';
-                    selectedCell.querySelector('.cell-content').style.color = '';
-                    selectedCell.querySelector('.cell-id').style.display = 'block';
-                    cellData.delete(selectedCell.dataset.id);
-                    break;
-                    
-                case 'v':
-                    e.preventDefault();
-                    if (clipboardData) {
-                        const content = selectedCell.querySelector('.cell-content');
-                        content.textContent = clipboardData.text;
-                        selectedCell.style.backgroundColor = clipboardData.backgroundColor;
-                        content.style.color = clipboardData.textColor;
-                        if (clipboardData.text) {
-                            selectedCell.querySelector('.cell-id').style.display = 'none';
-                        }
-                        cellData.set(selectedCell.dataset.id, clipboardData.text);
-                    }
-                    break;
-            }
         }
     }, { passive: false });
 
@@ -1512,6 +1469,50 @@ document.addEventListener('DOMContentLoaded', () => {
     createGrid();
     createRangeGrid();
     toggleViewMode();
+    
+    // Add global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
+            switch(e.key.toLowerCase()) {
+                case 'c':
+                    e.preventDefault();
+                    clipboardData = {
+                        text: selectedCell.querySelector('.cell-content').textContent,
+                        backgroundColor: selectedCell.style.backgroundColor,
+                        textColor: selectedCell.querySelector('.cell-content').style.color
+                    };
+                    break;
+                    
+                case 'x':
+                    e.preventDefault();
+                    clipboardData = {
+                        text: selectedCell.querySelector('.cell-content').textContent,
+                        backgroundColor: selectedCell.style.backgroundColor,
+                        textColor: selectedCell.querySelector('.cell-content').style.color
+                    };
+                    selectedCell.querySelector('.cell-content').textContent = '';
+                    selectedCell.style.backgroundColor = '';
+                    selectedCell.querySelector('.cell-content').style.color = '';
+                    selectedCell.querySelector('.cell-id').style.display = 'block';
+                    cellData.delete(selectedCell.dataset.id);
+                    break;
+                    
+                case 'v':
+                    e.preventDefault();
+                    if (clipboardData) {
+                        const content = selectedCell.querySelector('.cell-content');
+                        content.textContent = clipboardData.text;
+                        selectedCell.style.backgroundColor = clipboardData.backgroundColor;
+                        content.style.color = clipboardData.textColor;
+                        if (clipboardData.text) {
+                            selectedCell.querySelector('.cell-id').style.display = 'none';
+                        }
+                        cellData.set(selectedCell.dataset.id, clipboardData.text);
+                    }
+                    break;
+            }
+        }
+    });
     
     // Color picker event listeners
     document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
