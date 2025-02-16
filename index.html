@@ -951,6 +951,7 @@ function addContextMenu(cell) {
         const menuItems = [
             { text: 'Fill Color', icon: '🎨', submenu: true },
             { text: 'Text Color', icon: 'A', submenu: true },
+            { text: 'Reset Format', icon: '↺', submenu: false }, // Added Reset option
             { text: 'Cut', icon: '✂️' },
             { text: 'Copy', icon: '📄' },
             { text: 'Paste', icon: '📋' }
@@ -1086,6 +1087,10 @@ function showColorSubmenu(menuItem, isFillColor) {
 
 function handleContextMenuAction(action, cell) {
     switch(action) {
+        case 'Reset Format':
+            cell.style.backgroundColor = ''; // Reset background color
+            cell.querySelector('.cell-content').style.color = ''; // Reset text color
+            break;
         case 'Cut':
             clipboardData = {
                 text: cell.querySelector('.cell-content').textContent,
