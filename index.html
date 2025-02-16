@@ -1096,63 +1096,22 @@ function handleContextMenuAction(action, cell) {
             cell.querySelector('.cell-content').style.color = '';
             break;
         case 'Clear Range':
-            const clearContent = cell.querySelector('.cell-content');
-            if (clearContent.dataset.range) {
-                clearContent.innerHTML = '';
-                clearContent.dataset.range = '';
-                clearContent.classList.remove('has-range');
-                cellData.delete(cell.dataset.id);
+            const content = cell.querySelector('.cell-content');
+            if (content.dataset.range) {
+                clearCell(cell);
             }
             break;
         case 'Cut':
-            const cutContent = cell.querySelector('.cell-content');
-            clipboardData = {
-                text: cutContent.textContent,
-                backgroundColor: cell.style.backgroundColor,
-                textColor: cutContent.style.color,
-                rangeData: cutContent.dataset.range || '',
-                hasRange: cutContent.classList.contains('has-range')
-            };
-            cutContent.innerHTML = '';
-            cutContent.dataset.range = '';
-            cutContent.classList.remove('has-range');
-            cell.style.backgroundColor = '';
-            cutContent.style.color = '';
-            cellData.delete(cell.dataset.id);
+            clipboardData = copyCell(cell);
+            clearCell(cell);
             break;
         case 'Copy':
-            const copyContent = cell.querySelector('.cell-content');
-            clipboardData = {
-                text: copyContent.textContent,
-                backgroundColor: cell.style.backgroundColor,
-                textColor: copyContent.style.color,
-                rangeData: copyContent.dataset.range || '',
-                hasRange: copyContent.classList.contains('has-range')
-            };
+            clipboardData = copyCell(cell);
             break;
         case 'Paste':
-            if (clipboardData) {
-                const pasteContent = cell.querySelector('.cell-content');
-                pasteContent.textContent = clipboardData.text;
-                cell.style.backgroundColor = clipboardData.backgroundColor;
-                pasteContent.style.color = clipboardData.textColor;
-                
-                // Handle range data
-                if (clipboardData.rangeData) {
-                    pasteContent.dataset.range = clipboardData.rangeData;
-                    if (clipboardData.hasRange) {
-                        pasteContent.classList.add('has-range');
-                        addCellHover(cell); // Re-add hover functionality
-                    }
-                }
-                
-                if (clipboardData.text || clipboardData.rangeData) {
-                    cellData.set(cell.dataset.id, clipboardData.text);
-                }
-            }
+            pasteCell(cell, clipboardData);
             break;
     }
-    // Close context menu after action
     document.querySelectorAll('.context-menu').forEach(m => m.remove());
 }
   
@@ -1558,6 +1517,48 @@ function addCellHover(cell) {
         popup.remove();
     });
 }
+
+function copyCell(cell) {
+    const content = cell.querySelector('.cell-content');
+    return {
+        text: content.textContent,
+        backgroundColor: cell.style.backgroundColor,
+        textColor: content.style.color,
+        rangeData: content.dataset.range || '',
+        hasRange: content.classList.contains('has-range')
+    };
+}
+
+function clearCell(cell) {
+    const content = cell.querySelector('.cell-content');
+    content.innerHTML = '';
+    content.dataset.range = '';
+    content.classList.remove('has-range');
+    cell.style.backgroundColor = '';
+    content.style.color = '';
+    cellData.delete(cell.dataset.id);
+}
+
+function pasteCell(cell, data) {
+    if (!data) return;
+    
+    const content = cell.querySelector('.cell-content');
+    content.textContent = data.text;
+    cell.style.backgroundColor = data.backgroundColor;
+    content.style.color = data.textColor;
+    
+    if (data.rangeData) {
+        content.dataset.range = data.rangeData;
+        if (data.hasRange) {
+            content.classList.add('has-range');
+            addCellHover(cell);
+        }
+    }
+    
+    if (data.text || data.rangeData) {
+        cellData.set(cell.dataset.id, data.text);
+    }
+}
         
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -1565,49 +1566,26 @@ document.addEventListener('DOMContentLoaded', () => {
     createRangeGrid();
     toggleViewMode();
     
-    // Add global keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
-            switch(e.key.toLowerCase()) {
-                case 'c':
-                    e.preventDefault();
-                    clipboardData = {
-                        text: selectedCell.querySelector('.cell-content').textContent,
-                        backgroundColor: selectedCell.style.backgroundColor,
-                        textColor: selectedCell.querySelector('.cell-content').style.color
-                    };
-                    break;
-                    
-                case 'x':
-                    e.preventDefault();
-                    clipboardData = {
-                        text: selectedCell.querySelector('.cell-content').textContent,
-                        backgroundColor: selectedCell.style.backgroundColor,
-                        textColor: selectedCell.querySelector('.cell-content').style.color
-                    };
-                    selectedCell.querySelector('.cell-content').textContent = '';
-                    selectedCell.style.backgroundColor = '';
-                    selectedCell.querySelector('.cell-content').style.color = '';
-                    selectedCell.querySelector('.cell-id').style.display = 'block';
-                    cellData.delete(selectedCell.dataset.id);
-                    break;
-                    
-                case 'v':
-                    e.preventDefault();
-                    if (clipboardData) {
-                        const content = selectedCell.querySelector('.cell-content');
-                        content.textContent = clipboardData.text;
-                        selectedCell.style.backgroundColor = clipboardData.backgroundColor;
-                        content.style.color = clipboardData.textColor;
-                        if (clipboardData.text) {
-                            selectedCell.querySelector('.cell-id').style.display = 'none';
-                        }
-                        cellData.set(selectedCell.dataset.id, clipboardData.text);
-                    }
-                    break;
-            }
+ // Add global keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
+        switch(e.key.toLowerCase()) {
+            case 'c':
+                e.preventDefault();
+                clipboardData = copyCell(selectedCell);
+                break;
+            case 'x':
+                e.preventDefault();
+                clipboardData = copyCell(selectedCell);
+                clearCell(selectedCell);
+                break;
+            case 'v':
+                e.preventDefault();
+                pasteCell(selectedCell, clipboardData);
+                break;
         }
-    });
+    }
+});
     
     // Color picker event listeners
     document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
