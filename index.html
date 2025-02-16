@@ -845,21 +845,25 @@ function createGrid() {
 }
 
 function makeEditable(cell) {
+    // Single click for selection only
     cell.addEventListener('click', (e) => {
         // Remove previous selections
         document.querySelectorAll('.cell').forEach(c => 
             c.style.outline = 'none'
         );
         
-        // Thicker highlight around all sides of the cell
+        // Highlight selected cell
         cell.style.outline = '3px solid #4CAF50';
-        cell.style.outlineOffset = '-3px'; // This ensures the outline is inside the cell
-        
-        // Make cell editable immediately
+        cell.style.outlineOffset = '-3px';
+        selectedCell = cell;
+    });
+
+    // Double click for editing
+    cell.addEventListener('dblclick', (e) => {
         const content = cell.querySelector('.cell-content');
         const cellId = cell.querySelector('.cell-id');
         
-        // Hide cell ID immediately when cell is selected
+        // Hide cell ID when editing starts
         cellId.style.display = 'none';
         
         // Only create input if it doesn't exist
@@ -884,7 +888,7 @@ function makeEditable(cell) {
                 content.innerHTML = newText || '';
                 cellData.set(cell.dataset.id, newText);
                 if (!newText) {
-                    cellId.style.display = 'block'; // Only show cell ID if cell is empty after editing
+                    cellId.style.display = 'block'; // Show cell ID if empty
                 }
             };
             
@@ -1174,16 +1178,10 @@ function selectCell(e) {
     if (!isViewMode) return;
     if (selectedCell) {
         selectedCell.style.outline = 'none';
-        const prevCellId = selectedCell.querySelector('.cell-id');
-        if (!selectedCell.querySelector('.cell-content').textContent) {
-            prevCellId.style.display = 'block';
-        }
     }
     selectedCell = e.currentTarget;
     selectedCell.style.outline = '3px solid #4CAF50';
     selectedCell.style.outlineOffset = '-3px';
-    const cellId = selectedCell.querySelector('.cell-id');
-    cellId.style.display = 'none';
 }
 
 function saveToCell() {
