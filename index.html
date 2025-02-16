@@ -355,16 +355,21 @@
 .color-options {
     margin-top: 12px;
     display: flex;
-    gap: 8px;
+    justify-content: flex-start; /* Left align */
 }
 
 .option-button {
     padding: 4px 8px;
-    background: #1a1a1a;
-    border: 1px solid #444;
-    color: white;
+    background: transparent;
+    border: none;
+    color: #666; /* Excel-like gray color */
     cursor: pointer;
-    flex: 1;
+    text-align: left;
+    font-size: 12px;
+}
+
+.option-button:hover {
+    text-decoration: underline;
 }
         
 /* Range Text Box */
@@ -515,8 +520,7 @@
                             <div class="recent-colors-grid"></div>
                         </div>
                         <div class="color-options">
-                            <button class="option-button no-fill">No Fill</button>
-                            <button class="option-button more-colors">More Colors...</button>
+                           <button class="option-button more-colors">More Colors...</button>
                         </div>
                     </div>
                 </div>
