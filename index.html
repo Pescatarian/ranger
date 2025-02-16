@@ -1395,9 +1395,9 @@ async function saveToCell() {
     
     // Store in cell
     const content = selectedCell.querySelector('.cell-content');
-    content.innerHTML = '📝';
+    content.innerHTML = ''; // Changed this line - no more 📝 icon
     content.dataset.range = JSON.stringify(cellData);
-    content.classList.add('has-range'); // Add this line to add the indicator class
+    content.classList.add('has-range');
     
     // Add hover functionality
     addCellHover(selectedCell);
