@@ -21,13 +21,13 @@
 
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(40, 65px); /* Changed from 8 to 40, and 100px to 65px */
-    gap: 1px;
+    grid-template-columns: repeat(40, 65px);
+    gap: 0; /* Changed from 1px to 0 */
     background-color: #2d2d2d;
     padding: 1px;
     width: fit-content;
-    height: fit-content; /* Changed from aspect-ratio: 1 */
-    overflow: auto; /* Add scrolling */
+    height: fit-content;
+    overflow: auto;
 }
 
 .cell {
@@ -837,9 +837,53 @@ function createGrid() {
             cell.addEventListener('dragover', handleDragOver);
             cell.addEventListener('drop', handleDrop);
             
+            makeEditable(cell); // Add editing functionality
+            
             grid.appendChild(cell);
         }
     }
+}
+
+function makeEditable(cell) {
+    // Create input element when cell is double-clicked
+    cell.addEventListener('dblclick', (e) => {
+        if (cell.querySelector('input')) return; // Prevent multiple inputs
+        
+        const content = cell.querySelector('.cell-content');
+        const currentText = content.textContent;
+        content.innerHTML = ''; // Clear the cell content
+        
+        // Create and configure input element
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentText === '📝' ? '' : currentText;
+        input.style.width = '100%';
+        input.style.height = '100%';
+        input.style.border = 'none';
+        input.style.padding = '0 2px';
+        input.style.backgroundColor = '#1a1a1a';
+        input.style.color = '#4CAF50';
+        
+        // Add input to cell
+        content.appendChild(input);
+        input.focus();
+        
+        // Handle input completion
+        const finishEditing = () => {
+            const newText = input.value;
+            content.innerHTML = newText || ''; // Set new text or empty string
+            cellData.set(cell.dataset.id, newText); // Store the text
+        };
+        
+        // Save on enter key or when clicking away
+        input.addEventListener('blur', finishEditing);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                input.blur();
+            }
+        });
+    });
 }
 
 function createRangeGrid() {
