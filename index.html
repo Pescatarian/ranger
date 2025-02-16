@@ -58,6 +58,49 @@
     opacity: 0.7;
 }
 
+.context-menu {
+    position: fixed;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    padding: 5px 0;
+    z-index: 1000;
+    min-width: 150px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.context-menu-item {
+    padding: 8px 15px;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.context-menu-item:hover {
+    background: #3d3d3d;
+}
+
+.menu-icon {
+    width: 20px;
+    text-align: center;
+}
+
+.has-submenu .submenu-arrow {
+    margin-left: auto;
+    font-size: 10px;
+}
+
+.color-submenu {
+    position: fixed;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    padding: 8px;
+    z-index: 1001;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+        
 /* Button Styles */
 .button {
     padding: 8px 16px;
@@ -838,6 +881,7 @@ function createGrid() {
             cell.addEventListener('drop', handleDrop);
             
             makeEditable(cell); // Add editing functionality
+            addContextMenu(cell); // Add right-click menu functionality
             
             grid.appendChild(cell);
         }
@@ -900,6 +944,60 @@ function makeEditable(cell) {
                 }
             });
         }
+    });
+}
+
+function addContextMenu(cell) {
+    cell.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        
+        // Remove any existing context menus
+        document.querySelectorAll('.context-menu').forEach(menu => menu.remove());
+        
+        const menu = document.createElement('div');
+        menu.className = 'context-menu';
+        
+        const menuItems = [
+            { text: 'Fill Color', icon: '🎨', submenu: true },
+            { text: 'Text Color', icon: 'A', submenu: true },
+            { text: 'Cut', icon: '✂️' },
+            { text: 'Copy', icon: '📄' },
+            { text: 'Paste', icon: '📋' }
+        ];
+        
+        menuItems.forEach(item => {
+            const menuItem = document.createElement('div');
+            menuItem.className = 'context-menu-item';
+            if (item.submenu) {
+                menuItem.classList.add('has-submenu');
+            }
+            menuItem.innerHTML = `
+                <span class="menu-icon">${item.icon}</span>
+                <span class="menu-text">${item.text}</span>
+                ${item.submenu ? '<span class="submenu-arrow">▶</span>' : ''}
+            `;
+            
+            if (item.submenu) {
+                menuItem.addEventListener('mouseover', () => {
+                    showColorSubmenu(menuItem, item.text === 'Fill Color');
+                });
+            } else {
+                menuItem.onclick = () => handleContextMenuAction(item.text, cell);
+            }
+            
+            menu.appendChild(menuItem);
+        });
+        
+        // Position the menu at cursor
+        menu.style.left = `${e.pageX}px`;
+        menu.style.top = `${e.pageY}px`;
+        
+        document.body.appendChild(menu);
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.context-menu, .color-submenu').forEach(m => m.remove());
+        }, { once: true });
     });
 }
 
