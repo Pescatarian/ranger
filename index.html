@@ -1444,7 +1444,12 @@ function updateCellContent(cellId) {
     const cell = document.querySelector(`[data-id="${cellId}"]`);
     const content = cell.querySelector('.cell-content');
     const data = cellData.get(cellId);
-    content.innerHTML = data ? '📝' : '';
+    
+    if (data) {
+        content.textContent = data;
+    } else {
+        content.innerHTML = '';
+    }
 }
 
 // Weight and Color Settings Functions
