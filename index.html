@@ -630,6 +630,11 @@ let isDragging = false;
 let dragStartX, dragStartY;
 let clipboardData = null;
 
+// Create a single reusable popup element
+const hoverPopup = document.createElement('div');
+hoverPopup.className = 'range-popup';
+document.body.appendChild(hoverPopup);
+        
 // Color Palettes
 const themeColors = [
     ['#FFFFFF', '#000000', '#4472C4', '#5B9BD5', '#ED7D31', '#70AD47', '#7030A0', '#00B0F0', '#FFC000', '#FFD966'],
@@ -1481,40 +1486,28 @@ function convertRangeToImage() {
 }
 
 function addCellHover(cell) {
-    const popup = document.createElement('div');
-    popup.className = 'range-popup';
-    popup.style.cssText = `
-        position: fixed;
-        background: #fff;
-        border: 1px solid #444;
-        border-radius: 4px;
-        padding: 5px;
-        display: none;
-        z-index: 1000;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    `;
-    
     cell.addEventListener('mouseenter', () => {
-        const rangeData = JSON.parse(cell.querySelector('.cell-content').dataset.range);
+        const content = cell.querySelector('.cell-content');
+        if (!content.dataset.range) return;
+
+        const rangeData = JSON.parse(content.dataset.range);
         if (rangeData && rangeData.image) {
             const img = new Image();
             img.src = rangeData.image;
-            popup.innerHTML = '';
-            popup.appendChild(img);
-            
-            document.body.appendChild(popup);
+            hoverPopup.innerHTML = '';
+            hoverPopup.appendChild(img);
             
             // Position popup
             const cellRect = cell.getBoundingClientRect();
-            popup.style.left = `${cellRect.right + 5}px`;
-            popup.style.top = `${cellRect.top}px`;
-            popup.style.display = 'block';
+            hoverPopup.style.left = `${cellRect.right + 5}px`;
+            hoverPopup.style.top = `${cellRect.top}px`;
+            hoverPopup.style.display = 'block';
         }
     });
     
     cell.addEventListener('mouseleave', () => {
-        popup.style.display = 'none';
-        popup.remove();
+        hoverPopup.style.display = 'none';
+        hoverPopup.innerHTML = '';
     });
 }
 
