@@ -1427,24 +1427,55 @@ function handleDragOver(e) {
 function handleDrop(e) {
     if (!isViewMode) return;
     e.preventDefault();
-    const sourceId = e.dataTransfer.getData('text/plain');
-    const targetId = e.target.closest('.cell').dataset.id;
     
-    const sourceData = cellData.get(sourceId);
-    const targetData = cellData.get(targetId);
+    const sourceCell = document.querySelector(`[data-id="${e.dataTransfer.getData('text/plain')}"]`);
+    const targetCell = e.target.closest('.cell');
     
-    if (sourceData) cellData.set(targetId, sourceData);
-    if (targetData) cellData.set(sourceId, targetData);
+    if (!sourceCell || !targetCell) return;
     
-    updateCellContent(sourceId);
-    updateCellContent(targetId);
+    // Store source cell data
+    const sourceContent = sourceCell.querySelector('.cell-content');
+    const sourceData = {
+        text: sourceContent.textContent,
+        backgroundColor: sourceCell.style.backgroundColor,
+        textColor: sourceContent.style.color,
+        rangeData: sourceContent.dataset.range,
+        hasRange: sourceContent.classList.contains('has-range')
+    };
+    
+    // Store target cell data
+    const targetContent = targetCell.querySelector('.cell-content');
+    const targetData = {
+        text: targetContent.textContent,
+        backgroundColor: targetCell.style.backgroundColor,
+        textColor: targetContent.style.color,
+        rangeData: targetContent.dataset.range,
+        hasRange: targetContent.classList.contains('has-range')
+    };
+    
+    // Swap data
+    clearCell(sourceCell);
+    clearCell(targetCell);
+    
+    if (Object.keys(targetData).length > 0) {
+        pasteCell(sourceCell, targetData);
+    }
+    
+    if (Object.keys(sourceData).length > 0) {
+        pasteCell(targetCell, sourceData);
+    }
 }
 
 function updateCellContent(cellId) {
     const cell = document.querySelector(`[data-id="${cellId}"]`);
     const content = cell.querySelector('.cell-content');
     const data = cellData.get(cellId);
-    content.innerHTML = data ? '📝' : '';
+    
+    if (data) {
+        content.textContent = data;
+    } else {
+        content.innerHTML = '';
+    }
 }
 
 // Weight and Color Settings Functions
@@ -1486,7 +1517,12 @@ function convertRangeToImage() {
 }
 
 function addCellHover(cell) {
-    cell.addEventListener('mouseenter', () => {
+    // Remove existing listeners if any
+    cell.removeEventListener('mouseenter', cell._mouseenterHandler);
+    cell.removeEventListener('mouseleave', cell._mouseleaveHandler);
+    
+    // Create new handlers and store references
+    cell._mouseenterHandler = () => {
         const content = cell.querySelector('.cell-content');
         if (!content.dataset.range) return;
 
@@ -1503,12 +1539,16 @@ function addCellHover(cell) {
             hoverPopup.style.top = `${cellRect.top}px`;
             hoverPopup.style.display = 'block';
         }
-    });
+    };
     
-    cell.addEventListener('mouseleave', () => {
+    cell._mouseleaveHandler = () => {
         hoverPopup.style.display = 'none';
         hoverPopup.innerHTML = '';
-    });
+    };
+    
+    // Add new listeners
+    cell.addEventListener('mouseenter', cell._mouseenterHandler);
+    cell.addEventListener('mouseleave', cell._mouseleaveHandler);
 }
 
 function copyCell(cell) {
