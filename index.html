@@ -1021,38 +1021,43 @@ function createRangeGrid() {
 }
 
 function showColorSubmenu(menuItem, isFillColor) {
-    // Remove any existing color submenus
     document.querySelectorAll('.color-submenu').forEach(sub => sub.remove());
     
     const submenu = document.createElement('div');
     submenu.className = 'color-submenu';
     
-    // Theme Colors (similar to Excel)
+    // Updated theme colors to match Excel's 10x6 grid
     const themeColors = [
-        ['#FFFFFF', '#000000', '#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5', '#70AD47'],
-        ['#F2F2F2', '#7F7F7F', '#D9E2F3', '#FBE5D6', '#EDEDED', '#FFF2CC', '#DEEBF7', '#E2EFD9'],
-        ['#D8D8D8', '#595959', '#B4C6E7', '#F7CBAC', '#DBDBDB', '#FFE699', '#BDD7EE', '#C6E0B4'],
-        ['#BFBFBF', '#3F3F3F', '#8EA9DB', '#F4B183', '#C9C9C9', '#FFD966', '#9CC3E5', '#A9D08E'],
-        ['#A5A5A5', '#262626', '#2F5496', '#C55A11', '#7B7B7B', '#BF9000', '#2E75B5', '#538135'],
-        ['#7F7F7F', '#0C0C0C', '#1F3864', '#833C0C', '#525252', '#7F6000', '#1F4E79', '#375623']
+        ['#FFFFFF', '#000000', '#E7E6E6', '#44546A', '#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5', '#70AD47'],
+        ['#F2F2F2', '#7F7F7F', '#D0CECE', '#D5DCE4', '#D9E2F3', '#FBE5D6', '#EDEDED', '#FFF2CC', '#DEEBF7', '#E2EFD9'],
+        ['#D8D8D8', '#595959', '#AEABAB', '#ACB9CA', '#B4C6E7', '#F7CBAC', '#DBDBDB', '#FFE699', '#BDD7EE', '#C6E0B4'],
+        ['#BFBFBF', '#3F3F3F', '#757070', '#8496B0', '#8EA9DB', '#F4B183', '#C9C9C9', '#FFD966', '#9CC3E5', '#A9D08E'],
+        ['#A5A5A5', '#262626', '#3A3838', '#323F4F', '#2F5496', '#C55A11', '#7B7B7B', '#BF9000', '#2E75B5', '#538135'],
+        ['#7F7F7F', '#0C0C0C', '#171717', '#222A35', '#1F3864', '#833C0C', '#525252', '#7F6000', '#1F4E79', '#375623']
     ];
 
-    // Create color grid
     const colorGrid = document.createElement('div');
-    colorGrid.style.display = 'grid';
-    colorGrid.style.gridTemplateColumns = 'repeat(8, 20px)';
-    colorGrid.style.gap = '2px';
-   
+    colorGrid.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(10, 20px);
+        gap: 1px;
+        padding: 2px;
+    `;
+
+    // Create all swatches at once using DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
     themeColors.forEach(row => {
         row.forEach(color => {
-            const colorSwatch = document.createElement('div');
-            colorSwatch.style.width = '20px';
-            colorSwatch.style.height = '20px';
-            colorSwatch.style.backgroundColor = color;
-            colorSwatch.style.cursor = 'pointer';
-            colorSwatch.style.border = '1px solid #444';
+            const swatch = document.createElement('div');
+            swatch.style.cssText = `
+                width: 20px;
+                height: 20px;
+                background-color: ${color};
+                cursor: pointer;
+                border: 1px solid #444;
+            `;
             
-            colorSwatch.onclick = () => {
+            swatch.onclick = () => {
                 const cell = selectedCell;
                 if (isFillColor) {
                     cell.style.backgroundColor = color;
@@ -1060,14 +1065,14 @@ function showColorSubmenu(menuItem, isFillColor) {
                     const content = cell.querySelector('.cell-content');
                     content.style.color = color;
                 }
-                // Close menus after selection
                 document.querySelectorAll('.context-menu, .color-submenu').forEach(m => m.remove());
             };
             
-            colorGrid.appendChild(colorSwatch);
+            fragment.appendChild(swatch);
         });
     });
 
+    colorGrid.appendChild(fragment);
     submenu.appendChild(colorGrid);
 
     // Position submenu next to the menu item
