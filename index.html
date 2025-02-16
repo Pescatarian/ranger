@@ -468,6 +468,16 @@
     max-width: 300px;
     height: auto;
 }
+
+.cell-content.has-range::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    border-style: solid;
+    border-width: 0 8px 8px 0;
+    border-color: transparent #4CAF50 transparent transparent;
+}
         
      </style>
 </head>
@@ -944,7 +954,8 @@ function addContextMenu(cell) {
         const menuItems = [
             { text: 'Fill Color', icon: '🎨', submenu: true },
             { text: 'Text Color', icon: 'A', submenu: true },
-            { text: 'Reset Format', icon: '↺', submenu: false }, // Added Reset option
+            { text: 'Reset Format', icon: '↺', submenu: false },
+            { text: 'Clear Range', icon: '🗑️' }, // Added Clear Range option
             { text: 'Cut', icon: '✂️' },
             { text: 'Copy', icon: '📄' },
             { text: 'Paste', icon: '📋' }
@@ -1081,8 +1092,17 @@ function showColorSubmenu(menuItem, isFillColor) {
 function handleContextMenuAction(action, cell) {
     switch(action) {
         case 'Reset Format':
-            cell.style.backgroundColor = ''; // Reset background color
-            cell.querySelector('.cell-content').style.color = ''; // Reset text color
+            cell.style.backgroundColor = '';
+            cell.querySelector('.cell-content').style.color = '';
+            break;
+        case 'Clear Range':
+            const content = cell.querySelector('.cell-content');
+            if (content.dataset.range) {
+                content.innerHTML = '';
+                content.dataset.range = '';
+                content.classList.remove('has-range'); // Add this line to remove the indicator
+                cellData.delete(cell.dataset.id);
+            }
             break;
         case 'Cut':
             clipboardData = {
@@ -1095,26 +1115,8 @@ function handleContextMenuAction(action, cell) {
             cell.querySelector('.cell-content').style.color = '';
             cellData.delete(cell.dataset.id);
             break;
-        case 'Copy':
-            clipboardData = {
-                text: cell.querySelector('.cell-content').textContent,
-                backgroundColor: cell.style.backgroundColor,
-                textColor: cell.querySelector('.cell-content').style.color
-            };
-            break;
-        case 'Paste':
-            if (clipboardData) {
-                const content = cell.querySelector('.cell-content');
-                content.textContent = clipboardData.text;
-                cell.style.backgroundColor = clipboardData.backgroundColor;
-                content.style.color = clipboardData.textColor;
-                if (clipboardData.text) {
-                    cellData.set(cell.dataset.id, clipboardData.text);
-                }
-            }
-            break;
+        // ... rest of the cases ...
     }
-    // Close context menu after action
     document.querySelectorAll('.context-menu').forEach(m => m.remove());
 }
   
@@ -1395,6 +1397,7 @@ async function saveToCell() {
     const content = selectedCell.querySelector('.cell-content');
     content.innerHTML = '📝';
     content.dataset.range = JSON.stringify(cellData);
+    content.classList.add('has-range'); // Add this line to add the indicator class
     
     // Add hover functionality
     addCellHover(selectedCell);
