@@ -50,14 +50,6 @@
     justify-content: center;
 }
 
-.cell-id {
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    font-size: 12px;
-    opacity: 0.7;
-}
-
 .context-menu {
     position: fixed;
     background: #2d2d2d;
@@ -838,13 +830,8 @@ function createGrid() {
             const cellContent = document.createElement('div');
             cellContent.className = 'cell-content';
             
-            const cellIdSpan = document.createElement('span');
-            cellIdSpan.className = 'cell-id';
-            cellIdSpan.textContent = cellId;
-            
-            cell.appendChild(cellIdSpan);
             cell.appendChild(cellContent);
-            cell.dataset.id = cellId;
+            cell.dataset.id = cellId; // Keep this for functionality
             
             cell.addEventListener('click', selectCell);
             cell.setAttribute('draggable', true);
@@ -852,8 +839,8 @@ function createGrid() {
             cell.addEventListener('dragover', handleDragOver);
             cell.addEventListener('drop', handleDrop);
             
-            makeEditable(cell); // Add editing functionality
-            addContextMenu(cell); // Add right-click menu functionality
+            makeEditable(cell);
+            addContextMenu(cell);
             
             grid.appendChild(cell);
         }
@@ -863,25 +850,21 @@ function createGrid() {
 function makeEditable(cell) {
     // Single click for selection only
     cell.addEventListener('click', (e) => {
-        // Remove previous selections
         document.querySelectorAll('.cell').forEach(c => 
             c.style.outline = 'none'
         );
         
-        // Highlight selected cell
         cell.style.outline = '3px solid #4CAF50';
         cell.style.outlineOffset = '-3px';
         selectedCell = cell;
     });
 
-    // Add delete/backspace handler
+    // Add keyboard shortcuts handler
     document.addEventListener('keydown', (e) => {
         if (selectedCell && (e.key === 'Delete' || e.key === 'Backspace') && !selectedCell.querySelector('input')) {
             e.preventDefault();
             const content = selectedCell.querySelector('.cell-content');
-            const cellId = selectedCell.querySelector('.cell-id');
             content.textContent = '';
-            cellId.style.display = 'block';
             cellData.delete(selectedCell.dataset.id);
         }
     }, { passive: false });
@@ -889,10 +872,6 @@ function makeEditable(cell) {
     // Double click for editing
     cell.addEventListener('dblclick', (e) => {
         const content = cell.querySelector('.cell-content');
-        const cellId = cell.querySelector('.cell-id');
-        
-        // Hide cell ID when editing starts
-        cellId.style.display = 'none';
         
         // Only create input if it doesn't exist
         if (!cell.querySelector('input')) {
@@ -918,10 +897,8 @@ function makeEditable(cell) {
                 content.innerHTML = newText || '';
                 if (newText) {
                     cellData.set(cell.dataset.id, newText);
-                    cellId.style.display = 'none';
                 } else {
                     cellData.delete(cell.dataset.id);
-                    cellId.style.display = 'block';
                 }
             };
             
@@ -931,7 +908,6 @@ function makeEditable(cell) {
                     e.preventDefault();
                     input.blur();
                 }
-                // Allow normal input behavior for backspace/delete when editing
                 e.stopPropagation();
             });
         }
@@ -1100,7 +1076,7 @@ function handleContextMenuAction(action, cell) {
             cell.querySelector('.cell-content').textContent = '';
             cell.style.backgroundColor = '';
             cell.querySelector('.cell-content').style.color = '';
-            cell.querySelector('.cell-id').style.display = 'block';
+            cellData.delete(cell.dataset.id);
             break;
         case 'Copy':
             clipboardData = {
@@ -1116,9 +1092,8 @@ function handleContextMenuAction(action, cell) {
                 cell.style.backgroundColor = clipboardData.backgroundColor;
                 content.style.color = clipboardData.textColor;
                 if (clipboardData.text) {
-                    cell.querySelector('.cell-id').style.display = 'none';
+                    cellData.set(cell.dataset.id, clipboardData.text);
                 }
-                cellData.set(cell.dataset.id, clipboardData.text);
             }
             break;
     }
