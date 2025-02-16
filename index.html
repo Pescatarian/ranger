@@ -823,22 +823,17 @@ function initializeDragging() {
     });
 }
 
-function startDragging(e) {
-    const panel = e.target.closest('.color-picker-panel');
-    isDragging = true;
-    dragStartX = e.clientX - panel.offsetLeft;
-    dragStartY = e.clientY - panel.offsetTop;
-
-    const moveHandler = (e) => {
-        if (isDragging) {
-            const x = e.clientX - dragStartX;
-            const y = e.clientY - dragStartY;
-            panel.style.left = `${x}px`;
-            panel.style.top = `${y}px`;
-            colorPickerPosition = { x, y };
-            localStorage.setItem('colorPickerPosition', JSON.stringify(colorPickerPosition));
-        }
-    };
+function handleDragStart(e) {
+    if (!isViewMode) return;
+    const cell = e.target.closest('.cell');
+    if (!cell) return;
+    
+    e.dataTransfer.setData('text/plain', cell.dataset.id);
+    // Clear any existing outline when starting drag
+    if (selectedCell) {
+        selectedCell.style.outline = 'none';
+    }
+}
 
     const upHandler = () => {
         isDragging = false;
@@ -1433,6 +1428,9 @@ function handleDrop(e) {
     
     if (!sourceCell || !targetCell) return;
     
+    const sourceCellId = sourceCell.dataset.id;
+    const targetCellId = targetCell.dataset.id;
+    
     // Store source cell data
     const sourceContent = sourceCell.querySelector('.cell-content');
     const sourceData = {
@@ -1459,10 +1457,16 @@ function handleDrop(e) {
     
     if (Object.keys(targetData).length > 0) {
         pasteCell(sourceCell, targetData);
+        if (targetData.text) {
+            cellData.set(sourceCellId, targetData.text);
+        }
     }
     
     if (Object.keys(sourceData).length > 0) {
         pasteCell(targetCell, sourceData);
+        if (sourceData.text) {
+            cellData.set(targetCellId, sourceData.text);
+        }
     }
 }
 
