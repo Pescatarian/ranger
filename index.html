@@ -312,8 +312,9 @@
 .recent-colors-grid {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
-    gap: 0;  /* Remove gap */
+    gap: 0;
     margin-top: 4px;
+    position: relative; /* Add this */
 }
 
 .color-swatch {
@@ -321,11 +322,13 @@
     aspect-ratio: 1;
     border: none;
     cursor: pointer;
+    position: relative; /* Add this */
 }
 
 .color-swatch:hover {
-    border: 1px solid #fff;
-    z-index: 1;  /* Keep this to make sure the border shows on top */
+    outline: 1px solid #fff; /* Use outline instead of border */
+    outline-offset: 0;
+    z-index: 1;
 }
 
 .color-swatch-button {
