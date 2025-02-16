@@ -319,16 +319,13 @@
 .color-swatch {
     width: 100%;
     aspect-ratio: 1;
-    border: none;  /* Remove border as it adds space */
+    border: none;
     cursor: pointer;
-    transition: transform 0.1s ease;
 }
 
-/* Only show border on hover */
 .color-swatch:hover {
-    transform: scale(1.1);
     border: 1px solid #fff;
-    z-index: 1; /* Make sure hover appears above other swatches */
+    z-index: 1;  /* Keep this to make sure the border shows on top */
 }
 
 .color-swatch-button {
