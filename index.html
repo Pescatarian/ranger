@@ -21,18 +21,18 @@
 
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(8, 100px);
+    grid-template-columns: repeat(40, 65px); /* Changed from 8 to 40, and 100px to 65px */
     gap: 1px;
     background-color: #2d2d2d;
     padding: 1px;
     width: fit-content;
-    aspect-ratio: 1;
+    height: fit-content; /* Changed from aspect-ratio: 1 */
+    overflow: auto; /* Add scrolling */
 }
 
-/* Cell Styles */
 .cell {
-    width: 100px;
-    height: 100px;
+    width: 65px; /* Changed from 100px */
+    height: 28px; /* Changed from 100px */
     background-color: #1a1a1a;
     border: 1px solid #444;
     display: flex;
@@ -70,6 +70,11 @@
     transition: all 0.3s ease;
 }
 
+.button {
+    position: relative; /* Ensure button content is above any background */
+    z-index: 1001; /* Higher than the controls container */
+}
+        
 .button.active {
     background-color: #45a049;
     box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
@@ -175,7 +180,8 @@
     right: 20px;
     display: flex;
     gap: 10px;
-    z-index: 1000;
+    z-index: 1000; /* Ensure buttons are above everything */
+    background: transparent; /* Remove any background */
 }
 
 /* Row Controls */
@@ -808,8 +814,8 @@ function startDragging(e) {
 // Grid Creation Functions
 function createGrid() {
     const grid = document.getElementById('grid');
-    for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
+    for (let i = 0; i < 40; i++) {
+        for (let j = 0; j < 40; j++) {
             const cell = document.createElement('div');
             cell.className = 'cell';
             const cellId = `${String.fromCharCode(65 + j)}${i + 1}`;
