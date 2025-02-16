@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Ranger</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
        body {
     background-color: #1a1a1a;
@@ -452,6 +453,22 @@
 .row-toggle:hover:not(.active) {
     background-color: #3d3d3d;
 }
+
+.range-popup {
+    background: #fff;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 5px;
+    position: fixed;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.range-popup img {
+    max-width: 300px;
+    height: auto;
+}
+        
      </style>
 </head>
 <body>
@@ -1353,7 +1370,7 @@ function selectCell(e) {
     selectedCell.style.outlineOffset = '-3px';
 }
 
-function saveToCell() {
+async function saveToCell() {
     if (!selectedCell) {
         alert('Please select a cell first');
         return;
@@ -1365,9 +1382,22 @@ function saveToCell() {
         return;
     }
     
-    cellData.set(selectedCell.dataset.id, rangeText);
+    // Convert range to image
+    const rangeImage = await convertRangeToImage();
+    
+    // Save both text and image
+    const cellData = {
+        text: rangeText,
+        image: rangeImage
+    };
+    
+    // Store in cell
     const content = selectedCell.querySelector('.cell-content');
     content.innerHTML = '📝';
+    content.dataset.range = JSON.stringify(cellData);
+    
+    // Add hover functionality
+    addCellHover(selectedCell);
     
     toggleRangeBuilder();
 }
@@ -1444,6 +1474,52 @@ function loadSavedColors() {
     }
 }
 
+// Add these new functions
+function convertRangeToImage() {
+    const rangeGrid = document.getElementById('rangeGrid');
+    return html2canvas(rangeGrid).then(canvas => {
+        return canvas.toDataURL('image/png');
+    });
+}
+
+function addCellHover(cell) {
+    const popup = document.createElement('div');
+    popup.className = 'range-popup';
+    popup.style.cssText = `
+        position: fixed;
+        background: #fff;
+        border: 1px solid #444;
+        border-radius: 4px;
+        padding: 5px;
+        display: none;
+        z-index: 1000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    `;
+    
+    cell.addEventListener('mouseenter', () => {
+        const rangeData = JSON.parse(cell.querySelector('.cell-content').dataset.range);
+        if (rangeData && rangeData.image) {
+            const img = new Image();
+            img.src = rangeData.image;
+            popup.innerHTML = '';
+            popup.appendChild(img);
+            
+            document.body.appendChild(popup);
+            
+            // Position popup
+            const cellRect = cell.getBoundingClientRect();
+            popup.style.left = `${cellRect.right + 5}px`;
+            popup.style.top = `${cellRect.top}px`;
+            popup.style.display = 'block';
+        }
+    });
+    
+    cell.addEventListener('mouseleave', () => {
+        popup.style.display = 'none';
+        popup.remove();
+    });
+}
+        
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
     createGrid();
