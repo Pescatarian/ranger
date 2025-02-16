@@ -873,6 +873,18 @@ function makeEditable(cell) {
         selectedCell = cell;
     });
 
+    // Add keydown listener for delete/backspace
+    document.addEventListener('keydown', (e) => {
+        if (selectedCell && (e.key === 'Delete' || e.key === 'Backspace') && !selectedCell.querySelector('input')) {
+            e.preventDefault();
+            const content = selectedCell.querySelector('.cell-content');
+            const cellId = selectedCell.querySelector('.cell-id');
+            content.textContent = '';
+            cellId.style.display = 'block';
+            cellData.delete(selectedCell.dataset.id);
+        }
+    }, { passive: false });
+
     // Double click for editing
     cell.addEventListener('dblclick', (e) => {
         const content = cell.querySelector('.cell-content');
@@ -886,13 +898,15 @@ function makeEditable(cell) {
             const input = document.createElement('input');
             input.type = 'text';
             input.value = content.textContent === '📝' ? '' : content.textContent;
-            input.style.width = '100%';
-            input.style.height = '100%';
-            input.style.border = 'none';
-            input.style.padding = '0 2px';
-            input.style.backgroundColor = '#1a1a1a';
-            input.style.color = '#4CAF50';
-            input.style.textAlign = 'center';
+            input.style.cssText = `
+                width: 100%;
+                height: 100%;
+                border: none;
+                padding: 0 2px;
+                background-color: #1a1a1a;
+                color: #4CAF50;
+                text-align: center;
+            `;
             
             content.innerHTML = '';
             content.appendChild(input);
@@ -901,9 +915,12 @@ function makeEditable(cell) {
             const finishEditing = () => {
                 const newText = input.value;
                 content.innerHTML = newText || '';
-                cellData.set(cell.dataset.id, newText);
-                if (!newText) {
-                    cellId.style.display = 'block'; // Show cell ID if empty
+                if (newText) {
+                    cellData.set(cell.dataset.id, newText);
+                    cellId.style.display = 'none';
+                } else {
+                    cellData.delete(cell.dataset.id);
+                    cellId.style.display = 'block';
                 }
             };
             
@@ -913,6 +930,8 @@ function makeEditable(cell) {
                     e.preventDefault();
                     input.blur();
                 }
+                // Allow normal input behavior for backspace/delete when editing
+                e.stopPropagation();
             });
         }
     });
@@ -1023,7 +1042,7 @@ function showColorSubmenu(menuItem, isFillColor) {
     colorGrid.style.display = 'grid';
     colorGrid.style.gridTemplateColumns = 'repeat(8, 20px)';
     colorGrid.style.gap = '2px';
-
+   
     themeColors.forEach(row => {
         row.forEach(color => {
             const colorSwatch = document.createElement('div');
