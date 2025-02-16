@@ -1030,6 +1030,87 @@ function createRangeGrid() {
     document.addEventListener('mouseup', endRangeSelection);
 }
 
+function showColorSubmenu(menuItem, isFillColor) {
+    // Remove any existing color submenus
+    document.querySelectorAll('.color-submenu').forEach(sub => sub.remove());
+    
+    const submenu = document.createElement('div');
+    submenu.className = 'color-submenu';
+    
+    // Theme Colors (similar to Excel)
+    const themeColors = [
+        ['#FFFFFF', '#000000', '#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5', '#70AD47'],
+        ['#F2F2F2', '#7F7F7F', '#D9E2F3', '#FBE5D6', '#EDEDED', '#FFF2CC', '#DEEBF7', '#E2EFD9'],
+        ['#D8D8D8', '#595959', '#B4C6E7', '#F7CBAC', '#DBDBDB', '#FFE699', '#BDD7EE', '#C6E0B4'],
+        ['#BFBFBF', '#3F3F3F', '#8EA9DB', '#F4B183', '#C9C9C9', '#FFD966', '#9CC3E5', '#A9D08E'],
+        ['#A5A5A5', '#262626', '#2F5496', '#C55A11', '#7B7B7B', '#BF9000', '#2E75B5', '#538135'],
+        ['#7F7F7F', '#0C0C0C', '#1F3864', '#833C0C', '#525252', '#7F6000', '#1F4E79', '#375623']
+    ];
+
+    // Create color grid
+    const colorGrid = document.createElement('div');
+    colorGrid.style.display = 'grid';
+    colorGrid.style.gridTemplateColumns = 'repeat(8, 20px)';
+    colorGrid.style.gap = '2px';
+
+    themeColors.forEach(row => {
+        row.forEach(color => {
+            const colorSwatch = document.createElement('div');
+            colorSwatch.style.width = '20px';
+            colorSwatch.style.height = '20px';
+            colorSwatch.style.backgroundColor = color;
+            colorSwatch.style.cursor = 'pointer';
+            colorSwatch.style.border = '1px solid #444';
+            
+            colorSwatch.onclick = () => {
+                const cell = selectedCell;
+                if (isFillColor) {
+                    cell.style.backgroundColor = color;
+                } else {
+                    const content = cell.querySelector('.cell-content');
+                    content.style.color = color;
+                }
+                // Close menus after selection
+                document.querySelectorAll('.context-menu, .color-submenu').forEach(m => m.remove());
+            };
+            
+            colorGrid.appendChild(colorSwatch);
+        });
+    });
+
+    submenu.appendChild(colorGrid);
+
+    // Position submenu next to the menu item
+    const rect = menuItem.getBoundingClientRect();
+    submenu.style.left = `${rect.right}px`;
+    submenu.style.top = `${rect.top}px`;
+
+    document.body.appendChild(submenu);
+}
+
+function handleContextMenuAction(action, cell) {
+    switch(action) {
+        case 'Cut':
+            navigator.clipboard.writeText(cell.querySelector('.cell-content').textContent);
+            cell.querySelector('.cell-content').textContent = '';
+            break;
+        case 'Copy':
+            navigator.clipboard.writeText(cell.querySelector('.cell-content').textContent);
+            break;
+        case 'Paste':
+            navigator.clipboard.readText().then(text => {
+                cell.querySelector('.cell-content').textContent = text;
+                // Hide cell ID if there's content
+                if (text) {
+                    cell.querySelector('.cell-id').style.display = 'none';
+                }
+            });
+            break;
+    }
+    // Close context menu after action
+    document.querySelectorAll('.context-menu').forEach(m => m.remove());
+}
+        
 // Range Handling Functions
 function toggleRangeCell(cell) {
     const activeRowToggle = document.querySelector(`.row-toggle[data-row="${activeRow + 1}"]`);
