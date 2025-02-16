@@ -853,42 +853,6 @@ function startDragging(e) {
 // Grid Creation Functions
 function createGrid() {
     const grid = document.getElementById('grid');
-    
-    // Add event listeners to grid container
-    grid.addEventListener('click', e => {
-        const cell = e.target.closest('.cell');
-        if (cell) selectCell(e);
-    });
-    
-    grid.addEventListener('dragstart', e => {
-        const cell = e.target.closest('.cell');
-        if (cell) handleDragStart(e);
-    });
-    
-    grid.addEventListener('dragover', e => {
-        const cell = e.target.closest('.cell');
-        if (cell) handleDragOver(e);
-    });
-    
-    grid.addEventListener('drop', e => {
-        const cell = e.target.closest('.cell');
-        if (cell) handleDrop(e);
-    });
-    
-    grid.addEventListener('contextmenu', e => {
-        const cell = e.target.closest('.cell');
-        if (cell) {
-            e.preventDefault();
-            showContextMenu(e, cell);
-        }
-    });
-    
-    grid.addEventListener('dblclick', e => {
-        const cell = e.target.closest('.cell');
-        if (cell) makeEditable(cell, e);
-    });
-
-    // Create grid cells
     for (let i = 0; i < 40; i++) {
         for (let j = 0; j < 40; j++) {
             const cell = document.createElement('div');
@@ -899,8 +863,16 @@ function createGrid() {
             cellContent.className = 'cell-content';
             
             cell.appendChild(cellContent);
-            cell.dataset.id = cellId;
+            cell.dataset.id = cellId; // Keep this for functionality
+            
+            cell.addEventListener('click', selectCell);
             cell.setAttribute('draggable', true);
+            cell.addEventListener('dragstart', handleDragStart);
+            cell.addEventListener('dragover', handleDragOver);
+            cell.addEventListener('drop', handleDrop);
+            
+            makeEditable(cell);
+            addContextMenu(cell);
             
             grid.appendChild(cell);
         }
