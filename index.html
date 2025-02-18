@@ -1123,41 +1123,43 @@ function handleContextMenuAction(action, cell) {
   
 // Range Handling Functions
 function toggleRangeCell(cell) {
-    if (!cell.classList.contains('range-cell')) return;
-    
-    const combo = cell.textContent;
-    const activeRow = document.querySelector('.row-toggle.active').dataset.row;
-    const otherRow = activeRow === '1' ? '2' : '1';
-    
-    const weight = parseFloat(document.getElementById(`weight${activeRow}`).value) / 100;
-    const otherWeight = parseFloat(document.getElementById(`weight${otherRow}`).value) / 100;
-    
-    const activeSelections = activeRow === '1' ? selectedCombos.row1 : selectedCombos.row2;
-    const otherSelections = activeRow === '1' ? selectedCombos.row2 : selectedCombos.row1;
+    const activeRowToggle = document.querySelector(`.row-toggle[data-row="${activeRow + 1}"]`);
+    if (!activeRowToggle?.classList.contains('active')) return;
 
-    // Check if combo exists in other row
-    if (otherSelections.has(combo)) {
-        if (weight > otherWeight) {
-            // If new weight is higher, adjust other row down
-            const remainingWeight = 1 - weight;
-            document.getElementById(`weight${otherRow}`).value = (remainingWeight * 100).toFixed(0);
-            activeSelections.add(combo);
-            updateCellVisual(cell);
-        }
-    } else {
-        // Normal toggle behavior
-        if (activeSelections.has(combo)) {
-            activeSelections.delete(combo);
-        } else {
-            // Check if total weight would exceed 100%
-            if (weight + (otherSelections.has(combo) ? otherWeight : 0) <= 1) {
-                activeSelections.add(combo);
-            }
-        }
-        updateCellVisual(cell);
+    if (!cell.dataset.selections) {
+        cell.dataset.selections = JSON.stringify([]);
     }
     
-    updateDisplay();
+    let selections = JSON.parse(cell.dataset.selections);
+    const currentColor = currentColors[activeRow];
+    const currentWeight = currentWeights[activeRow];
+    
+    const otherRowSelections = selections.filter(s => currentColors.indexOf(s.color) !== activeRow);
+    const existingSelection = selections.find(s => currentColors.indexOf(s.color) === activeRow);
+    const otherRowSelection = otherRowSelections[0]; // Get the other row's selection if it exists
+
+    if (existingSelection) {
+        // Normal toggle off if clicking same color/weight
+        if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
+            selections = otherRowSelections;
+        } else {
+            selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
+        }
+    } else {
+        // Check if other row exists and handle weight adjustment
+        if (otherRowSelection && currentWeight > otherRowSelection.weight) {
+            // Adjust other row's weight down
+            const remainingWeight = 1 - currentWeight;
+            otherRowSelection.weight = remainingWeight;
+            selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
+        } else {
+            selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
+        }
+    }
+    
+    cell.dataset.selections = JSON.stringify(selections);
+    updateCellVisual(cell);
+    updateRangeText();
     updateStats();
 }
 
