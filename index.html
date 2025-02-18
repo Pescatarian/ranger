@@ -1144,19 +1144,28 @@ function toggleRangeCell(cell) {
             if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
                 selections = otherRowSelections;
             } else {
-                existingSelection.weight = currentWeight;
-                // Only adjust Row 2 if total would exceed 100%
-                if (otherRowSelection && (currentWeight + otherRowSelection.weight) > 1) {
-                    otherRowSelection.weight = 1 - currentWeight;
+                // Keep Row 2 if exists and total <= 100%, otherwise adjust it
+                if (otherRowSelection) {
+                    const totalWeight = currentWeight + otherRowSelection.weight;
+                    if (totalWeight > 1) {
+                        otherRowSelection.weight = 1 - currentWeight;
+                    }
+                    selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
+                } else {
+                    selections = [{ color: currentColor, weight: currentWeight }];
                 }
-                selections = [...otherRowSelections, existingSelection];
             }
         } else {
-            // Only adjust Row 2 if total would exceed 100%
-            if (otherRowSelection && (currentWeight + otherRowSelection.weight) > 1) {
-                otherRowSelection.weight = 1 - currentWeight;
+            // Keep Row 2 if exists and total <= 100%, otherwise adjust it
+            if (otherRowSelection) {
+                const totalWeight = currentWeight + otherRowSelection.weight;
+                if (totalWeight > 1) {
+                    otherRowSelection.weight = 1 - currentWeight;
+                }
+                selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
+            } else {
+                selections = [{ color: currentColor, weight: currentWeight }];
             }
-            selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
         }
     } else { // Row 2
         if (existingSelection) {
