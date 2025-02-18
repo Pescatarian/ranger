@@ -1441,6 +1441,32 @@ function handleDrop(e) {
     updateCellContent(targetId);
 }
 
+function handlePaste(e) {
+    if (!selectedCell) return; // Only paste if a cell is selected
+    
+    const items = e.clipboardData.items;
+    
+    for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+            const file = item.getAsFile();
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                const content = selectedCell.querySelector('.cell-content');
+                content.innerHTML = '';
+                content.dataset.range = JSON.stringify({
+                    image: event.target.result
+                });
+                content.classList.add('has-range');
+                addCellHover(selectedCell);
+            };
+            
+            reader.readAsDataURL(file);
+            break;
+        }
+    }
+}
+
 function updateCellContent(cellId) {
     const cell = document.querySelector(`[data-id="${cellId}"]`);
     const content = cell.querySelector('.cell-content');
@@ -1565,26 +1591,29 @@ document.addEventListener('DOMContentLoaded', () => {
     createRangeGrid();
     toggleViewMode();
     
- // Add global keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-    if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
-        switch(e.key.toLowerCase()) {
-            case 'c':
-                e.preventDefault();
-                clipboardData = copyCell(selectedCell);
-                break;
-            case 'x':
-                e.preventDefault();
-                clipboardData = copyCell(selectedCell);
-                clearCell(selectedCell);
-                break;
-            case 'v':
-                e.preventDefault();
-                pasteCell(selectedCell, clipboardData);
-                break;
+    // Add global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
+            switch(e.key.toLowerCase()) {
+                case 'c':
+                    e.preventDefault();
+                    clipboardData = copyCell(selectedCell);
+                    break;
+                case 'x':
+                    e.preventDefault();
+                    clipboardData = copyCell(selectedCell);
+                    clearCell(selectedCell);
+                    break;
+                case 'v':
+                    e.preventDefault();
+                    pasteCell(selectedCell, clipboardData);
+                    break;
+            }
         }
-    }
-});
+    });
+    
+    // Add image paste handler
+    document.addEventListener('paste', handlePaste);
     
     // Color picker event listeners
     document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
