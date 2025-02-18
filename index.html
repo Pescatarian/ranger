@@ -1139,31 +1139,54 @@ function toggleRangeCell(cell) {
     const otherRowSelection = otherRowSelections[0];
 
     // Handle selection logic
-    if (existingSelection) {
-        // Only deselect if clicking with same color and weight
-        if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
-            selections = otherRowSelections;
-        } else {
-            // Update weight for current row
-            existingSelection.weight = currentWeight;
-            selections = [...otherRowSelections, existingSelection];
-        }
-    } else {
-        // Adding new selection
-        if (otherRowSelection) {
-            const totalWeight = currentWeight + otherRowSelection.weight;
-            if (totalWeight <= 1) {
-                // If total is 100% or less, keep both weights
-                selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
+    if (activeRow === 0) { // Row 1 (main row)
+        if (existingSelection) {
+            // Only deselect if clicking with same color and weight
+            if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
+                selections = otherRowSelections;
             } else {
-                // If total would exceed 100%, adjust other row's weight down
-                const remainingWeight = 1 - currentWeight;
-                otherRowSelection.weight = remainingWeight;
-                selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
+                // Update Row 1 weight and adjust Row 2 if needed
+                existingSelection.weight = currentWeight;
+                if (otherRowSelection && (currentWeight + otherRowSelection.weight) > 1) {
+                    otherRowSelection.weight = 1 - currentWeight;
+                }
+                selections = [...otherRowSelections, existingSelection];
             }
         } else {
-            // No other row selection exists, just add new one
-            selections = [{ color: currentColor, weight: currentWeight }];
+            // Adding new Row 1 selection
+            if (otherRowSelection && (currentWeight + otherRowSelection.weight) > 1) {
+                otherRowSelection.weight = 1 - currentWeight;
+                selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
+            } else {
+                selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
+            }
+        }
+    } else { // Row 2
+        const row1Selection = otherRowSelection; // Row 1 selection if it exists
+        
+        if (existingSelection) {
+            // Only deselect if clicking with same color and weight
+            if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
+                selections = otherRowSelections;
+            } else {
+                // Can't modify if Row 1 is at 100%
+                if (row1Selection && row1Selection.weight === 1) {
+                    return;
+                }
+                // Update Row 2 weight but don't exceed available space
+                const availableWeight = row1Selection ? 1 - row1Selection.weight : 1;
+                existingSelection.weight = Math.min(currentWeight, availableWeight);
+                selections = [...otherRowSelections, existingSelection];
+            }
+        } else {
+            // Can't add if Row 1 is at 100%
+            if (row1Selection && row1Selection.weight === 1) {
+                return;
+            }
+            // Add new Row 2 selection but don't exceed available space
+            const availableWeight = row1Selection ? 1 - row1Selection.weight : 1;
+            const newWeight = Math.min(currentWeight, availableWeight);
+            selections = [...otherRowSelections, { color: currentColor, weight: newWeight }];
         }
     }
     
