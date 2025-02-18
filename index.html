@@ -1122,7 +1122,9 @@ function handleContextMenuAction(action, cell) {
 }
   
 // Range Handling Functions
-function toggleRangeCell(cell) {
+function toggleRangeCell(cell, event) {
+    if (event && event.button !== 0) return;  // Only this line is new - stops right-clicks
+    
     const activeRowToggle = document.querySelector(`.row-toggle[data-row="${activeRow + 1}"]`);
     if (!activeRowToggle?.classList.contains('active')) return;
 
@@ -1134,30 +1136,23 @@ function toggleRangeCell(cell) {
     const currentColor = currentColors[activeRow];
     const currentWeight = currentWeights[activeRow];
     
-    // Get Row 2 and Row 1 selections separately
     const row2Selection = selections.find(s => s.color === currentColors[1]);
     const row1Selection = selections.find(s => s.color === currentColors[0]);
 
-    // Handle selection logic
-    if (activeRow === 0) { // Row 1 (main row)
+    if (activeRow === 0) {
         if (row1Selection && row1Selection.color === currentColor && row1Selection.weight === currentWeight) {
-            // If clicking same color/weight in Row 1, just remove Row 1 and keep Row 2
             selections = row2Selection ? [row2Selection] : [];
         } else {
-            // Adding or updating Row 1
             let newSelections = [];
             
             if (row2Selection) {
-                // Always keep Row 2's original selection first
                 const totalWeight = currentWeight + row2Selection.weight;
                 if (totalWeight > 1) {
-                    // Only adjust Row 2 down if total would exceed 100%
                     newSelections.push({
                         color: row2Selection.color,
-                        weight: Math.max(0, 1 - currentWeight) // Ensure no negative weights
+                        weight: Math.max(0, 1 - currentWeight)
                     });
                 } else {
-                    // Keep Row 2's original weight if total <= 100%
                     newSelections.push({
                         color: row2Selection.color,
                         weight: row2Selection.weight
@@ -1165,7 +1160,6 @@ function toggleRangeCell(cell) {
                 }
             }
             
-            // Add Row 1's selection
             newSelections.push({
                 color: currentColor,
                 weight: currentWeight
@@ -1173,17 +1167,15 @@ function toggleRangeCell(cell) {
             
             selections = newSelections;
         }
-    } else { // Row 2
+    } else {
         if (row2Selection && row2Selection.color === currentColor && row2Selection.weight === currentWeight) {
-            // If clicking same color/weight in Row 2, just remove Row 2 and keep Row 1
             selections = row1Selection ? [row1Selection] : [];
         } else {
             if (row1Selection && row1Selection.weight === 1) {
-                return; // Don't modify if Row 1 is at 100%
+                return;
             }
-            // Adding or updating Row 2
             if (row1Selection) {
-                selections = [{ color: currentColor, weight: currentWeight }, row1Selection];
+                selections = [row1Selection, { color: currentColor, weight: currentWeight }];
             } else {
                 selections = [{ color: currentColor, weight: currentWeight }];
             }
@@ -1194,40 +1186,6 @@ function toggleRangeCell(cell) {
     updateCellVisual(cell);
     updateRangeText();
     updateStats();
-}
-
-function updateCellVisual(cell) {
-    const selections = JSON.parse(cell.dataset.selections || '[]');
-    
-    if (selections.length === 0) {
-        cell.style.background = '#1a1a1a';
-        cell.classList.remove('selected');
-        return;
-    }
-
-    cell.classList.add('selected');
-    
-    if (selections.length === 1) {
-        const {color, weight} = selections[0];
-        cell.style.background = `linear-gradient(to right, ${color} ${weight}%, #1a1a1a ${weight}%)`;
-    } else {
-        selections.sort((a, b) => currentColors.indexOf(a.color) - currentColors.indexOf(b.color));
-        
-        let gradientString = 'linear-gradient(to right, ';
-        let currentPosition = 0;
-        
-        selections.forEach((selection, index) => {
-            gradientString += `${selection.color} ${currentPosition}% ${currentPosition + selection.weight}%`;
-            currentPosition += selection.weight;
-            
-            if (index < selections.length - 1) {
-                gradientString += ', ';
-            }
-        });
-        
-        gradientString += `, #1a1a1a ${currentPosition}%)`;
-        cell.style.background = gradientString;
-    }
 }
 
 function updateStats() {
