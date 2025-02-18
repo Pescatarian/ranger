@@ -1145,12 +1145,14 @@ function toggleRangeCell(cell) {
                 selections = otherRowSelections;
             } else {
                 existingSelection.weight = currentWeight;
+                // Only adjust Row 2 if total would exceed 100%
                 if (otherRowSelection && (currentWeight + otherRowSelection.weight) > 1) {
                     otherRowSelection.weight = 1 - currentWeight;
                 }
                 selections = [...otherRowSelections, existingSelection];
             }
         } else {
+            // Only adjust Row 2 if total would exceed 100%
             if (otherRowSelection && (currentWeight + otherRowSelection.weight) > 1) {
                 otherRowSelection.weight = 1 - currentWeight;
             }
