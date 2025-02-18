@@ -1123,7 +1123,8 @@ function handleContextMenuAction(action, cell) {
   
 // Range Handling Functions
 function toggleRangeCell(cell, event) {
-    if (event && event.button !== 0) return;  // Only this line is new - stops right-clicks
+    // Block right-clicks only
+    if (event?.button === 2) return;
     
     const activeRowToggle = document.querySelector(`.row-toggle[data-row="${activeRow + 1}"]`);
     if (!activeRowToggle?.classList.contains('active')) return;
