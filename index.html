@@ -1130,13 +1130,10 @@ function startRangeSelection(e) {
     toggleRangeCell(cell, e);  // PASS THE EVENT HERE
 }
 
-function toggleRangeCell(cell, event) {
-    if (event?.button === 2) return;  // Check for right-click here
-    
+function toggleRangeCell(cell) {
     const activeRowToggle = document.querySelector(`.row-toggle[data-row="${activeRow + 1}"]`);
     if (!activeRowToggle?.classList.contains('active')) return;
 
-    // Rest of your existing toggleRangeCell code stays exactly the same
     if (!cell.dataset.selections) {
         cell.dataset.selections = JSON.stringify([]);
     }
@@ -1145,50 +1142,17 @@ function toggleRangeCell(cell, event) {
     const currentColor = currentColors[activeRow];
     const currentWeight = currentWeights[activeRow];
     
-    const row2Selection = selections.find(s => s.color === currentColors[1]);
-    const row1Selection = selections.find(s => s.color === currentColors[0]);
+    const otherRowSelections = selections.filter(s => currentColors.indexOf(s.color) !== activeRow);
+    const existingSelection = selections.find(s => currentColors.indexOf(s.color) === activeRow);
 
-    if (activeRow === 0) {
-        if (row1Selection && row1Selection.color === currentColor && row1Selection.weight === currentWeight) {
-            selections = row2Selection ? [row2Selection] : [];
+    if (existingSelection) {
+        if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
+            selections = otherRowSelections;
         } else {
-            let newSelections = [];
-            
-            if (row2Selection) {
-                const totalWeight = currentWeight + row2Selection.weight;
-                if (totalWeight > 1) {
-                    newSelections.push({
-                        color: row2Selection.color,
-                        weight: Math.max(0, 1 - currentWeight)
-                    });
-                } else {
-                    newSelections.push({
-                        color: row2Selection.color,
-                        weight: row2Selection.weight
-                    });
-                }
-            }
-            
-            newSelections.push({
-                color: currentColor,
-                weight: currentWeight
-            });
-            
-            selections = newSelections;
+            selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
         }
     } else {
-        if (row2Selection && row2Selection.color === currentColor && row2Selection.weight === currentWeight) {
-            selections = row1Selection ? [row1Selection] : [];
-        } else {
-            if (row1Selection && row1Selection.weight === 1) {
-                return;
-            }
-            if (row1Selection) {
-                selections = [row1Selection, { color: currentColor, weight: currentWeight }];
-            } else {
-                selections = [{ color: currentColor, weight: currentWeight }];
-            }
-        }
+        selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
     }
     
     cell.dataset.selections = JSON.stringify(selections);
