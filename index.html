@@ -1136,19 +1136,25 @@ function toggleRangeCell(cell) {
     
     const otherRowSelections = selections.filter(s => currentColors.indexOf(s.color) !== activeRow);
     const existingSelection = selections.find(s => currentColors.indexOf(s.color) === activeRow);
-    const otherRowSelection = otherRowSelections[0]; // Get the other row's selection if it exists
+    const otherRowSelection = otherRowSelections[0];
 
     if (existingSelection) {
         // Normal toggle off if clicking same color/weight
         if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
             selections = otherRowSelections;
         } else {
-            selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
+            // Handle weight adjustment when changing existing selection
+            if (otherRowSelection && currentWeight > otherRowSelection.weight) {
+                const remainingWeight = 1 - currentWeight;
+                otherRowSelection.weight = remainingWeight;
+                selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
+            } else {
+                selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
+            }
         }
     } else {
-        // Check if other row exists and handle weight adjustment
+        // Handle weight adjustment for new selection
         if (otherRowSelection && currentWeight > otherRowSelection.weight) {
-            // Adjust other row's weight down
             const remainingWeight = 1 - currentWeight;
             otherRowSelection.weight = remainingWeight;
             selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
