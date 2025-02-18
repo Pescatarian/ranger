@@ -1005,8 +1005,6 @@ function addContextMenu(cell) {
 
 function createRangeGrid() {
     const rangeGrid = document.getElementById('rangeGrid');
-    // Block right-click at grid level
-    rangeGrid.addEventListener('contextmenu', e => e.preventDefault());
     const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     
     for (let i = 0; i < ranks.length; i++) {
@@ -1024,13 +1022,9 @@ function createRangeGrid() {
             }
             cell.appendChild(textSpan);
 
-            // Block right-click at cell level
-            cell.addEventListener('contextmenu', e => e.preventDefault());
+            // Only block cell selection on right click, allow inspect menu
             cell.addEventListener('mousedown', e => {
-                if (e.button === 2) {
-                    e.preventDefault();
-                    return;
-                }
+                if (e.button === 2) return; // Just ignore right clicks for selection
                 startRangeSelection(e);
             });
             cell.addEventListener('mouseover', updateRangeSelection);
