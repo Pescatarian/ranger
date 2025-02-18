@@ -1123,33 +1123,62 @@ function handleContextMenuAction(action, cell) {
   
 // Range Handling Functions
 function toggleRangeCell(cell) {
-    const activeRowToggle = document.querySelector(`.row-toggle[data-row="${activeRow + 1}"]`);
-    if (!activeRowToggle?.classList.contains('active')) return;
-
-    if (!cell.dataset.selections) {
-        cell.dataset.selections = JSON.stringify([]);
-    }
+    if (!cell.classList.contains('range-cell')) return;
     
-    let selections = JSON.parse(cell.dataset.selections);
-    const currentColor = currentColors[activeRow];
-    const currentWeight = currentWeights[activeRow];
+    const combo = cell.textContent;
+    const activeRow = document.querySelector('.row-toggle.active').dataset.row;
+    const otherRow = activeRow === '1' ? '2' : '1';
     
-    const otherRowSelections = selections.filter(s => currentColors.indexOf(s.color) !== activeRow);
-    const existingSelection = selections.find(s => currentColors.indexOf(s.color) === activeRow);
-
-    if (existingSelection) {
-        if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
-            selections = otherRowSelections;
+    const weight = parseFloat(document.getElementById(`weight${activeRow}`).value) / 100;
+    const otherWeight = parseFloat(document.getElementById(`weight${otherRow}`).value) / 100;
+    
+    // Get current selections for both rows
+    const row1Selections = selectedCombos.row1;
+    const row2Selections = selectedCombos.row2;
+    
+    if (activeRow === '1') {
+        if (row2Selections.has(combo)) {
+            // If combo exists in row 2
+            if (weight > otherWeight) {
+                // If new weight is higher, adjust row 2 down
+                const remainingWeight = 1 - weight;
+                document.getElementById('weight2').value = (remainingWeight * 100).toFixed(0);
+                row1Selections.add(combo);
+                updateCellVisual(cell);
+                updateDisplay();
+            }
         } else {
-            selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
+            // Normal toggle for row 1
+            if (row1Selections.has(combo)) {
+                row1Selections.delete(combo);
+            } else if (weight + (row2Selections.has(combo) ? otherWeight : 0) <= 1) {
+                row1Selections.add(combo);
+            }
+            updateCellVisual(cell);
         }
     } else {
-        selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
+        if (row1Selections.has(combo)) {
+            // If combo exists in row 1
+            if (weight > otherWeight) {
+                // If new weight is higher, adjust row 1 down
+                const remainingWeight = 1 - weight;
+                document.getElementById('weight1').value = (remainingWeight * 100).toFixed(0);
+                row2Selections.add(combo);
+                updateCellVisual(cell);
+                updateDisplay();
+            }
+        } else {
+            // Normal toggle for row 2
+            if (row2Selections.has(combo)) {
+                row2Selections.delete(combo);
+            } else if (weight + (row1Selections.has(combo) ? otherWeight : 0) <= 1) {
+                row2Selections.add(combo);
+            }
+            updateCellVisual(cell);
+        }
     }
     
-    cell.dataset.selections = JSON.stringify(selections);
-    updateCellVisual(cell);
-    updateRangeText();
+    updateDisplay();
     updateStats();
 }
 
