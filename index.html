@@ -1138,34 +1138,32 @@ function toggleRangeCell(cell) {
     const existingSelection = selections.find(s => currentColors.indexOf(s.color) === activeRow);
     const otherRowSelection = otherRowSelections[0];
 
+    // Handle selection logic
     if (existingSelection) {
-        // Normal toggle off if clicking same color/weight
+        // Only deselect if clicking with same color and weight
         if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
             selections = otherRowSelections;
         } else {
-            if (otherRowSelection) {
-                const totalWeight = currentWeight + otherRowSelection.weight;
-                if (totalWeight > 1) {
-                    // If total exceeds 100%, adjust other row down
-                    const remainingWeight = 1 - currentWeight;
-                    otherRowSelection.weight = remainingWeight;
-                }
-                selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
-            } else {
-                selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
-            }
+            // Update weight for current row
+            existingSelection.weight = currentWeight;
+            selections = [...otherRowSelections, existingSelection];
         }
     } else {
+        // Adding new selection
         if (otherRowSelection) {
             const totalWeight = currentWeight + otherRowSelection.weight;
-            if (totalWeight > 1) {
-                // If total exceeds 100%, adjust other row down
+            if (totalWeight <= 1) {
+                // If total is 100% or less, keep both weights
+                selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
+            } else {
+                // If total would exceed 100%, adjust other row's weight down
                 const remainingWeight = 1 - currentWeight;
                 otherRowSelection.weight = remainingWeight;
+                selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
             }
-            selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
         } else {
-            selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
+            // No other row selection exists, just add new one
+            selections = [{ color: currentColor, weight: currentWeight }];
         }
     }
     
