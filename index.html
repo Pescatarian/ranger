@@ -1135,9 +1135,10 @@ function toggleRangeCell(cell) {
     const currentWeight = currentWeights[activeRow];
     
     // Get Row 2 and Row 1 selections separately
-    const row2Selection = selections.find(s => currentColors.indexOf(s.color) === 1);
-    const row1Selection = selections.find(s => currentColors.indexOf(s.color) === 0);
+    const row2Selection = selections.find(s => s.color === currentColors[1]);
+    const row1Selection = selections.find(s => s.color === currentColors[0]);
 
+    // Handle selection logic
     if (activeRow === 0) { // Row 1 (main row)
         if (row1Selection && row1Selection.color === currentColor && row1Selection.weight === currentWeight) {
             // If clicking same color/weight in Row 1, just remove Row 1 and keep Row 2
@@ -1147,16 +1148,16 @@ function toggleRangeCell(cell) {
             let newSelections = [];
             
             if (row2Selection) {
-                // Keep Row 2's original weight if total ≤ 100%
+                // Always keep Row 2's original selection first
                 const totalWeight = currentWeight + row2Selection.weight;
                 if (totalWeight > 1) {
-                    // Only adjust Row 2 if total would exceed 100%
+                    // Only adjust Row 2 down if total would exceed 100%
                     newSelections.push({
                         color: row2Selection.color,
                         weight: Math.max(0, 1 - currentWeight) // Ensure no negative weights
                     });
                 } else {
-                    // Keep Row 2's original weight
+                    // Keep Row 2's original weight if total <= 100%
                     newSelections.push({
                         color: row2Selection.color,
                         weight: row2Selection.weight
@@ -1164,28 +1165,28 @@ function toggleRangeCell(cell) {
                 }
             }
             
-            // Add Row 1
-            newSelections.push({ color: currentColor, weight: currentWeight });
+            // Add Row 1's selection
+            newSelections.push({
+                color: currentColor,
+                weight: currentWeight
+            });
+            
             selections = newSelections;
         }
-    } else { // Row 2 - keeping existing working code
-        if (row2Selection) {
-            if (row2Selection.color === currentColor && row2Selection.weight === currentWeight) {
-                selections = row1Selection ? [row1Selection] : [];
-            } else {
-                if (row1Selection && row1Selection.weight === 1) {
-                    return; // Don't modify if Row 1 is at 100%
-                }
-                row2Selection.weight = currentWeight;
-                selections = row1Selection ? [row1Selection, row2Selection] : [row2Selection];
-            }
+    } else { // Row 2
+        if (row2Selection && row2Selection.color === currentColor && row2Selection.weight === currentWeight) {
+            // If clicking same color/weight in Row 2, just remove Row 2 and keep Row 1
+            selections = row1Selection ? [row1Selection] : [];
         } else {
             if (row1Selection && row1Selection.weight === 1) {
-                return; // Don't add if Row 1 is at 100%
+                return; // Don't modify if Row 1 is at 100%
             }
-            selections = row1Selection ? 
-                [row1Selection, { color: currentColor, weight: currentWeight }] : 
-                [{ color: currentColor, weight: currentWeight }];
+            // Adding or updating Row 2
+            if (row1Selection) {
+                selections = [{ color: currentColor, weight: currentWeight }, row1Selection];
+            } else {
+                selections = [{ color: currentColor, weight: currentWeight }];
+            }
         }
     }
     
