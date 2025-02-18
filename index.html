@@ -1486,8 +1486,13 @@ function loadSavedColors() {
 // Add these new functions
 function convertRangeToImage() {
     const rangeGrid = document.getElementById('rangeGrid');
-    return html2canvas(rangeGrid).then(canvas => {
-        return canvas.toDataURL('image/png');
+    return html2canvas(rangeGrid, {
+        scale: 2,  // This increases the resolution without changing the range builder
+        backgroundColor: null,
+        useCORS: true,
+        logging: false
+    }).then(canvas => {
+        return canvas.toDataURL('image/png', 1.0);
     });
 }
 
