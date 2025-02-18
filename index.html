@@ -1122,10 +1122,7 @@ function handleContextMenuAction(action, cell) {
 }
   
 // Range Handling Functions
-function toggleRangeCell(cell, event) {
-    // Block right-clicks only
-    if (event?.button === 2) return;
-    
+function toggleRangeCell(cell) {
     const activeRowToggle = document.querySelector(`.row-toggle[data-row="${activeRow + 1}"]`);
     if (!activeRowToggle?.classList.contains('active')) return;
 
@@ -1226,6 +1223,9 @@ function updateStats() {
 
 // Event Handlers and Selection Functions
 function startRangeSelection(e) {
+    // Block right clicks
+    if (e.button === 2) return;
+    
     isMouseDown = true;
     const cell = e.target.closest('.range-cell');
     const selections = JSON.parse(cell.dataset.selections || '[]');
