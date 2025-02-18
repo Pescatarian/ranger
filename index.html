@@ -1134,58 +1134,58 @@ function toggleRangeCell(cell) {
     const currentColor = currentColors[activeRow];
     const currentWeight = currentWeights[activeRow];
     
-    const otherRowSelections = selections.filter(s => currentColors.indexOf(s.color) !== activeRow);
-    const existingSelection = selections.find(s => currentColors.indexOf(s.color) === activeRow);
-    const otherRowSelection = otherRowSelections[0];
+    // Get Row 2 and Row 1 selections separately
+    const row2Selection = selections.find(s => currentColors.indexOf(s.color) === 1);
+    const row1Selection = selections.find(s => currentColors.indexOf(s.color) === 0);
 
-    // Handle selection logic
     if (activeRow === 0) { // Row 1 (main row)
-        if (existingSelection) {
-            if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
-                // Toggle off Row 1 but keep Row 2 if it exists
-                selections = otherRowSelections;
-            } else {
-                // Update Row 1's weight
-                if (otherRowSelection) {
-                    // Keep Row 2's selection and check total
-                    const totalWeight = currentWeight + otherRowSelection.weight;
-                    if (totalWeight > 1) {
-                        // Only adjust Row 2 down if total would exceed 100%
-                        otherRowSelection.weight = 1 - currentWeight;
-                    }
-                }
-                selections = otherRowSelection ? [otherRowSelection, { color: currentColor, weight: currentWeight }] 
-                                            : [{ color: currentColor, weight: currentWeight }];
-            }
+        if (row1Selection && row1Selection.color === currentColor && row1Selection.weight === currentWeight) {
+            // If clicking same color/weight in Row 1, just remove Row 1 and keep Row 2
+            selections = row2Selection ? [row2Selection] : [];
         } else {
-            // New Row 1 selection
-            if (otherRowSelection) {
-                // Keep Row 2's selection and check total
-                const totalWeight = currentWeight + otherRowSelection.weight;
+            // Adding or updating Row 1
+            let newSelections = [];
+            
+            if (row2Selection) {
+                // Keep Row 2's original weight if total ≤ 100%
+                const totalWeight = currentWeight + row2Selection.weight;
                 if (totalWeight > 1) {
-                    // Only adjust Row 2 down if total would exceed 100%
-                    otherRowSelection.weight = 1 - currentWeight;
+                    // Only adjust Row 2 if total would exceed 100%
+                    newSelections.push({
+                        color: row2Selection.color,
+                        weight: Math.max(0, 1 - currentWeight) // Ensure no negative weights
+                    });
+                } else {
+                    // Keep Row 2's original weight
+                    newSelections.push({
+                        color: row2Selection.color,
+                        weight: row2Selection.weight
+                    });
                 }
             }
-            selections = otherRowSelection ? [otherRowSelection, { color: currentColor, weight: currentWeight }] 
-                                        : [{ color: currentColor, weight: currentWeight }];
+            
+            // Add Row 1
+            newSelections.push({ color: currentColor, weight: currentWeight });
+            selections = newSelections;
         }
     } else { // Row 2 - keeping existing working code
-        if (existingSelection) {
-            if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
-                selections = otherRowSelections;
+        if (row2Selection) {
+            if (row2Selection.color === currentColor && row2Selection.weight === currentWeight) {
+                selections = row1Selection ? [row1Selection] : [];
             } else {
-                if (otherRowSelection && otherRowSelection.weight === 1) {
+                if (row1Selection && row1Selection.weight === 1) {
                     return; // Don't modify if Row 1 is at 100%
                 }
-                existingSelection.weight = currentWeight;
-                selections = [...otherRowSelections, existingSelection];
+                row2Selection.weight = currentWeight;
+                selections = row1Selection ? [row1Selection, row2Selection] : [row2Selection];
             }
         } else {
-            if (otherRowSelection && otherRowSelection.weight === 1) {
+            if (row1Selection && row1Selection.weight === 1) {
                 return; // Don't add if Row 1 is at 100%
             }
-            selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
+            selections = row1Selection ? 
+                [row1Selection, { color: currentColor, weight: currentWeight }] : 
+                [{ color: currentColor, weight: currentWeight }];
         }
     }
     
