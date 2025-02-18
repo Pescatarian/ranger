@@ -1132,50 +1132,29 @@ function toggleRangeCell(cell) {
     const weight = parseFloat(document.getElementById(`weight${activeRow}`).value) / 100;
     const otherWeight = parseFloat(document.getElementById(`weight${otherRow}`).value) / 100;
     
-    // Get current selections for both rows
-    const row1Selections = selectedCombos.row1;
-    const row2Selections = selectedCombos.row2;
-    
-    if (activeRow === '1') {
-        if (row2Selections.has(combo)) {
-            // If combo exists in row 2
-            if (weight > otherWeight) {
-                // If new weight is higher, adjust row 2 down
-                const remainingWeight = 1 - weight;
-                document.getElementById('weight2').value = (remainingWeight * 100).toFixed(0);
-                row1Selections.add(combo);
-                updateCellVisual(cell);
-                updateDisplay();
-            }
-        } else {
-            // Normal toggle for row 1
-            if (row1Selections.has(combo)) {
-                row1Selections.delete(combo);
-            } else if (weight + (row2Selections.has(combo) ? otherWeight : 0) <= 1) {
-                row1Selections.add(combo);
-            }
+    const activeSelections = activeRow === '1' ? selectedCombos.row1 : selectedCombos.row2;
+    const otherSelections = activeRow === '1' ? selectedCombos.row2 : selectedCombos.row1;
+
+    // Check if combo exists in other row
+    if (otherSelections.has(combo)) {
+        if (weight > otherWeight) {
+            // If new weight is higher, adjust other row down
+            const remainingWeight = 1 - weight;
+            document.getElementById(`weight${otherRow}`).value = (remainingWeight * 100).toFixed(0);
+            activeSelections.add(combo);
             updateCellVisual(cell);
         }
     } else {
-        if (row1Selections.has(combo)) {
-            // If combo exists in row 1
-            if (weight > otherWeight) {
-                // If new weight is higher, adjust row 1 down
-                const remainingWeight = 1 - weight;
-                document.getElementById('weight1').value = (remainingWeight * 100).toFixed(0);
-                row2Selections.add(combo);
-                updateCellVisual(cell);
-                updateDisplay();
-            }
+        // Normal toggle behavior
+        if (activeSelections.has(combo)) {
+            activeSelections.delete(combo);
         } else {
-            // Normal toggle for row 2
-            if (row2Selections.has(combo)) {
-                row2Selections.delete(combo);
-            } else if (weight + (row1Selections.has(combo) ? otherWeight : 0) <= 1) {
-                row2Selections.add(combo);
+            // Check if total weight would exceed 100%
+            if (weight + (otherSelections.has(combo) ? otherWeight : 0) <= 1) {
+                activeSelections.add(combo);
             }
-            updateCellVisual(cell);
         }
+        updateCellVisual(cell);
     }
     
     updateDisplay();
