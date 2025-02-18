@@ -1442,16 +1442,24 @@ function handleDrop(e) {
 }
 
 function handlePaste(e) {
-    if (!selectedCell) return; // Only paste if a cell is selected
+    console.log('Paste event triggered');
+    if (!selectedCell) {
+        console.log('No cell selected');
+        return;
+    }
     
     const items = e.clipboardData.items;
+    console.log('Clipboard items:', items);
     
     for (let item of items) {
+        console.log('Item type:', item.type);
         if (item.type.indexOf('image') !== -1) {
+            console.log('Image found in clipboard');
             const file = item.getAsFile();
             const reader = new FileReader();
             
             reader.onload = function(event) {
+                console.log('Image loaded');
                 const content = selectedCell.querySelector('.cell-content');
                 content.innerHTML = '';
                 content.dataset.range = JSON.stringify({
@@ -1459,6 +1467,7 @@ function handlePaste(e) {
                 });
                 content.classList.add('has-range');
                 addCellHover(selectedCell);
+                console.log('Image added to cell');
             };
             
             reader.readAsDataURL(file);
