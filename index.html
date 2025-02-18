@@ -1143,8 +1143,8 @@ function toggleRangeCell(cell) {
         if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
             selections = otherRowSelections;
         } else {
-            // Handle weight adjustment when changing existing selection
-            if (otherRowSelection && currentWeight > otherRowSelection.weight) {
+            // Always allow weight adjustment when changing existing selection
+            if (otherRowSelection) {
                 const remainingWeight = 1 - currentWeight;
                 otherRowSelection.weight = remainingWeight;
                 selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
@@ -1153,8 +1153,8 @@ function toggleRangeCell(cell) {
             }
         }
     } else {
-        // Handle weight adjustment for new selection
-        if (otherRowSelection && currentWeight > otherRowSelection.weight) {
+        // Always allow weight adjustment for new selection
+        if (otherRowSelection) {
             const remainingWeight = 1 - currentWeight;
             otherRowSelection.weight = remainingWeight;
             selections = [otherRowSelection, { color: currentColor, weight: currentWeight }];
