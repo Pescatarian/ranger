@@ -1005,6 +1005,7 @@ function addContextMenu(cell) {
 
 function createRangeGrid() {
     const rangeGrid = document.getElementById('rangeGrid');
+    rangeGrid.addEventListener('contextmenu', e => e.preventDefault());  // THIS IS THE NEW LINE I ADDED
     const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     
     for (let i = 0; i < ranks.length; i++) {
@@ -1031,7 +1032,7 @@ function createRangeGrid() {
     
     document.addEventListener('mouseup', endRangeSelection);
 }
-
+      
 function showColorSubmenu(menuItem, isFillColor) {
     document.querySelectorAll('.color-submenu').forEach(sub => sub.remove());
     
