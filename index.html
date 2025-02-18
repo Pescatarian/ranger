@@ -1005,7 +1005,8 @@ function addContextMenu(cell) {
 
 function createRangeGrid() {
     const rangeGrid = document.getElementById('rangeGrid');
-    rangeGrid.addEventListener('contextmenu', e => e.preventDefault());  // THIS IS THE NEW LINE I ADDED
+    // Block right-click at grid level
+    rangeGrid.addEventListener('contextmenu', e => e.preventDefault());
     const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     
     for (let i = 0; i < ranks.length; i++) {
@@ -1023,7 +1024,15 @@ function createRangeGrid() {
             }
             cell.appendChild(textSpan);
 
-            cell.addEventListener('mousedown', startRangeSelection);
+            // Block right-click at cell level
+            cell.addEventListener('contextmenu', e => e.preventDefault());
+            cell.addEventListener('mousedown', e => {
+                if (e.button === 2) {
+                    e.preventDefault();
+                    return;
+                }
+                startRangeSelection(e);
+            });
             cell.addEventListener('mouseover', updateRangeSelection);
             
             rangeGrid.appendChild(cell);
