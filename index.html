@@ -1122,10 +1122,21 @@ function handleContextMenuAction(action, cell) {
 }
   
 // Range Handling Functions
-function toggleRangeCell(cell) {
+function startRangeSelection(e) {
+    isMouseDown = true;
+    const cell = e.target.closest('.range-cell');
+    const selections = JSON.parse(cell.dataset.selections || '[]');
+    isSelecting = !selections.some(s => s.color === currentColors[activeRow]);
+    toggleRangeCell(cell, e);  // PASS THE EVENT HERE
+}
+
+function toggleRangeCell(cell, event) {
+    if (event?.button === 2) return;  // Check for right-click here
+    
     const activeRowToggle = document.querySelector(`.row-toggle[data-row="${activeRow + 1}"]`);
     if (!activeRowToggle?.classList.contains('active')) return;
 
+    // Rest of your existing toggleRangeCell code stays exactly the same
     if (!cell.dataset.selections) {
         cell.dataset.selections = JSON.stringify([]);
     }
