@@ -1123,11 +1123,13 @@ function handleContextMenuAction(action, cell) {
   
 // Range Handling Functions
 function startRangeSelection(e) {
+    if (e.button === 2) return;  // ADD THIS ONE LINE
+    
     isMouseDown = true;
     const cell = e.target.closest('.range-cell');
     const selections = JSON.parse(cell.dataset.selections || '[]');
     isSelecting = !selections.some(s => s.color === currentColors[activeRow]);
-    toggleRangeCell(cell, e);  // PASS THE EVENT HERE
+    toggleRangeCell(cell);
 }
 
 function toggleRangeCell(cell) {
