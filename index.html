@@ -1123,7 +1123,7 @@ function handleContextMenuAction(action, cell) {
   
 // Range Handling Functions
 function startRangeSelection(e) {
-    if (e.button === 2) return;  // ADD THIS ONE LINE
+    if (e.button !== 0) return;  // CHANGED THIS LINE - only allow left clicks
     
     isMouseDown = true;
     const cell = e.target.closest('.range-cell');
