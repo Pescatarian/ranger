@@ -1368,40 +1368,35 @@ function updateRangeText() {
     const cells = [...document.querySelectorAll('.range-cell')];
     let output = '';
     
-    // Get all selected hands and their weights
     const selections = cells
         .filter(cell => cell.dataset.selections && JSON.parse(cell.dataset.selections).length > 0)
         .map(cell => {
             const hand = cell.querySelector('span').textContent;
             const cellSelections = JSON.parse(cell.dataset.selections);
             
-            let weight;
+            let weight = 0;
             if (currentView === 'all') {
-                // Sum weights when showing all (capped at 100)
                 weight = Math.min(100, cellSelections.reduce((sum, s) => sum + s.weight, 0));
-            } else {
-                // Show only selected row's weight
-                const rowIndex = currentView === 'row1' ? 0 : 1;
-                const rowSelection = cellSelections.find(s => s.color === currentColors[rowIndex]);
-                weight = rowSelection ? rowSelection.weight : 0;
+            } else if (currentView === 'row1') {
+                const row1Selection = cellSelections.find(s => s.color === currentColors[0]);
+                weight = row1Selection ? row1Selection.weight : 0;
+            } else if (currentView === 'row2') {
+                const row2Selection = cellSelections.find(s => s.color === currentColors[1]);
+                weight = row2Selection ? row2Selection.weight : 0;
             }
             
             return { hand, weight };
         })
-        .filter(selection => selection.weight > 0); // Only include non-zero weights
+        .filter(selection => selection.weight > 0);
 
     if (currentFormat === 1) {
-        // Format 1: hand:decimal
         output = selections
             .map(({ hand, weight }) => `${hand}:${(weight/100).toFixed(3)}`)
             .join(',');
     } else {
-        // Format 2: hand,[xx%]hand[/xx%]
         output = selections
             .map(({ hand, weight }) => {
-                if (weight === 100) {
-                    return hand;
-                }
+                if (weight === 100) return hand;
                 return `[${weight}%]${hand}[/${weight}%]`;
             })
             .join(',');
