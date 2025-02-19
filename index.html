@@ -674,6 +674,7 @@ let isDragging = false;
 let dragStartX, dragStartY;
 let clipboardData = null;
 let currentFormat = 1; // 1 for decimal format, 2 for bracket format
+let currentShowRow = 'both'; // can be 'both', 'row1', or 'row2'
 
 
 // Create a single reusable popup element
@@ -1203,39 +1204,41 @@ function toggleRangeCell(cell) {
 }
 
 function updateCellVisual(cell) {
-    const selections = JSON.parse(cell.dataset.selections || '[]');
+    if (!cell.dataset.selections) return;
     
+    const selections = JSON.parse(cell.dataset.selections);
     if (selections.length === 0) {
-        cell.style.background = '#1a1a1a';
-        cell.classList.remove('selected');
+        cell.style.backgroundColor = '';
+        cell.style.opacity = '';
         return;
     }
-
-    cell.classList.add('selected');
     
-    if (selections.length === 1) {
-        const {color, weight} = selections[0];
-        cell.style.background = `linear-gradient(to right, ${color} ${weight}%, #1a1a1a ${weight}%)`;
+    // Filter selections based on which row(s) are being shown
+    const visibleSelections = selections.filter(s => {
+        if (currentShowRow === 'both') return true;
+        return (currentShowRow === 'row1' && s.rowIndex === 0) ||
+               (currentShowRow === 'row2' && s.rowIndex === 1);
+    });
+    
+    if (visibleSelections.length > 0) {
+        // Apply color from the last selection in the filtered list
+        cell.style.backgroundColor = visibleSelections[visibleSelections.length - 1].color;
+        
+        // Calculate total weight for opacity
+        const totalWeight = visibleSelections.reduce((sum, s) => sum + s.weight, 0);
+        cell.style.opacity = Math.min(totalWeight / 100, 1);
     } else {
-        selections.sort((a, b) => currentColors.indexOf(a.color) - currentColors.indexOf(b.color));
-        
-        let gradientString = 'linear-gradient(to right, ';
-        let currentPosition = 0;
-        
-        selections.forEach((selection, index) => {
-            gradientString += `${selection.color} ${currentPosition}% ${currentPosition + selection.weight}%`;
-            currentPosition += selection.weight;
-            
-            if (index < selections.length - 1) {
-                gradientString += ', ';
-            }
-        });
-        
-        gradientString += `, #1a1a1a ${currentPosition}%)`;
-        cell.style.background = gradientString;
+        cell.style.backgroundColor = '';
+        cell.style.opacity = '';
     }
 }
 
+// Add this helper function if you don't have it
+function updateAllCellVisuals() {
+    document.querySelectorAll('.range-cell').forEach(cell => {
+        updateCellVisual(cell);
+    });
+}
 function updateStats() {
     const selectedCells = document.querySelectorAll('.range-cell');
     let totalCombos = [0, 0];
@@ -1307,13 +1310,38 @@ function handleViewChange(e) {
 }
 
 function handleRowToggle(e) {
-    document.querySelectorAll('.row-toggle').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.control-row').forEach(row => row.classList.remove('active'));
+    const button = e.target;
+    const row = button.dataset.row;
     
-    e.target.classList.add('active');
-    e.target.closest('.control-row').classList.add('active');
-    
-    activeRow = parseInt(e.target.dataset.row) - 1;
+    if (button.classList.contains('show-toggle')) {
+        // Handle Show 1/Show 2 toggle
+        document.querySelectorAll('.show-toggle').forEach(btn => {
+            if (btn === button) {
+                btn.classList.toggle('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        // Update currentShowRow based on which Show button is active
+        if (button.classList.contains('active')) {
+            currentShowRow = row === '1' ? 'row1' : 'row2';
+        } else {
+            currentShowRow = 'both';
+        }
+        
+        updateRangeText();
+        updateAllCellVisuals();
+    } else {
+        // Original row toggle functionality for selections
+        document.querySelectorAll('.row-toggle').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.control-row').forEach(row => row.classList.remove('active'));
+        
+        button.classList.add('active');
+        button.closest('.control-row').classList.add('active');
+        
+        activeRow = parseInt(button.dataset.row) - 1;
+    }
 }
 
 function updateRangeDisplay(view) {
@@ -1365,35 +1393,43 @@ function toggleFormat() {
         
 // Cell and Range Text Functions
 function updateRangeText() {
-    const cells = [...document.querySelectorAll('.range-cell')];
+    const cells = document.querySelectorAll('.range-cell');
     let output = '';
     
-    // Get all selected hands and their weights
-    const selections = cells
-        .filter(cell => cell.dataset.selections && JSON.parse(cell.dataset.selections).length > 0)
-        .map(cell => {
-            const hand = cell.querySelector('span').textContent;
-            const weight = Math.max(...JSON.parse(cell.dataset.selections)
-                .map(s => s.weight));
-            return { hand, weight };
-        });
-
-    if (currentFormat === 1) {
-        // Format 1: hand:decimal
-        output = selections
-            .map(({ hand, weight }) => `${hand}:${(weight/100).toFixed(3)}`)
-            .join(',');
-    } else {
-        // Format 2: hand,[xx%]hand[/xx%]
-        output = selections
-            .map(({ hand, weight }) => {
-                if (weight === 100) {
-                    return hand;
-                }
-                return `[${weight}%]${hand}[/${weight}%]`;
-            })
-            .join(',');
-    }
+    cells.forEach(cell => {
+        if (!cell.dataset.selections) return;
+        
+        const selections = JSON.parse(cell.dataset.selections);
+        if (selections.length === 0) return;
+        
+        const hand = cell.querySelector('span').textContent;
+        let totalWeight = 0;
+        
+        // Calculate weight based on which row(s) are being shown
+        if (currentShowRow === 'both') {
+            // Sum weights from both rows
+            const row1Selection = selections.find(s => s.rowIndex === 0);
+            const row2Selection = selections.find(s => s.rowIndex === 1);
+            
+            if (row1Selection) totalWeight += row1Selection.weight;
+            if (row2Selection) totalWeight += row2Selection.weight;
+            
+            // Cap at 100%
+            if (totalWeight > 100) totalWeight = 100;
+        } else {
+            // Only show weight from selected row
+            const rowIndex = currentShowRow === 'row1' ? 0 : 1;
+            const rowSelection = selections.find(s => s.rowIndex === rowIndex);
+            if (rowSelection) {
+                totalWeight = rowSelection.weight;
+            }
+        }
+        
+        if (totalWeight > 0) {
+            if (output) output += ',';
+            output += `[${totalWeight}%]${hand}[/${totalWeight}%]`;
+        }
+    });
     
     document.getElementById('rangeText').value = output;
 }
