@@ -448,17 +448,49 @@
     background-color: #ff4444;
 }
 
+/* Replace the current .format-switch CSS with this */
 .format-switch {
-    width: 80px;
-    height: 35px;
-    padding: 0;
-    border: none;
-    border-radius: 4px;
+    position: relative;
+    width: 60px;
+    height: 30px;
+    margin: 2.5px 10px;
+    background-color: #2d2d2d;
+    border-radius: 15px;
+    border: 1px solid #444;
     cursor: pointer;
-    color: white;
-    font-weight: bold;
-    line-height: 35px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px;
+}
+
+.format-switch::before {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
     background-color: #4CAF50;
+    left: 2px;
+    transition: transform 0.3s;
+}
+
+.format-switch.format-2::before {
+    transform: translateX(30px);
+}
+
+.format-switch::after {
+    content: '1';
+    position: absolute;
+    color: #4CAF50;
+    font-size: 12px;
+    font-weight: bold;
+    left: 9px;
+}
+
+.format-switch.format-2::after {
+    content: '2';
+    left: auto;
+    right: 9px;
 }
     
 /* Hover Effects */
@@ -619,7 +651,7 @@
         
         <div class="button-container">
             <button class="save-button" onclick="saveToCell()">Save to Cell</button>
-            <button class="format-switch" id="formatSwitch">Format 1</button>
+            <button class="format-switch" id="formatSwitch"></button>
             <button class="clear-button" onclick="clearSelection()">Clear</button>
         </div>
     </div>
@@ -1329,8 +1361,8 @@ function toggleRangeBuilder() {
 
 function toggleFormat() {
     currentFormat = currentFormat === 1 ? 2 : 1;
-    document.getElementById('formatSwitch').textContent = `Format ${currentFormat}`;
-    updateRangeText(); // Update the text box with new format
+    document.getElementById('formatSwitch').classList.toggle('format-2');
+    updateRangeText();
 }
         
 // Cell and Range Text Functions
