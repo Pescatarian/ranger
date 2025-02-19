@@ -674,7 +674,6 @@ let isDragging = false;
 let dragStartX, dragStartY;
 let clipboardData = null;
 let currentFormat = 1; // 1 for decimal format, 2 for bracket format
-let currentShowRow = 'both'; // can be 'both', 'row1', or 'row2'
 
 
 // Create a single reusable popup element
@@ -1184,76 +1183,18 @@ function toggleRangeCell(cell) {
     const currentColor = currentColors[activeRow];
     const currentWeight = currentWeights[activeRow];
     
-    // Find existing selections for both rows
-    const existingSelection = selections.find(s => s.color === currentColor);
-    const otherRowSelections = selections.filter(s => s.color !== currentColor);
+    const otherRowSelections = selections.filter(s => currentColors.indexOf(s.color) !== activeRow);
+    const existingSelection = selections.find(s => currentColors.indexOf(s.color) === activeRow);
 
-    // Calculate total weight including current selection
-    let totalWeight = currentWeight;
-    otherRowSelections.forEach(s => {
-        totalWeight += s.weight;
-    });
-
-    // Handle selection based on total weight
     if (existingSelection) {
-        // If clicking same row again with same weight, remove it
         if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
             selections = otherRowSelections;
         } else {
-            // Update existing selection
-            const newSelection = {
-                color: currentColor,
-                weight: currentWeight,
-                rowIndex: activeRow
-            };
-            
-            // If total would exceed 100%, adjust weights
-            if (totalWeight > 100) {
-                if (activeRow === 0) {
-                    // Row 1 gets priority
-                    newSelection.weight = Math.min(currentWeight, 100);
-                    // Adjust Row 2 if it exists
-                    const row2Selection = otherRowSelections.find(s => s.rowIndex === 1);
-                    if (row2Selection) {
-                        row2Selection.weight = Math.max(0, 100 - newSelection.weight);
-                    }
-                } else {
-                    // Row 2 gets reduced if needed
-                    newSelection.weight = Math.max(0, 100 - otherRowSelections[0]?.weight || 0);
-                }
-            }
-            
-            selections = [...otherRowSelections, newSelection];
+            selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
         }
     } else {
-        // Add new selection
-        const newSelection = {
-            color: currentColor,
-            weight: currentWeight,
-            rowIndex: activeRow
-        };
-        
-        // If total would exceed 100%, adjust weights
-        if (totalWeight > 100) {
-            if (activeRow === 0) {
-                // Row 1 gets priority
-                newSelection.weight = Math.min(currentWeight, 100);
-                // Adjust Row 2 if it exists
-                const row2Selection = otherRowSelections.find(s => s.rowIndex === 1);
-                if (row2Selection) {
-                    row2Selection.weight = Math.max(0, 100 - newSelection.weight);
-                }
-            } else {
-                // Row 2 gets reduced if needed
-                newSelection.weight = Math.max(0, 100 - otherRowSelections[0]?.weight || 0);
-            }
-        }
-        
-        selections = [...otherRowSelections, newSelection];
+        selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
     }
-    
-    // Filter out any selections with 0 weight
-    selections = selections.filter(s => s.weight > 0);
     
     cell.dataset.selections = JSON.stringify(selections);
     updateCellVisual(cell);
@@ -1262,41 +1203,39 @@ function toggleRangeCell(cell) {
 }
 
 function updateCellVisual(cell) {
-    if (!cell.dataset.selections) return;
+    const selections = JSON.parse(cell.dataset.selections || '[]');
     
-    const selections = JSON.parse(cell.dataset.selections);
     if (selections.length === 0) {
-        cell.style.backgroundColor = '';
-        cell.style.opacity = '';
+        cell.style.background = '#1a1a1a';
+        cell.classList.remove('selected');
         return;
     }
+
+    cell.classList.add('selected');
     
-    // Filter selections based on which row(s) are being shown
-    const visibleSelections = selections.filter(s => {
-        if (currentShowRow === 'both') return true;
-        return (currentShowRow === 'row1' && s.rowIndex === 0) ||
-               (currentShowRow === 'row2' && s.rowIndex === 1);
-    });
-    
-    if (visibleSelections.length > 0) {
-        // Apply color from the last selection in the filtered list
-        cell.style.backgroundColor = visibleSelections[visibleSelections.length - 1].color;
-        
-        // Calculate total weight for opacity
-        const totalWeight = visibleSelections.reduce((sum, s) => sum + s.weight, 0);
-        cell.style.opacity = Math.min(totalWeight / 100, 1);
+    if (selections.length === 1) {
+        const {color, weight} = selections[0];
+        cell.style.background = `linear-gradient(to right, ${color} ${weight}%, #1a1a1a ${weight}%)`;
     } else {
-        cell.style.backgroundColor = '';
-        cell.style.opacity = '';
+        selections.sort((a, b) => currentColors.indexOf(a.color) - currentColors.indexOf(b.color));
+        
+        let gradientString = 'linear-gradient(to right, ';
+        let currentPosition = 0;
+        
+        selections.forEach((selection, index) => {
+            gradientString += `${selection.color} ${currentPosition}% ${currentPosition + selection.weight}%`;
+            currentPosition += selection.weight;
+            
+            if (index < selections.length - 1) {
+                gradientString += ', ';
+            }
+        });
+        
+        gradientString += `, #1a1a1a ${currentPosition}%)`;
+        cell.style.background = gradientString;
     }
 }
 
-// Add this helper function if you don't have it
-function updateAllCellVisuals() {
-    document.querySelectorAll('.range-cell').forEach(cell => {
-        updateCellVisual(cell);
-    });
-}
 function updateStats() {
     const selectedCells = document.querySelectorAll('.range-cell');
     let totalCombos = [0, 0];
@@ -1368,38 +1307,13 @@ function handleViewChange(e) {
 }
 
 function handleRowToggle(e) {
-    const button = e.target;
-    const row = button.dataset.row;
+    document.querySelectorAll('.row-toggle').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.control-row').forEach(row => row.classList.remove('active'));
     
-    if (button.classList.contains('show-toggle')) {
-        // Handle Show 1/Show 2 toggle
-        document.querySelectorAll('.show-toggle').forEach(btn => {
-            if (btn === button) {
-                btn.classList.toggle('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-        
-        // Update currentShowRow based on which Show button is active
-        if (button.classList.contains('active')) {
-            currentShowRow = row === '1' ? 'row1' : 'row2';
-        } else {
-            currentShowRow = 'both';
-        }
-        
-        updateRangeText();
-        updateAllCellVisuals();
-    } else {
-        // Original row toggle functionality for selections
-        document.querySelectorAll('.row-toggle').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.control-row').forEach(row => row.classList.remove('active'));
-        
-        button.classList.add('active');
-        button.closest('.control-row').classList.add('active');
-        
-        activeRow = parseInt(button.dataset.row) - 1;
-    }
+    e.target.classList.add('active');
+    e.target.closest('.control-row').classList.add('active');
+    
+    activeRow = parseInt(e.target.dataset.row) - 1;
 }
 
 function updateRangeDisplay(view) {
@@ -1451,43 +1365,35 @@ function toggleFormat() {
         
 // Cell and Range Text Functions
 function updateRangeText() {
-    const cells = document.querySelectorAll('.range-cell');
+    const cells = [...document.querySelectorAll('.range-cell')];
     let output = '';
     
-    cells.forEach(cell => {
-        if (!cell.dataset.selections) return;
-        
-        const selections = JSON.parse(cell.dataset.selections);
-        if (selections.length === 0) return;
-        
-        const hand = cell.querySelector('span').textContent;
-        let totalWeight = 0;
-        
-        // Calculate weight based on which row(s) are being shown
-        if (currentShowRow === 'both') {
-            // Sum weights from both rows
-            const row1Selection = selections.find(s => s.rowIndex === 0);
-            const row2Selection = selections.find(s => s.rowIndex === 1);
-            
-            if (row1Selection) totalWeight += row1Selection.weight;
-            if (row2Selection) totalWeight += row2Selection.weight;
-            
-            // Cap at 100%
-            if (totalWeight > 100) totalWeight = 100;
-        } else {
-            // Only show weight from selected row
-            const rowIndex = currentShowRow === 'row1' ? 0 : 1;
-            const rowSelection = selections.find(s => s.rowIndex === rowIndex);
-            if (rowSelection) {
-                totalWeight = rowSelection.weight;
-            }
-        }
-        
-        if (totalWeight > 0) {
-            if (output) output += ',';
-            output += `[${totalWeight}%]${hand}[/${totalWeight}%]`;
-        }
-    });
+    // Get all selected hands and their weights
+    const selections = cells
+        .filter(cell => cell.dataset.selections && JSON.parse(cell.dataset.selections).length > 0)
+        .map(cell => {
+            const hand = cell.querySelector('span').textContent;
+            const weight = Math.max(...JSON.parse(cell.dataset.selections)
+                .map(s => s.weight));
+            return { hand, weight };
+        });
+
+    if (currentFormat === 1) {
+        // Format 1: hand:decimal
+        output = selections
+            .map(({ hand, weight }) => `${hand}:${(weight/100).toFixed(3)}`)
+            .join(',');
+    } else {
+        // Format 2: hand,[xx%]hand[/xx%]
+        output = selections
+            .map(({ hand, weight }) => {
+                if (weight === 100) {
+                    return hand;
+                }
+                return `[${weight}%]${hand}[/${weight}%]`;
+            })
+            .join(',');
+    }
     
     document.getElementById('rangeText').value = output;
 }
@@ -1776,39 +1682,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
     document.getElementById('colorPicker2').addEventListener('click', handleColorPickerClick);
     
-    // Updated view button handling
     document.querySelectorAll('.view-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            document.querySelectorAll('.view-button').forEach(btn => 
-                btn.classList.remove('active')
-            );
-            e.target.classList.add('active');
-            
-            const view = e.target.dataset.view;
-            currentShowRow = view === 'all' ? 'both' : 
-                           view === 'row1' ? 'row1' : 'row2';
-            
-            updateRangeText();
-            updateAllCellVisuals();
-        });
+        button.addEventListener('click', handleViewChange);
     });
     
-    // Row toggle handling
     document.querySelectorAll('.row-toggle').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const button = e.target;
-            document.querySelectorAll('.row-toggle').forEach(btn => 
-                btn.classList.remove('active')
-            );
-            document.querySelectorAll('.control-row').forEach(row => 
-                row.classList.remove('active')
-            );
-            
-            button.classList.add('active');
-            button.closest('.control-row').classList.add('active');
-            
-            activeRow = parseInt(button.dataset.row) - 1;
-        });
+        button.addEventListener('click', handleRowToggle);
     });
     
     // Event delegation for color swatches
@@ -1827,3 +1706,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSavedColors();
     initializeDragging();
 });
+</script>
+</body>
+</html>
