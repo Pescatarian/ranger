@@ -578,7 +578,7 @@
     border-color: transparent #4CAF50 transparent transparent;
 }
         
-     </style>
+   </style>
 </head>
 <body>
     <div class="main-container">
@@ -593,13 +593,11 @@
         <h2>Range Builder</h2>
         
         <!-- View Mode Controls -->
-        <!-- Replace the current view-controls div with this -->
-<div class="view-controls">
-    <div class="three-way-switch">
-        <div class="switch-handle"></div>
-        <div class="switch-labels">
-     </div>
-</div>
+        <div class="view-controls">
+            <div class="three-way-switch">
+                <div class="switch-handle"></div>
+            </div>  <!-- Missing closing div for three-way-switch -->
+        </div>     <!-- Missing closing div for view-controls -->
 
         <div class="range-grid" id="rangeGrid"></div>
         
