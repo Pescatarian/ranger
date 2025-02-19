@@ -531,20 +531,17 @@
 .view-switch-container {
     position: absolute;
     left: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    height: 100%;  /* Match full height of control rows */
     width: 30px;
-    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1;
 }
 
 .view-switch {
     width: 20px;
-    height: 60px;
-    background: #2d2d2d;
+    height: 100%;  /* Match full height */
+    background: #2d2d2d;  
     border: 1px solid #444;
     border-radius: 10px;
     position: relative;
@@ -557,7 +554,8 @@
     background: #4CAF50;
     border-radius: 50%;
     position: absolute;
-    left: 2px;
+    left: 1px;
+    top: 22px;  /* Middle position */
     transition: top 0.3s;
 }
 
@@ -1820,30 +1818,52 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add view switch event listener
     document.querySelector('.view-switch').addEventListener('click', function(e) {
         const handle = this.querySelector('.view-switch-handle');
-        const currentView = handle.dataset.view;
+        const currentView = handle.dataset.view || 'all';
+        const rect = this.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        const middleY = rect.height / 2;
         
-        // Cycle through views: all -> row1 -> row2 -> all
+        // Determine if click was above or below middle
         let newView;
-        switch(currentView) {
-            case 'all':
-                newView = 'row1';
-                handle.style.top = '4px';
-                break;
-            case 'row1':
-                newView = 'row2';
-                handle.style.top = '40px';
-                break;
-            case 'row2':
-                newView = 'all';
-                handle.style.top = '22px';
-                break;
+        if (clickY < middleY) {
+            // Move up one position
+            switch(currentView) {
+                case 'all':
+                    newView = 'row1';
+                    handle.style.top = '4px';
+                    break;
+                case 'row2':
+                    newView = 'all';
+                    handle.style.top = '22px';
+                    break;
+                case 'row1':
+                    // Already at top, stay there
+                    newView = 'row1';
+                    handle.style.top = '4px';
+                    break;
+            }
+        } else {
+            // Move down one position
+            switch(currentView) {
+                case 'all':
+                    newView = 'row2';
+                    handle.style.top = '40px';
+                    break;
+                case 'row1':
+                    newView = 'all';
+                    handle.style.top = '22px';
+                    break;
+                case 'row2':
+                    // Already at bottom, stay there
+                    newView = 'row2';
+                    handle.style.top = '40px';
+                    break;
+            }
         }
         
         handle.dataset.view = newView;
-        
-        // Update the view state
-        currentView = newView;
-        updateRangeDisplay(currentView);
+        window.currentView = newView;
+        updateRangeDisplay(newView);
         document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
         updateRangeText();
     });
