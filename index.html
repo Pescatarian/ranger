@@ -490,6 +490,61 @@
     left: auto;
     right: 9px;
 }
+
+/* Add this CSS */
+.three-way-switch {
+    width: 180px;
+    height: 34px;
+    background-color: #2d2d2d;
+    border-radius: 17px;
+    position: relative;
+    cursor: pointer;
+    border: 1px solid #444;
+    margin: 3px auto;
+}
+
+.switch-handle {
+    width: 60px;
+    height: 28px;
+    background-color: #4CAF50;
+    border-radius: 14px;
+    position: absolute;
+    top: 2px;
+    left: 60px; /* Middle position by default */
+    transition: left 0.3s ease;
+}
+
+.switch-labels {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    color: white;
+    font-size: 13px;
+    position: relative;
+    z-index: 2;
+}
+
+.switch-labels span {
+    flex: 1;
+    text-align: center;
+    user-select: none;
+}
+
+/* Handle positions */
+.three-way-switch[data-view="row1"] .switch-handle {
+    left: 2px;
+}
+
+.three-way-switch[data-view="all"] .switch-handle {
+    left: 60px;
+}
+
+.three-way-switch[data-view="row2"] .switch-handle {
+    left: 118px;
+}
     
 /* Hover Effects */
 .view-button:hover:not(.active),
@@ -538,11 +593,17 @@
         <h2>Range Builder</h2>
         
         <!-- View Mode Controls -->
-        <div class="view-controls">
-            <button class="view-button active" data-view="all">Show All</button>
-            <button class="view-button" data-view="row1">Show 1</button>
-            <button class="view-button" data-view="row2">Show 2</button>
+        <!-- Replace the current view-controls div with this -->
+<div class="view-controls">
+    <div class="three-way-switch">
+        <div class="switch-handle"></div>
+        <div class="switch-labels">
+            <span>Show 1</span>
+            <span>Show All</span>
+            <span>Show 2</span>
         </div>
+    </div>
+</div>
 
         <div class="range-grid" id="rangeGrid"></div>
         
@@ -1723,8 +1784,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
     document.getElementById('colorPicker2').addEventListener('click', handleColorPickerClick);
     
-    document.querySelectorAll('.view-button').forEach(button => {
-        button.addEventListener('click', handleViewChange);
+    // Replace view-button handlers with three-way switch handler
+    const threeWaySwitch = document.querySelector('.three-way-switch');
+    threeWaySwitch.dataset.view = 'all'; // Default position
+    
+    threeWaySwitch.addEventListener('click', (e) => {
+        const rect = threeWaySwitch.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const width = rect.width;
+        
+        let newView;
+        if (x < width / 3) {
+            newView = 'row1';
+        } else if (x < (width * 2) / 3) {
+            newView = 'all';
+        } else {
+            newView = 'row2';
+        }
+        
+        threeWaySwitch.dataset.view = newView;
+        currentView = newView;
+        updateRangeDisplay(newView);
+        document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
+        updateRangeText();
     });
     
     document.querySelectorAll('.row-toggle').forEach(button => {
