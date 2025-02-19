@@ -1568,23 +1568,28 @@ async function saveToCell() {
     }
     
     const rangeText = document.getElementById('rangeText').value;
-    if (rangeText && !rangeText.match(/^\[[\d]+:[#\w]+\][^[]+\[\/\d+\](,\[[\d]+:[#\w]+\][^[]+\[\/\d+\])*$/)) {
-        alert('Invalid range format');
-        return;
-    }
+    const currentView = document.querySelector('.three-way-switch').dataset.view; // gets 'all', 'row1', or 'row2'
     
-    // Convert range to image
+    // Ensure range display matches current switch position
+    updateRangeDisplay(currentView);
+    document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
+    
+    // Small delay to ensure visual update is complete
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Convert current view state to image
     const rangeImage = await convertRangeToImage();
     
     // Save both text and image
     const cellData = {
         text: rangeText,
-        image: rangeImage
+        image: rangeImage,
+        view: currentView
     };
     
     // Store in cell
     const content = selectedCell.querySelector('.cell-content');
-    content.innerHTML = ''; // Changed this line - no more 📝 icon
+    content.innerHTML = '';
     content.dataset.range = JSON.stringify(cellData);
     content.classList.add('has-range');
     
@@ -1778,7 +1783,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
     document.getElementById('colorPicker2').addEventListener('click', handleColorPickerClick);
     
-    // Replace view-button handlers with three-way switch handler
+    // Three-way switch handler
     const threeWaySwitch = document.querySelector('.three-way-switch');
     threeWaySwitch.dataset.view = 'all'; // Default position
     
