@@ -1327,6 +1327,9 @@ function handleViewChange(e) {
     
     // Update all cell visuals to reflect new view
     document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
+    
+    // Update text output to match current view
+    updateRangeText();
 }
 
 function handleRowToggle(e) {
