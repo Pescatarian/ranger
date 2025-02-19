@@ -1830,9 +1830,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add this new code here
     document.getElementById('rangeText').addEventListener('copy', (e) => {
-        console.log('Copying:', e.target.value);
-        console.log('Selection:', e.target.selectionStart, e.target.selectionEnd);
-    });
+    e.preventDefault(); // Stop any interference
+    const text = e.target.value.slice(e.target.selectionStart, e.target.selectionEnd);
+    e.clipboardData.setData('text/plain', text);
+    console.log('Manually copied:', text);
+});
 });
 </script>
 </body>
