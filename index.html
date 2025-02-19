@@ -524,10 +524,15 @@
     border-color: transparent #4CAF50 transparent transparent;
 }
 
+.top-controls {
+    position: relative;  /* Add this */
+}
+
 .view-switch-container {
     position: absolute;
     left: 0;
-    top: 585px;  /* This aligns with your control rows */
+    top: 50%;
+    transform: translateY(-50%);
     width: 30px;
     height: 60px;
     display: flex;
@@ -582,16 +587,17 @@
     <div class="sidebar" id="sidebar">
         <h2>Range Builder</h2>
         
-       <div class="range-grid" id="rangeGrid"></div>
-
-    <div class="view-switch-container">
-        <div class="view-switch">
-            <div class="view-switch-handle" data-view="all"></div>
-        </div>
-    </div>
+        <div class="range-grid" id="rangeGrid"></div>
         
         <!-- Control Rows Container -->
         <div class="top-controls">
+            <!-- Add switch here -->
+            <div class="view-switch-container">
+                <div class="view-switch">
+                    <div class="view-switch-handle" data-view="all"></div>
+                </div>
+            </div>
+
             <!-- First Control Row -->
             <div class="control-row active">
                 <button class="row-toggle active" data-row="1">Row 1</button>
@@ -667,6 +673,36 @@
                                <button class="option-button more-colors">More Colors...</button>
                             </div>
                         </div>
+                    </div>
+                </div>
+                
+                <div class="stat-box">
+                    <span>W%</span>
+                    <input type="number" id="weightInput2" value="100" min="0" max="100" 
+                           class="weight-input stat-value" onchange="updateWeight(this.value, 2)">
+                </div>
+                
+                <div class="stat-box">
+                    <span>Range</span>
+                    <span id="rangePercent2" class="stat-value">0</span>
+                </div>
+                
+                <div class="stat-box">
+                    <span>Combos</span>
+                    <span id="comboCount2" class="stat-value">0</span>
+                </div>
+            </div>
+        </div>
+
+        <textarea id="rangeText" class="range-text" 
+                  oninput="handleRangeTextChange(event)"></textarea>
+        
+        <div class="button-container">
+            <button class="save-button" onclick="saveToCell()">Save to Cell</button>
+            <button class="format-switch" id="formatSwitch"></button>
+            <button class="clear-button" onclick="clearSelection()">Clear</button>
+        </div>
+    </div>
                     </div>
                 </div>
                 
