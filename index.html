@@ -1213,20 +1213,36 @@ function updateCellVisual(cell) {
 
     cell.classList.add('selected');
     
-    if (selections.length === 1) {
-        const {color, weight} = selections[0];
+    // Filter selections based on current view
+    let activeSelections = selections;
+    if (currentView === 'row1') {
+        activeSelections = selections.filter(s => s.color === currentColors[0]);
+    } else if (currentView === 'row2') {
+        activeSelections = selections.filter(s => s.color === currentColors[1]);
+    }
+    
+    if (activeSelections.length === 0) {
+        cell.style.opacity = '0.3';
+        cell.style.background = '#1a1a1a';
+        return;
+    }
+    
+    cell.style.opacity = '1';
+    
+    if (activeSelections.length === 1) {
+        const {color, weight} = activeSelections[0];
         cell.style.background = `linear-gradient(to right, ${color} ${weight}%, #1a1a1a ${weight}%)`;
     } else {
-        selections.sort((a, b) => currentColors.indexOf(a.color) - currentColors.indexOf(b.color));
+        activeSelections.sort((a, b) => currentColors.indexOf(a.color) - currentColors.indexOf(b.color));
         
         let gradientString = 'linear-gradient(to right, ';
         let currentPosition = 0;
         
-        selections.forEach((selection, index) => {
+        activeSelections.forEach((selection, index) => {
             gradientString += `${selection.color} ${currentPosition}% ${currentPosition + selection.weight}%`;
             currentPosition += selection.weight;
             
-            if (index < selections.length - 1) {
+            if (index < activeSelections.length - 1) {
                 gradientString += ', ';
             }
         });
@@ -1369,22 +1385,30 @@ function updateRangeText() {
     let output = '';
     
     const selections = cells
-        .filter(cell => cell.dataset.selections && JSON.parse(cell.dataset.selections).length > 0)
+        .filter(cell => {
+            const cellSelections = JSON.parse(cell.dataset.selections || '[]');
+            
+            // Filter selections based on current view
+            if (currentView === 'row1') {
+                return cellSelections.some(s => s.color === currentColors[0]);
+            } else if (currentView === 'row2') {
+                return cellSelections.some(s => s.color === currentColors[1]);
+            }
+            return cellSelections.length > 0;
+        })
         .map(cell => {
             const hand = cell.querySelector('span').textContent;
             const cellSelections = JSON.parse(cell.dataset.selections);
             
-            let weight = 0;
-            if (currentView === 'all') {
-                weight = Math.min(100, cellSelections.reduce((sum, s) => sum + s.weight, 0));
-            } else if (currentView === 'row1') {
-                const row1Selection = cellSelections.find(s => s.color === currentColors[0]);
-                weight = row1Selection ? row1Selection.weight : 0;
+            // Get weights based on current view
+            let activeSelections = cellSelections;
+            if (currentView === 'row1') {
+                activeSelections = cellSelections.filter(s => s.color === currentColors[0]);
             } else if (currentView === 'row2') {
-                const row2Selection = cellSelections.find(s => s.color === currentColors[1]);
-                weight = row2Selection ? row2Selection.weight : 0;
+                activeSelections = cellSelections.filter(s => s.color === currentColors[1]);
             }
             
+            const weight = Math.min(100, activeSelections.reduce((sum, s) => sum + s.weight, 0));
             return { hand, weight };
         })
         .filter(selection => selection.weight > 0);
