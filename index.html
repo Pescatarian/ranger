@@ -1508,16 +1508,20 @@ function handleRangeTextChange(e) {
     // Detect format and parse accordingly
     if (text.includes('[')) {
         // Format 2: bracket format
-        const parts = text.match(/(?:[^,\[\]]+|\[[^\]]*\])+/g) || [];
+        const parts = text.split(',');
         parts.forEach(part => {
+            part = part.trim();
             if (part.includes('[')) {
-                const [hand, weightMatch] = part.match(/([^,\[\]]+)\[(\d+)%\]/) || [];
-                if (hand && weightMatch) {
-                    const weight = parseInt(weightMatch);
-                    selectHandWithWeight(hand.trim(), weight);
+                // Match pattern like "[50]AKs[/50]"
+                const match = part.match(/\[(\d+)\]([^[]+)\[\/\1\]/) || [];
+                if (match && match[1] && match[2]) {
+                    const weight = parseInt(match[1]);
+                    const hand = match[2].trim();
+                    selectHandWithWeight(hand, weight);
                 }
             } else {
-                selectHandWithWeight(part.trim(), 100);
+                // Handle parts without brackets (assumed 100%)
+                selectHandWithWeight(part, 100);
             }
         });
     } else {
