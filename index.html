@@ -1828,12 +1828,17 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSavedColors();
     initializeDragging();
 
-    // Add this new code here
-    document.getElementById('rangeText').addEventListener('copy', (e) => {
-    e.preventDefault(); // Stop any interference
+   // Add format switch event listener
+document.getElementById('formatSwitch').addEventListener('click', toggleFormat);
+
+loadSavedColors();
+initializeDragging();
+
+// Fix for range text copying
+document.getElementById('rangeText').addEventListener('copy', (e) => {
+    e.preventDefault();
     const text = e.target.value.slice(e.target.selectionStart, e.target.selectionEnd);
     e.clipboardData.setData('text/plain', text);
-    console.log('Manually copied:', text);
 });
 });
 </script>
