@@ -448,6 +448,19 @@
     background-color: #ff4444;
 }
 
+.format-switch {
+    width: 80px;
+    height: 35px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    line-height: 35px;
+    background-color: #4CAF50;
+}
+    
 /* Hover Effects */
 .view-button:hover:not(.active),
 .row-toggle:hover:not(.active) {
@@ -604,9 +617,9 @@
         <textarea id="rangeText" class="range-text" 
                   oninput="handleRangeTextChange(event)"></textarea>
         
-        <!-- Bottom Buttons Container -->
         <div class="button-container">
             <button class="save-button" onclick="saveToCell()">Save to Cell</button>
+            <button class="format-switch" id="formatSwitch">Format 1</button>
             <button class="clear-button" onclick="clearSelection()">Clear</button>
         </div>
     </div>
@@ -630,6 +643,8 @@ let colorPickerPosition = JSON.parse(localStorage.getItem('colorPickerPosition')
 let isDragging = false;
 let dragStartX, dragStartY;
 let clipboardData = null;
+let currentFormat = 1; // 1 for decimal format, 2 for bracket format
+
 
 // Create a single reusable popup element
 const hoverPopup = document.createElement('div');
@@ -1312,60 +1327,103 @@ function toggleRangeBuilder() {
     document.getElementById('sidebar').style.display = isRangeBuilderOpen ? 'flex' : 'none';
 }
 
+function toggleFormat() {
+    currentFormat = currentFormat === 1 ? 2 : 1;
+    document.getElementById('formatSwitch').textContent = `Format ${currentFormat}`;
+    updateRangeText(); // Update the text box with new format
+}
+        
 // Cell and Range Text Functions
 function updateRangeText() {
     const cells = [...document.querySelectorAll('.range-cell')];
-    const selectionsByColorAndWeight = {};
+    let output = '';
     
-    cells.forEach(cell => {
-        const selections = JSON.parse(cell.dataset.selections || '[]');
-        selections.forEach(({color, weight}) => {
-            const key = `${color}_${weight}`;
-            if (!selectionsByColorAndWeight[key]) {
-                selectionsByColorAndWeight[key] = [];
-            }
-            selectionsByColorAndWeight[key].push(cell.querySelector('span').textContent);
+    // Get all selected hands and their weights
+    const selections = cells
+        .filter(cell => cell.dataset.selections && JSON.parse(cell.dataset.selections).length > 0)
+        .map(cell => {
+            const hand = cell.querySelector('span').textContent;
+            const weight = Math.max(...JSON.parse(cell.dataset.selections)
+                .map(s => s.weight));
+            return { hand, weight };
         });
-    });
+
+    if (currentFormat === 1) {
+        // Format 1: hand:decimal
+        output = selections
+            .map(({ hand, weight }) => `${hand}:${(weight/100).toFixed(3)}`)
+            .join(',');
+    } else {
+        // Format 2: hand,[xx%]hand[/xx%]
+        output = selections
+            .map(({ hand, weight }) => {
+                if (weight === 100) {
+                    return hand;
+                }
+                return `[${weight}%]${hand}[/${weight}%]`;
+            })
+            .join(',');
+    }
     
-    const formattedGroups = Object.entries(selectionsByColorAndWeight)
-        .map(([key, hands]) => {
-            const [color, weight] = key.split('_');
-            return `[${weight}:${color}]${hands.join(',')}[/${weight}]`;
-        });
-    
-    document.getElementById('rangeText').value = formattedGroups.join(',');
+    document.getElementById('rangeText').value = output;
 }
 
 function handleRangeTextChange(e) {
     const text = e.target.value.trim();
     
+    // Clear all selections first
     document.querySelectorAll('.range-cell').forEach(cell => {
         cell.dataset.selections = JSON.stringify([]);
         updateCellVisual(cell);
     });
     
-    if (text) {
-        const weightGroups = text.match(/\[\d+:[#\w]+\][^[]+\[\/\d+\]/g) || [];
-        weightGroups.forEach(group => {
-            const [_, weight, color] = group.match(/\[(\d+):([#\w]+)\]/);
-            const hands = group.match(/\]([^[]+)\[/)[1].split(',');
-            
-            hands.forEach(hand => {
-                const cell = [...document.querySelectorAll('.range-cell')]
-                    .find(cell => cell.querySelector('span').textContent.trim() === hand.trim());
-                if (cell) {
-                    const selections = JSON.parse(cell.dataset.selections || '[]');
-                    selections.push({color, weight: parseInt(weight)});
-                    cell.dataset.selections = JSON.stringify(selections);
-                    updateCellVisual(cell);
+    if (!text) return;
+
+    // Detect format and parse accordingly
+    if (text.includes('[')) {
+        // Format 2: bracket format
+        const parts = text.match(/(?:[^,\[\]]+|\[[^\]]*\])+/g) || [];
+        parts.forEach(part => {
+            if (part.includes('[')) {
+                const [hand, weightMatch] = part.match(/([^,\[\]]+)\[(\d+)%\]/) || [];
+                if (hand && weightMatch) {
+                    const weight = parseInt(weightMatch);
+                    selectHandWithWeight(hand.trim(), weight);
                 }
-            });
+            } else {
+                selectHandWithWeight(part.trim(), 100);
+            }
+        });
+    } else {
+        // Format 1: decimal format
+        const parts = text.split(',');
+        parts.forEach(part => {
+            const [hand, weightStr] = part.split(':');
+            if (hand && weightStr) {
+                const weight = Math.round(parseFloat(weightStr) * 100);
+                selectHandWithWeight(hand.trim(), weight);
+            }
         });
     }
+    
     updateStats();
 }
 
+function selectHandWithWeight(hand, weight) {
+    const cell = [...document.querySelectorAll('.range-cell')]
+        .find(cell => cell.querySelector('span').textContent === hand);
+    
+    if (cell) {
+        const selections = JSON.parse(cell.dataset.selections || '[]');
+        selections.push({
+            color: currentColors[activeRow],
+            weight: weight
+        });
+        cell.dataset.selections = JSON.stringify(selections);
+        updateCellVisual(cell);
+    }
+}
+        
 // Cell Handling Functions
 function selectCell(e) {
     if (!isViewMode) return;
@@ -1569,26 +1627,26 @@ document.addEventListener('DOMContentLoaded', () => {
     createRangeGrid();
     toggleViewMode();
     
- // Add global keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-    if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
-        switch(e.key.toLowerCase()) {
-            case 'c':
-                e.preventDefault();
-                clipboardData = copyCell(selectedCell);
-                break;
-            case 'x':
-                e.preventDefault();
-                clipboardData = copyCell(selectedCell);
-                clearCell(selectedCell);
-                break;
-            case 'v':
-                e.preventDefault();
-                pasteCell(selectedCell, clipboardData);
-                break;
+    // Add global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
+            switch(e.key.toLowerCase()) {
+                case 'c':
+                    e.preventDefault();
+                    clipboardData = copyCell(selectedCell);
+                    break;
+                case 'x':
+                    e.preventDefault();
+                    clipboardData = copyCell(selectedCell);
+                    clearCell(selectedCell);
+                    break;
+                case 'v':
+                    e.preventDefault();
+                    pasteCell(selectedCell, clipboardData);
+                    break;
+            }
         }
-    }
-});
+    });
     
     // Color picker event listeners
     document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
@@ -1611,6 +1669,9 @@ document.addEventListener('keydown', (e) => {
             selectColor(color, rowIndex);
         }
     });
+    
+    // Add format switch event listener
+    document.getElementById('formatSwitch').addEventListener('click', toggleFormat);
     
     loadSavedColors();
     initializeDragging();
