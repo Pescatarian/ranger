@@ -1213,42 +1213,36 @@ function updateCellVisual(cell) {
 
     cell.classList.add('selected');
     
-    // Filter selections based on current view
-    let activeSelections = selections;
+    // Filter selections based on current view while preserving original data
+    let displaySelections = [...selections];
     if (currentView === 'row1') {
-        activeSelections = selections.filter(s => s.color === currentColors[0]);
+        displaySelections = selections.filter(s => s.color === currentColors[0]);
     } else if (currentView === 'row2') {
-        activeSelections = selections.filter(s => s.color === currentColors[1]);
+        displaySelections = selections.filter(s => s.color === currentColors[1]);
     }
     
-    if (activeSelections.length === 0) {
-        cell.style.opacity = '0.3';
-        cell.style.background = '#1a1a1a';
-        return;
-    }
-    
-    cell.style.opacity = '1';
-    
-    if (activeSelections.length === 1) {
-        const {color, weight} = activeSelections[0];
+    if (displaySelections.length === 1) {
+        const {color, weight} = displaySelections[0];
         cell.style.background = `linear-gradient(to right, ${color} ${weight}%, #1a1a1a ${weight}%)`;
-    } else {
-        activeSelections.sort((a, b) => currentColors.indexOf(a.color) - currentColors.indexOf(b.color));
+    } else if (displaySelections.length > 1) {
+        displaySelections.sort((a, b) => currentColors.indexOf(a.color) - currentColors.indexOf(b.color));
         
         let gradientString = 'linear-gradient(to right, ';
         let currentPosition = 0;
         
-        activeSelections.forEach((selection, index) => {
+        displaySelections.forEach((selection, index) => {
             gradientString += `${selection.color} ${currentPosition}% ${currentPosition + selection.weight}%`;
             currentPosition += selection.weight;
             
-            if (index < activeSelections.length - 1) {
+            if (index < displaySelections.length - 1) {
                 gradientString += ', ';
             }
         });
         
         gradientString += `, #1a1a1a ${currentPosition}%)`;
         cell.style.background = gradientString;
+    } else {
+        cell.style.background = '#1a1a1a';
     }
 }
 
