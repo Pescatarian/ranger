@@ -1184,18 +1184,76 @@ function toggleRangeCell(cell) {
     const currentColor = currentColors[activeRow];
     const currentWeight = currentWeights[activeRow];
     
-    const otherRowSelections = selections.filter(s => currentColors.indexOf(s.color) !== activeRow);
-    const existingSelection = selections.find(s => currentColors.indexOf(s.color) === activeRow);
+    // Find existing selections for both rows
+    const existingSelection = selections.find(s => s.color === currentColor);
+    const otherRowSelections = selections.filter(s => s.color !== currentColor);
 
+    // Calculate total weight including current selection
+    let totalWeight = currentWeight;
+    otherRowSelections.forEach(s => {
+        totalWeight += s.weight;
+    });
+
+    // Handle selection based on total weight
     if (existingSelection) {
+        // If clicking same row again with same weight, remove it
         if (existingSelection.color === currentColor && existingSelection.weight === currentWeight) {
             selections = otherRowSelections;
         } else {
-            selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
+            // Update existing selection
+            const newSelection = {
+                color: currentColor,
+                weight: currentWeight,
+                rowIndex: activeRow
+            };
+            
+            // If total would exceed 100%, adjust weights
+            if (totalWeight > 100) {
+                if (activeRow === 0) {
+                    // Row 1 gets priority
+                    newSelection.weight = Math.min(currentWeight, 100);
+                    // Adjust Row 2 if it exists
+                    const row2Selection = otherRowSelections.find(s => s.rowIndex === 1);
+                    if (row2Selection) {
+                        row2Selection.weight = Math.max(0, 100 - newSelection.weight);
+                    }
+                } else {
+                    // Row 2 gets reduced if needed
+                    newSelection.weight = Math.max(0, 100 - otherRowSelections[0]?.weight || 0);
+                }
+            }
+            
+            selections = [...otherRowSelections, newSelection];
         }
     } else {
-        selections = [...otherRowSelections, { color: currentColor, weight: currentWeight }];
+        // Add new selection
+        const newSelection = {
+            color: currentColor,
+            weight: currentWeight,
+            rowIndex: activeRow
+        };
+        
+        // If total would exceed 100%, adjust weights
+        if (totalWeight > 100) {
+            if (activeRow === 0) {
+                // Row 1 gets priority
+                newSelection.weight = Math.min(currentWeight, 100);
+                // Adjust Row 2 if it exists
+                const row2Selection = otherRowSelections.find(s => s.rowIndex === 1);
+                if (row2Selection) {
+                    row2Selection.weight = Math.max(0, 100 - newSelection.weight);
+                }
+            } else {
+                // Row 2 gets reduced if needed
+                newSelection.weight = Math.max(0, 100 - otherRowSelections[0]?.weight || 0);
+            }
+        }
+        
+        selections = [...otherRowSelections, newSelection];
     }
+    
+    // Filter out any selections with 0 weight
+    selections = selections.filter(s => s.weight > 0);
     
     cell.dataset.selections = JSON.stringify(selections);
     updateCellVisual(cell);
@@ -1718,12 +1776,39 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
     document.getElementById('colorPicker2').addEventListener('click', handleColorPickerClick);
     
+    // Updated view button handling
     document.querySelectorAll('.view-button').forEach(button => {
-        button.addEventListener('click', handleViewChange);
+        button.addEventListener('click', (e) => {
+            document.querySelectorAll('.view-button').forEach(btn => 
+                btn.classList.remove('active')
+            );
+            e.target.classList.add('active');
+            
+            const view = e.target.dataset.view;
+            currentShowRow = view === 'all' ? 'both' : 
+                           view === 'row1' ? 'row1' : 'row2';
+            
+            updateRangeText();
+            updateAllCellVisuals();
+        });
     });
     
+    // Row toggle handling
     document.querySelectorAll('.row-toggle').forEach(button => {
-        button.addEventListener('click', handleRowToggle);
+        button.addEventListener('click', (e) => {
+            const button = e.target;
+            document.querySelectorAll('.row-toggle').forEach(btn => 
+                btn.classList.remove('active')
+            );
+            document.querySelectorAll('.control-row').forEach(row => 
+                row.classList.remove('active')
+            );
+            
+            button.classList.add('active');
+            button.closest('.control-row').classList.add('active');
+            
+            activeRow = parseInt(button.dataset.row) - 1;
+        });
     });
     
     // Event delegation for color swatches
@@ -1742,6 +1827,3 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSavedColors();
     initializeDragging();
 });
-</script>
-</body>
-</html>
