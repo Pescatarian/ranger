@@ -1324,6 +1324,9 @@ function handleViewChange(e) {
     
     currentView = e.target.dataset.view;
     updateRangeDisplay(currentView);
+    
+    // Update all cell visuals to reflect new view
+    document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
 }
 
 function handleRowToggle(e) {
