@@ -1808,7 +1808,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateRangeText();
     });
     
-    document.querySelectorAll('.row-toggle').forEach(button => {
+       document.querySelectorAll('.row-toggle').forEach(button => {
         button.addEventListener('click', handleRowToggle);
     });
     
@@ -1827,6 +1827,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadSavedColors();
     initializeDragging();
+
+    // Add this new code here
+    document.getElementById('rangeText').addEventListener('copy', (e) => {
+        console.log('Copying:', e.target.value);
+        console.log('Selection:', e.target.selectionStart, e.target.selectionEnd);
+    });
 });
 </script>
 </body>
