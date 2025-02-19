@@ -1373,9 +1373,12 @@ function updateRangeText() {
         .filter(cell => cell.dataset.selections && JSON.parse(cell.dataset.selections).length > 0)
         .map(cell => {
             const hand = cell.querySelector('span').textContent;
-            const weight = Math.max(...JSON.parse(cell.dataset.selections)
-                .map(s => s.weight));
-            return { hand, weight };
+            const cellSelections = JSON.parse(cell.dataset.selections);
+            
+            // Calculate total weight (capped at 100)
+            const totalWeight = Math.min(100, cellSelections.reduce((sum, s) => sum + s.weight, 0));
+            
+            return { hand, weight: totalWeight };
         });
 
     if (currentFormat === 1) {
