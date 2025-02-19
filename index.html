@@ -1213,36 +1213,46 @@ function updateCellVisual(cell) {
 
     cell.classList.add('selected');
     
-    // Filter selections based on current view while preserving original data
-    let displaySelections = [...selections];
+    // For visual display, only show weights from active row
     if (currentView === 'row1') {
-        displaySelections = selections.filter(s => s.color === currentColors[0]);
-    } else if (currentView === 'row2') {
-        displaySelections = selections.filter(s => s.color === currentColors[1]);
+        const row1Selection = selections.find(s => s.color === currentColors[0]);
+        if (row1Selection) {
+            cell.style.background = `linear-gradient(to right, ${currentColors[0]} ${row1Selection.weight}%, #1a1a1a ${row1Selection.weight}%)`;
+        } else {
+            cell.style.background = '#1a1a1a';
+        }
+    } 
+    else if (currentView === 'row2') {
+        const row2Selection = selections.find(s => s.color === currentColors[1]);
+        if (row2Selection) {
+            cell.style.background = `linear-gradient(to right, ${currentColors[1]} ${row2Selection.weight}%, #1a1a1a ${row2Selection.weight}%)`;
+        } else {
+            cell.style.background = '#1a1a1a';
+        }
     }
-    
-    if (displaySelections.length === 1) {
-        const {color, weight} = displaySelections[0];
-        cell.style.background = `linear-gradient(to right, ${color} ${weight}%, #1a1a1a ${weight}%)`;
-    } else if (displaySelections.length > 1) {
-        displaySelections.sort((a, b) => currentColors.indexOf(a.color) - currentColors.indexOf(b.color));
-        
-        let gradientString = 'linear-gradient(to right, ';
-        let currentPosition = 0;
-        
-        displaySelections.forEach((selection, index) => {
-            gradientString += `${selection.color} ${currentPosition}% ${currentPosition + selection.weight}%`;
-            currentPosition += selection.weight;
+    else {
+        // Show All view - original combined gradient logic
+        if (selections.length === 1) {
+            const {color, weight} = selections[0];
+            cell.style.background = `linear-gradient(to right, ${color} ${weight}%, #1a1a1a ${weight}%)`;
+        } else {
+            selections.sort((a, b) => currentColors.indexOf(a.color) - currentColors.indexOf(b.color));
             
-            if (index < displaySelections.length - 1) {
-                gradientString += ', ';
-            }
-        });
-        
-        gradientString += `, #1a1a1a ${currentPosition}%)`;
-        cell.style.background = gradientString;
-    } else {
-        cell.style.background = '#1a1a1a';
+            let gradientString = 'linear-gradient(to right, ';
+            let currentPosition = 0;
+            
+            selections.forEach((selection, index) => {
+                gradientString += `${selection.color} ${currentPosition}% ${currentPosition + selection.weight}%`;
+                currentPosition += selection.weight;
+                
+                if (index < selections.length - 1) {
+                    gradientString += ', ';
+                }
+            });
+            
+            gradientString += `, #1a1a1a ${currentPosition}%)`;
+            cell.style.background = gradientString;
+        }
     }
 }
 
