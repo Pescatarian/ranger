@@ -1375,11 +1375,20 @@ function updateRangeText() {
             const hand = cell.querySelector('span').textContent;
             const cellSelections = JSON.parse(cell.dataset.selections);
             
-            // Calculate total weight (capped at 100)
-            const totalWeight = Math.min(100, cellSelections.reduce((sum, s) => sum + s.weight, 0));
+            let weight;
+            if (currentView === 'all') {
+                // Sum weights when showing all (capped at 100)
+                weight = Math.min(100, cellSelections.reduce((sum, s) => sum + s.weight, 0));
+            } else {
+                // Show only selected row's weight
+                const rowIndex = currentView === 'row1' ? 0 : 1;
+                const rowSelection = cellSelections.find(s => s.color === currentColors[rowIndex]);
+                weight = rowSelection ? rowSelection.weight : 0;
+            }
             
-            return { hand, weight: totalWeight };
-        });
+            return { hand, weight };
+        })
+        .filter(selection => selection.weight > 0); // Only include non-zero weights
 
     if (currentFormat === 1) {
         // Format 1: hand:decimal
