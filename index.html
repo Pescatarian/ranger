@@ -233,13 +233,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 490px;  /* Changed from 520px */
+    width: 520px;
     padding: 4px 0;
     border-radius: 4px;
     background-color: #1a1a1a;
     gap: 12px;
     opacity: 0.7;
-    margin-left: 30px;  /* Added this line */
 }
         
 .control-row.active {
@@ -523,53 +522,6 @@
     border-width: 0 8px 8px 0;
     border-color: transparent #4CAF50 transparent transparent;
 }
-
-.top-controls {
-    position: relative;  /* Add this */
-}
-
-.view-switch-container {
-    position: absolute;
-    left: 0;
-    height: 100%;  /* Match full height of control rows */
-    width: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.view-switch {
-    width: 20px;
-    height: 100%;
-    background: #2d2d2d;
-    border: 1px solid #444;
-    border-radius: 10px;
-    position: relative;
-    cursor: pointer;
-}
-
-.view-switch-handle {
-    width: 16px;
-    height: 16px;
-    background: #4CAF50;
-    border-radius: 50%;
-    position: absolute;
-    left: 1px;
-    top: 22px;  /* Middle position */
-    transition: top 0.3s;
-}
-
-.view-switch-handle[data-view="row1"] {
-    top: 4px;
-}
-
-.view-switch-handle[data-view="all"] {
-    top: 22px;
-}
-
-.view-switch-handle[data-view="row2"] {
-    top: 40px;
-}
         
      </style>
 </head>
@@ -585,17 +537,17 @@
     <div class="sidebar" id="sidebar">
         <h2>Range Builder</h2>
         
+        <!-- View Mode Controls -->
+        <div class="view-controls">
+            <button class="view-button active" data-view="all">Show All</button>
+            <button class="view-button" data-view="row1">Show 1</button>
+            <button class="view-button" data-view="row2">Show 2</button>
+        </div>
+
         <div class="range-grid" id="rangeGrid"></div>
         
         <!-- Control Rows Container -->
         <div class="top-controls">
-            <!-- Add switch here -->
-            <div class="view-switch-container">
-                <div class="view-switch">
-                    <div class="view-switch-handle" data-view="all"></div>
-                </div>
-            </div>
-
             <!-- First Control Row -->
             <div class="control-row active">
                 <button class="row-toggle active" data-row="1">Row 1</button>
@@ -671,36 +623,6 @@
                                <button class="option-button more-colors">More Colors...</button>
                             </div>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="stat-box">
-                    <span>W%</span>
-                    <input type="number" id="weightInput2" value="100" min="0" max="100" 
-                           class="weight-input stat-value" onchange="updateWeight(this.value, 2)">
-                </div>
-                
-                <div class="stat-box">
-                    <span>Range</span>
-                    <span id="rangePercent2" class="stat-value">0</span>
-                </div>
-                
-                <div class="stat-box">
-                    <span>Combos</span>
-                    <span id="comboCount2" class="stat-value">0</span>
-                </div>
-            </div>
-        </div>
-
-        <textarea id="rangeText" class="range-text" 
-                  oninput="handleRangeTextChange(event)"></textarea>
-        
-        <div class="button-container">
-            <button class="save-button" onclick="saveToCell()">Save to Cell</button>
-            <button class="format-switch" id="formatSwitch"></button>
-            <button class="clear-button" onclick="clearSelection()">Clear</button>
-        </div>
-    </div>
                     </div>
                 </div>
                 
@@ -1801,6 +1723,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
     document.getElementById('colorPicker2').addEventListener('click', handleColorPickerClick);
     
+    document.querySelectorAll('.view-button').forEach(button => {
+        button.addEventListener('click', handleViewChange);
+    });
+    
     document.querySelectorAll('.row-toggle').forEach(button => {
         button.addEventListener('click', handleRowToggle);
     });
@@ -1813,59 +1739,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const rowIndex = parseInt(swatch.dataset.rowIndex);
             selectColor(color, rowIndex);
         }
-    });
-    
-    // Add view switch event listener
-    document.querySelector('.view-switch').addEventListener('click', function(e) {
-        const handle = this.querySelector('.view-switch-handle');
-        const currentView = handle.dataset.view || 'all';
-        const rect = this.getBoundingClientRect();
-        const clickY = e.clientY - rect.top;
-        const middleY = rect.height / 2;
-        
-        // Determine if click was above or below middle
-        let newView;
-        if (clickY < middleY) {
-            // Move up one position
-            switch(currentView) {
-                case 'all':
-                    newView = 'row1';
-                    handle.style.top = '4px';
-                    break;
-                case 'row2':
-                    newView = 'all';
-                    handle.style.top = '22px';
-                    break;
-                case 'row1':
-                    // Already at top, stay there
-                    newView = 'row1';
-                    handle.style.top = '4px';
-                    break;
-            }
-        } else {
-            // Move down one position
-            switch(currentView) {
-                case 'all':
-                    newView = 'row2';
-                    handle.style.top = '40px';
-                    break;
-                case 'row1':
-                    newView = 'all';
-                    handle.style.top = '22px';
-                    break;
-                case 'row2':
-                    // Already at bottom, stay there
-                    newView = 'row2';
-                    handle.style.top = '40px';
-                    break;
-            }
-        }
-        
-        handle.dataset.view = newView;
-        window.currentView = newView;
-        updateRangeDisplay(newView);
-        document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
-        updateRangeText();
     });
     
     // Add format switch event listener
