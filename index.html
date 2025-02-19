@@ -1394,8 +1394,6 @@ function updateRangeText() {
     const selections = cells
         .filter(cell => {
             const cellSelections = JSON.parse(cell.dataset.selections || '[]');
-            
-            // Filter selections based on current view
             if (currentView === 'row1') {
                 return cellSelections.some(s => s.color === currentColors[0]);
             } else if (currentView === 'row2') {
@@ -1405,17 +1403,19 @@ function updateRangeText() {
         })
         .map(cell => {
             const hand = cell.querySelector('span').textContent;
-            const cellSelections = JSON.parse(cell.dataset.selections);
+            const cellSelections = JSON.parse(cell.dataset.selections || '[]');
             
-            // Get weights based on current view
-            let activeSelections = cellSelections;
+            let weight = 0;
             if (currentView === 'row1') {
-                activeSelections = cellSelections.filter(s => s.color === currentColors[0]);
+                const row1Selection = cellSelections.find(s => s.color === currentColors[0]);
+                weight = row1Selection ? row1Selection.weight : 0;
             } else if (currentView === 'row2') {
-                activeSelections = cellSelections.filter(s => s.color === currentColors[1]);
+                const row2Selection = cellSelections.find(s => s.color === currentColors[1]);
+                weight = row2Selection ? row2Selection.weight : 0;
+            } else {
+                weight = Math.min(100, cellSelections.reduce((sum, s) => sum + s.weight, 0));
             }
             
-            const weight = Math.min(100, activeSelections.reduce((sum, s) => sum + s.weight, 0));
             return { hand, weight };
         })
         .filter(selection => selection.weight > 0);
