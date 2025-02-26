@@ -585,6 +585,9 @@
         <div class="controls">
             <button id="viewModeBtn" class="button active" onclick="toggleViewMode()">View Mode</button>
             <button id="rangeBuilderBtn" class="button" onclick="toggleRangeBuilder()">Range Builder</button>
+            <button id="exportJsonBtn" class="button" onclick="exportToJson()">Export JSON</button>
+            <input type="file" id="jsonFileInput" accept=".json" style="display: none;" onchange="importFromJson(event)">
+            <button id="importJsonBtn" class="button" onclick="document.getElementById('jsonFileInput').click()">Import JSON</button>
         </div>
         <div class="grid-container" id="grid"></div>
     </div>
@@ -1346,7 +1349,107 @@ function updateStats() {
     });
 }
 
-// Event Handlers and Selection Functions
+// Now add the JSON export/import functions:
+function exportToJson() {
+    // Collect all cell data including ranges, styling, and content
+    const cellsData = {};
+    document.querySelectorAll('.cell').forEach(cell => {
+        const cellId = cell.dataset.id;
+        const content = cell.querySelector('.cell-content');
+        
+        if (content.textContent || content.dataset.range || 
+            cell.style.backgroundColor || content.style.color) {
+            cellsData[cellId] = {
+                text: content.textContent,
+                backgroundColor: cell.style.backgroundColor,
+                textColor: content.style.color,
+                rangeData: content.dataset.range || '',
+                hasRange: content.classList.contains('has-range')
+            };
+        }
+    });
+    
+    // Create complete app state object
+    const appData = {
+        cellsData: cellsData,
+        currentColors: currentColors,
+        currentWeights: currentWeights,
+        recentColors: recentColors,
+        currentFormat: currentFormat,
+        version: "1.0"
+    };
+    
+    // Create and trigger download
+    const dataStr = JSON.stringify(appData, null, 2);
+    const blob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ranger-data.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function importFromJson(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const appData = JSON.parse(e.target.result);
+            
+            // Restore cell data
+            if (appData.cellsData) {
+                Object.entries(appData.cellsData).forEach(([cellId, data]) => {
+                    const cell = document.querySelector(`[data-id="${cellId}"]`);
+                    if (!cell) return;
+                    
+                    const content = cell.querySelector('.cell-content');
+                    content.textContent = data.text || '';
+                    cell.style.backgroundColor = data.backgroundColor || '';
+                    content.style.color = data.textColor || '';
+                    
+                    if (data.rangeData) {
+                        content.dataset.range = data.rangeData;
+                        if (data.hasRange) {
+                            content.classList.add('has-range');
+                            addCellHover(cell);
+                        }
+                    }
+                    
+                    if (data.text) {
+                        cellData.set(cellId, data.text);
+                    }
+                });
+            }
+            
+            // Restore settings
+            if (appData.currentColors) currentColors = appData.currentColors;
+            if (appData.currentWeights) currentWeights = appData.currentWeights;
+            if (appData.recentColors) {
+                recentColors = appData.recentColors;
+                localStorage.setItem('recentColors', JSON.stringify(recentColors));
+            }
+            if (appData.currentFormat) {
+                currentFormat = appData.currentFormat;
+                document.getElementById('formatSwitch').classList.toggle('format-2', currentFormat === 2);
+            }
+            
+            // Update UI
+            loadSavedColors();
+            
+            alert('Data imported successfully!');
+        } catch (err) {
+            alert('Error importing data: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+}
+        // Event Handlers and Selection Functions
 function startRangeSelection(e) {
     isMouseDown = true;
     const cell = e.target.closest('.range-cell');
@@ -1812,7 +1915,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateRangeText();
     });
     
-       document.querySelectorAll('.row-toggle').forEach(button => {
+    document.querySelectorAll('.row-toggle').forEach(button => {
         button.addEventListener('click', handleRowToggle);
     });
     
@@ -1832,18 +1935,19 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSavedColors();
     initializeDragging();
 
-   // Add format switch event listener
-document.getElementById('formatSwitch').addEventListener('click', toggleFormat);
-
-loadSavedColors();
-initializeDragging();
-
-// Fix for range text copying
-document.getElementById('rangeText').addEventListener('copy', (e) => {
-    e.preventDefault();
-    const text = e.target.value.slice(e.target.selectionStart, e.target.selectionEnd);
-    e.clipboardData.setData('text/plain', text);
-});
+    // Fix for range text copying
+    document.getElementById('rangeText').addEventListener('copy', (e) => {
+        e.preventDefault();
+        const text = e.target.value.slice(e.target.selectionStart, e.target.selectionEnd);
+        e.clipboardData.setData('text/plain', text);
+    });
+    
+    // Add JSON export/import functionality
+    document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
+    document.getElementById('importJsonBtn').addEventListener('click', () => {
+        document.getElementById('jsonFileInput').click();
+    });
+    document.getElementById('jsonFileInput').addEventListener('change', importFromJson);
 });
 </script>
 </body>
