@@ -1756,6 +1756,63 @@ function pasteCell(cell, data) {
     }
 }
         
+// Save/Load Functions - Defined OUTSIDE DOMContentLoaded
+function saveGridState() {
+    const gridState = {
+        cells: {},
+        timestamp: new Date().getTime()
+    };
+    
+    document.querySelectorAll('.cell').forEach(cell => {
+        const cellId = cell.dataset.id;
+        const content = cell.querySelector('.cell-content');
+        
+        if (content.textContent || content.dataset.range || 
+            cell.style.backgroundColor || content.style.color) {
+            
+            gridState.cells[cellId] = {
+                text: content.textContent,
+                backgroundColor: cell.style.backgroundColor,
+                textColor: content.style.color,
+                rangeData: content.dataset.range || '',
+                hasRange: content.classList.contains('has-range')
+            };
+        }
+    });
+    
+    localStorage.setItem('pokerGridState', JSON.stringify(gridState));
+}
+
+function loadGridState() {
+    const savedState = localStorage.getItem('pokerGridState');
+    if (!savedState) return;
+    
+    const gridState = JSON.parse(savedState);
+    
+    Object.entries(gridState.cells).forEach(([cellId, data]) => {
+        const cell = document.querySelector(`[data-id="${cellId}"]`);
+        if (!cell) return;
+        
+        const content = cell.querySelector('.cell-content');
+        
+        content.textContent = data.text;
+        cell.style.backgroundColor = data.backgroundColor;
+        content.style.color = data.textColor;
+        
+        if (data.rangeData) {
+            content.dataset.range = data.rangeData;
+            if (data.hasRange) {
+                content.classList.add('has-range');
+                addCellHover(cell);
+            }
+        }
+        
+        if (data.text || data.rangeData) {
+            cellData.set(cellId, data.text);
+        }
+    });
+}
+
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
     createGrid();
@@ -1812,7 +1869,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateRangeText();
     });
     
-       document.querySelectorAll('.row-toggle').forEach(button => {
+    document.querySelectorAll('.row-toggle').forEach(button => {
         button.addEventListener('click', handleRowToggle);
     });
     
@@ -1832,19 +1889,27 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSavedColors();
     initializeDragging();
 
-   // Add format switch event listener
-document.getElementById('formatSwitch').addEventListener('click', toggleFormat);
+    // Fix for range text copying
+    document.getElementById('rangeText').addEventListener('copy', (e) => {
+        e.preventDefault();
+        const text = e.target.value.slice(e.target.selectionStart, e.target.selectionEnd);
+        e.clipboardData.setData('text/plain', text);
+    });
 
-loadSavedColors();
-initializeDragging();
+    // Initialize auto-save
+    setInterval(saveGridState, 30000); // Save every 30 seconds
+    window.addEventListener('beforeunload', saveGridState); // Save when closing
 
-// Fix for range text copying
-document.getElementById('rangeText').addEventListener('copy', (e) => {
-    e.preventDefault();
-    const text = e.target.value.slice(e.target.selectionStart, e.target.selectionEnd);
-    e.clipboardData.setData('text/plain', text);
+    // Add Save Work button
+    const saveButton = document.createElement('button');
+    saveButton.className = 'button';
+    saveButton.textContent = 'Save Work';
+    saveButton.onclick = () => {
+        saveGridState();
+        alert('Your work has been saved!');
+    };
+    document.querySelector('.controls').appendChild(saveButton);
+
+    // Load any previously saved state
+    loadGridState();
 });
-});
-</script>
-</body>
-</html>
