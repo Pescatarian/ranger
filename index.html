@@ -583,11 +583,11 @@
 <body>
     <div class="main-container">
         <div class="controls">
-            <button id="viewModeBtn" class="button active" onclick="toggleViewMode()">View Mode</button>
-            <button id="rangeBuilderBtn" class="button" onclick="toggleRangeBuilder()">Range Builder</button>
-            <button id="exportJsonBtn" class="button" onclick="exportToJson()">Export JSON</button>
-            <input type="file" id="jsonFileInput" accept=".json" style="display: none;" onchange="importFromJson(event)">
-            <button id="importJsonBtn" class="button" onclick="document.getElementById('jsonFileInput').click()">Import JSON</button>
+            <button id="viewModeBtn" class="button active">View Mode</button>
+            <button id="rangeBuilderBtn" class="button">Range Builder</button>
+            <button id="exportJsonBtn" class="button">Export JSON</button>
+            <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
+            <button id="importJsonBtn" class="button">Import JSON</button>
         </div>
         <div class="grid-container" id="grid"></div>
     </div>
@@ -599,8 +599,13 @@
         <div class="view-controls">
             <div class="three-way-switch">
                 <div class="switch-handle"></div>
-            </div>  <!-- Missing closing div for three-way-switch -->
-        </div>     <!-- Missing closing div for view-controls -->
+                <div class="switch-labels">
+                    <span>Row 1</span>
+                    <span>All</span>
+                    <span>Row 2</span>
+                </div>
+            </div>
+        </div>
 
         <div class="range-grid" id="rangeGrid"></div>
         
@@ -639,7 +644,7 @@
                 <div class="stat-box">
                     <span>W%</span>
                     <input type="number" id="weightInput1" value="100" min="0" max="100" 
-                           class="weight-input stat-value" onchange="updateWeight(this.value, 1)">
+                           class="weight-input stat-value">
                 </div>
                 
                 <div class="stat-box">
@@ -687,7 +692,7 @@
                 <div class="stat-box">
                     <span>W%</span>
                     <input type="number" id="weightInput2" value="100" min="0" max="100" 
-                           class="weight-input stat-value" onchange="updateWeight(this.value, 2)">
+                           class="weight-input stat-value">
                 </div>
                 
                 <div class="stat-box">
@@ -702,13 +707,12 @@
             </div>
         </div>
 
-        <textarea id="rangeText" class="range-text" 
-                  oninput="handleRangeTextChange(event)"></textarea>
+        <textarea id="rangeText" class="range-text"></textarea>
         
         <div class="button-container">
-            <button class="save-button" onclick="saveToCell()">Save to Cell</button>
+            <button class="save-button">Save to Cell</button>
             <button class="format-switch" id="formatSwitch"></button>
-            <button class="clear-button" onclick="clearSelection()">Clear</button>
+            <button class="clear-button">Clear</button>
         </div>
     </div>
 
@@ -732,7 +736,48 @@ let isDragging = false;
 let dragStartX, dragStartY;
 let clipboardData = null;
 let currentFormat = 1; // 1 for decimal format, 2 for bracket format
+// Remove the exportInProgress flag
+// Remove the exportTimeoutId variable
 
+// Function Declarations - Now declare all functions before they're called
+
+// View Mode and Range Builder Toggle Functions
+function toggleViewMode() {
+    isViewMode = true;
+    isRangeBuilderOpen = false;
+    
+    document.getElementById('viewModeBtn').classList.add('active');
+    document.getElementById('rangeBuilderBtn').classList.remove('active');
+    
+    document.getElementById('sidebar').style.display = 'none';
+}
+
+function toggleRangeBuilder() {
+    isRangeBuilderOpen = !isRangeBuilderOpen;
+    isViewMode = !isRangeBuilderOpen;
+    
+    document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
+    document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
+    
+    document.getElementById('sidebar').style.display = isRangeBuilderOpen ? 'flex' : 'none';
+}
+
+function toggleFormat() {
+    currentFormat = currentFormat === 1 ? 2 : 1;
+    document.getElementById('formatSwitch').classList.toggle('format-2');
+    updateRangeText();
+}
+
+// Cell Selection Function
+function selectCell(e) {
+    if (!isViewMode) return;
+    if (selectedCell) {
+        selectedCell.style.outline = 'none';
+    }
+    selectedCell = e.currentTarget;
+    selectedCell.style.outline = '3px solid #4CAF50';
+    selectedCell.style.outlineOffset = '-3px';
+}
 
 // Create a single reusable popup element
 const hoverPopup = document.createElement('div');
@@ -1349,107 +1394,235 @@ function updateStats() {
     });
 }
 
-// Now add the JSON export/import functions:
+// Simplified export/import functions
 function exportToJson() {
-    // Collect all cell data including ranges, styling, and content
-    const cellsData = {};
-    document.querySelectorAll('.cell').forEach(cell => {
-        const cellId = cell.dataset.id;
-        const content = cell.querySelector('.cell-content');
+    try {
+        // Collect all cell data including ranges, styling, and content
+        const cellsData = {};
+        document.querySelectorAll('.cell').forEach(cell => {
+            const cellId = cell.dataset.id;
+            const content = cell.querySelector('.cell-content');
+            
+            if (content.textContent || content.dataset.range || 
+                cell.style.backgroundColor || content.style.color) {
+                cellsData[cellId] = {
+                    text: String(content.textContent || ''),
+                    backgroundColor: String(cell.style.backgroundColor || ''),
+                    textColor: String(content.style.color || ''),
+                    rangeData: String(content.dataset.range || ''),
+                    hasRange: Boolean(content.classList.contains('has-range'))
+                };
+            }
+        });
         
-        if (content.textContent || content.dataset.range || 
-            cell.style.backgroundColor || content.style.color) {
-            cellsData[cellId] = {
-                text: content.textContent,
-                backgroundColor: cell.style.backgroundColor,
-                textColor: content.style.color,
-                rangeData: content.dataset.range || '',
-                hasRange: content.classList.contains('has-range')
-            };
-        }
-    });
-    
-    // Create complete app state object
-    const appData = {
-        cellsData: cellsData,
-        currentColors: currentColors,
-        currentWeights: currentWeights,
-        recentColors: recentColors,
-        currentFormat: currentFormat,
-        version: "1.0"
-    };
-    
-    // Create and trigger download
-    const dataStr = JSON.stringify(appData, null, 2);
-    const blob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'ranger-data.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+        // Create app state object
+        const appData = {
+            cellsData: cellsData,
+            currentColors: [...currentColors],
+            currentWeights: [...currentWeights],
+            recentColors: [...recentColors],
+            currentFormat: Number(currentFormat),
+            version: "1.0"
+        };
+        
+        // Create downloadable string
+        const dataStr = "data:text/json;charset=utf-8," + 
+                      encodeURIComponent(JSON.stringify(appData, null, 2));
+        
+        // Create download link
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "ranger-data.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    } catch (error) {
+        console.error('Export error:', error);
+        alert('Error exporting data: ' + error.message);
+    }
 }
 
 function importFromJson(event) {
     const file = event.target.files[0];
     if (!file) return;
     
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const appData = JSON.parse(e.target.result);
-            
-            // Restore cell data
-            if (appData.cellsData) {
-                Object.entries(appData.cellsData).forEach(([cellId, data]) => {
-                    const cell = document.querySelector(`[data-id="${cellId}"]`);
-                    if (!cell) return;
-                    
-                    const content = cell.querySelector('.cell-content');
-                    content.textContent = data.text || '';
-                    cell.style.backgroundColor = data.backgroundColor || '';
-                    content.style.color = data.textColor || '';
-                    
-                    if (data.rangeData) {
-                        content.dataset.range = data.rangeData;
-                        if (data.hasRange) {
-                            content.classList.add('has-range');
-                            addCellHover(cell);
+    try {
+        // Reset the file input so the same file can be selected again if needed
+        document.getElementById('jsonFileInput').value = '';
+        
+        const reader = new FileReader();
+        
+        // Add loading indicator
+        const loadingMsg = document.createElement('div');
+        loadingMsg.textContent = 'Importing data...';
+        loadingMsg.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px;border-radius:5px;z-index:9999;';
+        document.body.appendChild(loadingMsg);
+        
+        reader.onload = function(e) {
+            try {
+                const appData = JSON.parse(e.target.result);
+                
+                // Restore cell data
+                if (appData.cellsData) {
+                    Object.entries(appData.cellsData).forEach(([cellId, data]) => {
+                        const cell = document.querySelector(`[data-id="${cellId}"]`);
+                        if (!cell) return;
+                        
+                        const content = cell.querySelector('.cell-content');
+                        content.textContent = String(data.text || '');
+                        cell.style.backgroundColor = String(data.backgroundColor || '');
+                        content.style.color = String(data.textColor || '');
+                        
+                        if (data.rangeData) {
+                            content.dataset.range = String(data.rangeData);
+                            if (data.hasRange) {
+                                content.classList.add('has-range');
+                                addCellHover(cell);
+                            }
                         }
-                    }
-                    
-                    if (data.text) {
-                        cellData.set(cellId, data.text);
-                    }
-                });
+                        
+                        if (data.text) {
+                            cellData.set(cellId, data.text);
+                        }
+                    });
+                }
+                
+                // Restore settings - use explicit copies for arrays
+                if (appData.currentColors) currentColors = [...appData.currentColors];
+                if (appData.currentWeights) currentWeights = [...appData.currentWeights];
+                if (appData.recentColors) {
+                    recentColors = [...appData.recentColors];
+                    localStorage.setItem('recentColors', JSON.stringify(recentColors));
+                }
+                if (appData.currentFormat) {
+                    currentFormat = Number(appData.currentFormat);
+                    document.getElementById('formatSwitch').classList.toggle('format-2', currentFormat === 2);
+                }
+                
+                // Update UI
+                loadSavedColors();
+                
+                // Remove loading indicator and show success
+                document.body.removeChild(loadingMsg);
+                alert('Data imported successfully!');
+            } catch (err) {
+                document.body.removeChild(loadingMsg);
+                console.error('Import parsing error:', err);
+                alert('Error parsing import data: ' + err.message);
             }
-            
-            // Restore settings
-            if (appData.currentColors) currentColors = appData.currentColors;
-            if (appData.currentWeights) currentWeights = appData.currentWeights;
-            if (appData.recentColors) {
-                recentColors = appData.recentColors;
-                localStorage.setItem('recentColors', JSON.stringify(recentColors));
-            }
-            if (appData.currentFormat) {
-                currentFormat = appData.currentFormat;
-                document.getElementById('formatSwitch').classList.toggle('format-2', currentFormat === 2);
-            }
-            
-            // Update UI
-            loadSavedColors();
-            
-            alert('Data imported successfully!');
-        } catch (err) {
-            alert('Error importing data: ' + err.message);
-        }
-    };
-    reader.readAsText(file);
+        };
+        
+        reader.onerror = function() {
+            document.body.removeChild(loadingMsg);
+            console.error('File reading error');
+            alert('Error reading the file');
+        };
+        
+        reader.readAsText(file);
+    } catch (outerError) {
+        console.error('Import error:', outerError);
+        alert('Error importing data: ' + outerError.message);
+    }
 }
-        // Event Handlers and Selection Functions
+        
+async function saveToCell() {
+    if (!selectedCell) {
+        alert('Please select a cell first');
+        return;
+    }
+    
+    try {
+        const rangeText = document.getElementById('rangeText').value || '';
+        const currentView = document.querySelector('.three-way-switch').dataset.view || 'all';
+        
+        // Ensure range display matches current switch position
+        updateRangeDisplay(currentView);
+        document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
+        
+        // Small delay to ensure visual update is complete
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Convert current view state to image
+        const rangeImage = await convertRangeToImage();
+        
+        // Save both text and image with explicit String conversions
+        const cellDataObj = {
+            text: String(rangeText),
+            image: String(rangeImage),
+            view: String(currentView)
+        };
+        
+        // Store in cell
+        const content = selectedCell.querySelector('.cell-content');
+        content.innerHTML = '';
+        
+        // Use safer JSON stringification
+        try {
+            content.dataset.range = JSON.stringify(cellDataObj);
+            content.classList.add('has-range');
+            
+            // Add hover functionality
+            addCellHover(selectedCell);
+            
+            toggleRangeBuilder();
+        } catch (jsonError) {
+            console.error('JSON error in saveToCell:', jsonError);
+            alert('Error saving range data: ' + jsonError.message);
+        }
+    } catch (error) {
+        console.error('Save error:', error);
+        alert('Error saving to cell: ' + error.message);
+    }
+}
+
+function clearSelection() {
+    document.querySelectorAll('.range-cell').forEach(cell => {
+        cell.dataset.selections = JSON.stringify([]);
+        updateCellVisual(cell);
+    });
+    document.getElementById('rangeText').value = '';
+    updateStats();
+}
+
+function handleDragStart(e) {
+    if (!isViewMode) return;
+    e.dataTransfer.setData('text/plain', e.target.dataset.id);
+}
+
+function handleDragOver(e) {
+    if (!isViewMode) return;
+    e.preventDefault();
+}
+
+function handleDrop(e) {
+    if (!isViewMode) return;
+    e.preventDefault();
+    const sourceId = e.dataTransfer.getData('text/plain');
+    const targetId = e.target.closest('.cell').dataset.id;
+    
+    const sourceData = cellData.get(sourceId);
+    const targetData = cellData.get(targetId);
+    
+    if (sourceData) cellData.set(targetId, sourceData);
+    if (targetData) cellData.set(sourceId, targetData);
+    
+    updateCellContent(sourceId);
+    updateCellContent(targetId);
+}
+
+function updateCellContent(cellId) {
+    const cell = document.querySelector(`[data-id="${cellId}"]`);
+    const content = cell.querySelector('.cell-content');
+    const data = cellData.get(cellId);
+    
+    if (data) {
+        content.textContent = data;
+    } else {
+        content.innerHTML = '';
+    }
+}
+
+// Range Selection Functions
 function startRangeSelection(e) {
     isMouseDown = true;
     const cell = e.target.closest('.range-cell');
@@ -1520,33 +1693,6 @@ function updateRangeDisplay(view) {
     });
 }
 
-// View Mode and Range Builder Toggle Functions
-function toggleViewMode() {
-    isViewMode = true;
-    isRangeBuilderOpen = false;
-    
-    document.getElementById('viewModeBtn').classList.add('active');
-    document.getElementById('rangeBuilderBtn').classList.remove('active');
-    
-    document.getElementById('sidebar').style.display = 'none';
-}
-
-function toggleRangeBuilder() {
-    isRangeBuilderOpen = !isRangeBuilderOpen;
-    isViewMode = !isRangeBuilderOpen;
-    
-    document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
-    document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
-    
-    document.getElementById('sidebar').style.display = isRangeBuilderOpen ? 'flex' : 'none';
-}
-
-function toggleFormat() {
-    currentFormat = currentFormat === 1 ? 2 : 1;
-    document.getElementById('formatSwitch').classList.toggle('format-2');
-    updateRangeText();
-}
-        
 // Cell and Range Text Functions
 function updateRangeText() {
     const cells = [...document.querySelectorAll('.range-cell')];
@@ -1656,102 +1802,6 @@ function selectHandWithWeight(hand, weight) {
         updateCellVisual(cell);
     }
 }
-        
-// Cell Handling Functions
-function selectCell(e) {
-    if (!isViewMode) return;
-    if (selectedCell) {
-        selectedCell.style.outline = 'none';
-    }
-    selectedCell = e.currentTarget;
-    selectedCell.style.outline = '3px solid #4CAF50';
-    selectedCell.style.outlineOffset = '-3px';
-}
-
-async function saveToCell() {
-    if (!selectedCell) {
-        alert('Please select a cell first');
-        return;
-    }
-    
-    const rangeText = document.getElementById('rangeText').value;
-    const currentView = document.querySelector('.three-way-switch').dataset.view; // gets 'all', 'row1', or 'row2'
-    
-    // Ensure range display matches current switch position
-    updateRangeDisplay(currentView);
-    document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
-    
-    // Small delay to ensure visual update is complete
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
-    // Convert current view state to image
-    const rangeImage = await convertRangeToImage();
-    
-    // Save both text and image
-    const cellData = {
-        text: rangeText,
-        image: rangeImage,
-        view: currentView
-    };
-    
-    // Store in cell
-    const content = selectedCell.querySelector('.cell-content');
-    content.innerHTML = '';
-    content.dataset.range = JSON.stringify(cellData);
-    content.classList.add('has-range');
-    
-    // Add hover functionality
-    addCellHover(selectedCell);
-    
-    toggleRangeBuilder();
-}
-
-function clearSelection() {
-    document.querySelectorAll('.range-cell').forEach(cell => {
-        cell.dataset.selections = JSON.stringify([]);
-        updateCellVisual(cell);
-    });
-    document.getElementById('rangeText').value = '';
-    updateStats();
-}
-
-function handleDragStart(e) {
-    if (!isViewMode) return;
-    e.dataTransfer.setData('text/plain', e.target.dataset.id);
-}
-
-function handleDragOver(e) {
-    if (!isViewMode) return;
-    e.preventDefault();
-}
-
-function handleDrop(e) {
-    if (!isViewMode) return;
-    e.preventDefault();
-    const sourceId = e.dataTransfer.getData('text/plain');
-    const targetId = e.target.closest('.cell').dataset.id;
-    
-    const sourceData = cellData.get(sourceId);
-    const targetData = cellData.get(targetId);
-    
-    if (sourceData) cellData.set(targetId, sourceData);
-    if (targetData) cellData.set(sourceId, targetData);
-    
-    updateCellContent(sourceId);
-    updateCellContent(targetId);
-}
-
-function updateCellContent(cellId) {
-    const cell = document.querySelector(`[data-id="${cellId}"]`);
-    const content = cell.querySelector('.cell-content');
-    const data = cellData.get(cellId);
-    
-    if (data) {
-        content.textContent = data;
-    } else {
-        content.innerHTML = '';
-    }
-}
 
 // Weight and Color Settings Functions
 function updateWeight(value, rowIndex) {
@@ -1783,31 +1833,63 @@ function loadSavedColors() {
     }
 }
 
-// Add these new functions
+// Range Imaging Functions
 function convertRangeToImage() {
     const rangeGrid = document.getElementById('rangeGrid');
-    return html2canvas(rangeGrid).then(canvas => {
-        return canvas.toDataURL('image/png');
+    if (!rangeGrid) {
+        console.error('Range grid element not found');
+        return '';
+    }
+    
+    return html2canvas(rangeGrid, {
+        allowTaint: true,
+        useCORS: true,
+        logging: false
+    })
+    .then(canvas => {
+        try {
+            return canvas.toDataURL('image/png');
+        } catch (error) {
+            console.error('Canvas to data URL error:', error);
+            return '';
+        }
+    })
+    .catch(error => {
+        console.error('HTML2Canvas error:', error);
+        return '';
     });
 }
 
 function addCellHover(cell) {
     cell.addEventListener('mouseenter', () => {
-        const content = cell.querySelector('.cell-content');
-        if (!content.dataset.range) return;
+        try {
+            const content = cell.querySelector('.cell-content');
+            if (!content || !content.dataset.range) return;
 
-        const rangeData = JSON.parse(content.dataset.range);
-        if (rangeData && rangeData.image) {
-            const img = new Image();
-            img.src = rangeData.image;
-            hoverPopup.innerHTML = '';
-            hoverPopup.appendChild(img);
+            let rangeData;
+            try {
+                rangeData = JSON.parse(content.dataset.range);
+            } catch (parseError) {
+                console.error('Error parsing range data:', parseError);
+                return;
+            }
             
-            // Position popup
-            const cellRect = cell.getBoundingClientRect();
-            hoverPopup.style.left = `${cellRect.right + 5}px`;
-            hoverPopup.style.top = `${cellRect.top}px`;
-            hoverPopup.style.display = 'block';
+            if (rangeData && rangeData.image) {
+                const img = new Image();
+                img.onerror = () => console.error('Error loading range image');
+                img.src = rangeData.image;
+                
+                hoverPopup.innerHTML = '';
+                hoverPopup.appendChild(img);
+                
+                // Position popup
+                const cellRect = cell.getBoundingClientRect();
+                hoverPopup.style.left = `${cellRect.right + 5}px`;
+                hoverPopup.style.top = `${cellRect.top}px`;
+                hoverPopup.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Hover display error:', error);
         }
     });
     
@@ -1929,11 +2011,44 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Add format switch event listener
+    // Add event listeners for buttons and inputs
+    document.getElementById('viewModeBtn').addEventListener('click', toggleViewMode);
+    document.getElementById('rangeBuilderBtn').addEventListener('click', toggleRangeBuilder);
+    document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
     document.getElementById('formatSwitch').addEventListener('click', toggleFormat);
     
-    loadSavedColors();
-    initializeDragging();
+    // Weight inputs
+    document.getElementById('weightInput1').addEventListener('change', (e) => updateWeight(e.target.value, 1));
+    document.getElementById('weightInput2').addEventListener('change', (e) => updateWeight(e.target.value, 2));
+    
+    // Range text and action buttons
+    document.getElementById('rangeText').addEventListener('input', handleRangeTextChange);
+    document.querySelector('.save-button').addEventListener('click', saveToCell);
+    document.querySelector('.clear-button').addEventListener('click', clearSelection);
+    
+    // Import file handling with fresh input creation
+    document.getElementById('importJsonBtn').addEventListener('click', () => {
+        // Create a new file input each time to avoid browser caching issues
+        const oldInput = document.getElementById('jsonFileInput');
+        const newInput = document.createElement('input');
+        newInput.type = 'file';
+        newInput.id = 'jsonFileInput';
+        newInput.accept = '.json';
+        newInput.style.display = 'none';
+        
+        // Replace old input with new one
+        if (oldInput) {
+            oldInput.parentNode.replaceChild(newInput, oldInput);
+        } else {
+            document.body.appendChild(newInput);
+        }
+        
+        // Add event listener to new input
+        newInput.addEventListener('change', importFromJson);
+        
+        // Trigger click on new input
+        newInput.click();
+    });
 
     // Fix for range text copying
     document.getElementById('rangeText').addEventListener('copy', (e) => {
@@ -1942,12 +2057,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.clipboardData.setData('text/plain', text);
     });
     
-    // Add JSON export/import functionality
-    document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
-    document.getElementById('importJsonBtn').addEventListener('click', () => {
-        document.getElementById('jsonFileInput').click();
-    });
-    document.getElementById('jsonFileInput').addEventListener('change', importFromJson);
+    loadSavedColors();
+    initializeDragging();
 });
 </script>
 </body>
