@@ -1397,7 +1397,7 @@ function updateStats() {
 // Simplified export/import functions
 function exportToJson() {
     try {
-        // Collect data as before
+        // Collect data
         const cellsData = {};
         document.querySelectorAll('.cell').forEach(cell => {
             const cellId = cell.dataset.id;
@@ -1424,28 +1424,45 @@ function exportToJson() {
             version: "1.0"
         };
 
+        // Convert to JSON string with pretty formatting
         const jsonString = JSON.stringify(appData, null, 2);
         
-        // Create a Blob object
-        const blob = new Blob([jsonString], {type: 'application/json'});
-        
-        // Use navigator.msSaveBlob for IE/Edge, or create object URL for other browsers
-        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-            window.navigator.msSaveBlob(blob, 'ranger-data.json');
-        } else {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'ranger-data.json';
-            
-            // Append to document, click, and clean up in one atomic operation
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Revoke the object URL later to free memory
-            setTimeout(() => URL.revokeObjectURL(url), 100);
-        }
+        // Open a new window/tab with just the JSON content
+        const exportWindow = window.open();
+        exportWindow.document.write(`
+            <html>
+            <head>
+                <title>Ranger Export Data</title>
+                <style>
+                    body { background: #1a1a1a; color: #4CAF50; font-family: monospace; padding: 20px; }
+                    h2 { color: white; }
+                    pre { background: #111; padding: 15px; border: 1px solid #333; white-space: pre-wrap; }
+                    button { background: #4CAF50; color: white; border: none; padding: 10px 15px; cursor: pointer; }
+                </style>
+            </head>
+            <body>
+                <h2>Ranger Export Data</h2>
+                <p>Copy the JSON below and save it to a .json file</p>
+                <button onclick="copyJson()">Copy to Clipboard</button>
+                <pre id="json">${jsonString.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                <script>
+                    function copyJson() {
+                        const el = document.getElementById('json');
+                        const range = document.createRange();
+                        range.selectNodeContents(el);
+                        const sel = window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                        document.execCommand('copy');
+                        sel.removeAllRanges();
+                        document.querySelector('button').textContent = 'Copied!';
+                        setTimeout(() => document.querySelector('button').textContent = 'Copy to Clipboard', 2000);
+                    }
+                </script>
+            </body>
+            </html>
+        `);
+        exportWindow.document.close();
     } catch (error) {
         console.error('Export error:', error);
         alert('Error exporting data: ' + error.message);
