@@ -1397,7 +1397,7 @@ function updateStats() {
 // Simplified export/import functions
 function exportToJson() {
     try {
-        // Collect all cell data
+        // Collect data
         const cellsData = {};
         document.querySelectorAll('.cell').forEach(cell => {
             const cellId = cell.dataset.id;
@@ -1415,7 +1415,6 @@ function exportToJson() {
             }
         });
         
-        // Create app state object
         const appData = {
             cellsData: cellsData,
             currentColors: currentColors,
@@ -1425,33 +1424,29 @@ function exportToJson() {
             version: "1.0"
         };
         
-        // Create downloadable string - use data URI method which works better with Chrome's security
+        // Add timestamp to filename to avoid caching issues
+        const timestamp = new Date().getTime();
+        const filename = `ranger-data-${timestamp}.json`;
+        
+        // Clean approach - create and trigger download in one go
         const jsonString = JSON.stringify(appData, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonString);
         
-        // Create a visible download button to avoid Chrome's auto-blocking
+        // Create a new anchor for each download to avoid Chrome's blocking
         const downloadLink = document.createElement('a');
         downloadLink.setAttribute('href', dataUri);
-        downloadLink.setAttribute('download', 'ranger-data.json');
-        downloadLink.style.position = 'fixed';
-        downloadLink.style.top = '10px';
-        downloadLink.style.left = '10px';
-        downloadLink.style.padding = '10px 15px';
-        downloadLink.style.backgroundColor = '#4CAF50';
-        downloadLink.style.color = 'white';
-        downloadLink.style.borderRadius = '4px';
-        downloadLink.style.zIndex = '9999';
-        downloadLink.textContent = 'Download Ready - Click Here';
-        
+        downloadLink.setAttribute('download', filename);
+        downloadLink.style.display = 'none';
         document.body.appendChild(downloadLink);
         
-        // Allow user to manually click to download (more browser-compatible)
+        // Use setTimeout to ensure the DOM has time to update
         setTimeout(() => {
-            downloadLink.focus();
-            // Auto-remove after 10 seconds
-            setTimeout(() => document.body.removeChild(downloadLink), 10000);
-        }, 100);
-        
+            downloadLink.click();
+            // Remove the element after clicking
+            setTimeout(() => {
+                document.body.removeChild(downloadLink);
+            }, 100);
+        }, 10);
     } catch (error) {
         console.error('Export error:', error);
         alert('Error exporting data: ' + error.message);
