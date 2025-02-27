@@ -1397,8 +1397,6 @@ function updateStats() {
 // Simplified export/import functions
 function exportToJson() {
     try {
-        console.log("Starting export...");
-        
         // Collect all cell data
         const cellsData = {};
         document.querySelectorAll('.cell').forEach(cell => {
@@ -1427,31 +1425,31 @@ function exportToJson() {
             version: "1.0"
         };
         
-        // Add timestamp to filename to prevent caching
-        const timestamp = new Date().getTime();
-        const filename = `ranger-data-${timestamp}.json`;
+        // Create downloadable string - use data URI method which works better with Chrome's security
+        const jsonString = JSON.stringify(appData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonString);
         
-        // Create blob and URL
-        const blob = new Blob([JSON.stringify(appData, null, 2)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
+        // Create a visible download button to avoid Chrome's auto-blocking
+        const downloadLink = document.createElement('a');
+        downloadLink.setAttribute('href', dataUri);
+        downloadLink.setAttribute('download', 'ranger-data.json');
+        downloadLink.style.position = 'fixed';
+        downloadLink.style.top = '10px';
+        downloadLink.style.left = '10px';
+        downloadLink.style.padding = '10px 15px';
+        downloadLink.style.backgroundColor = '#4CAF50';
+        downloadLink.style.color = 'white';
+        downloadLink.style.borderRadius = '4px';
+        downloadLink.style.zIndex = '9999';
+        downloadLink.textContent = 'Download Ready - Click Here';
         
-        // Create a temporary download link
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = filename;
+        document.body.appendChild(downloadLink);
         
-        console.log("Download element created, clicking...");
-        
-        // Trigger download
-        document.body.appendChild(a);
-        a.click();
-        
-        // Clean up - use timeout to ensure download starts before revoking
+        // Allow user to manually click to download (more browser-compatible)
         setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            console.log("Export cleanup complete");
+            downloadLink.focus();
+            // Auto-remove after 10 seconds
+            setTimeout(() => document.body.removeChild(downloadLink), 10000);
         }, 100);
         
     } catch (error) {
@@ -1459,6 +1457,7 @@ function exportToJson() {
         alert('Error exporting data: ' + error.message);
     }
 }
+        
 function importFromJson(event) {
     const file = event.target.files[0];
     if (!file) return;
