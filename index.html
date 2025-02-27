@@ -733,7 +733,7 @@ let dragStartX, dragStartY;
 let clipboardData = null;
 let currentFormat = 1; // 1 for decimal format, 2 for bracket format
 let exportInProgress = false;
-
+        
 // Create a single reusable popup element
 const hoverPopup = document.createElement('div');
 hoverPopup.className = 'range-popup';
@@ -1410,39 +1410,11 @@ function exportToJson() {
     }
     
     exportInProgress = true;
+    console.log("Export started, flag set to true"); // Debug logging
     
     try {
         // Collect all cell data including ranges, styling, and content
-        const cellsData = {};
-        document.querySelectorAll('.cell').forEach(cell => {
-            const cellId = cell.dataset.id;
-            const content = cell.querySelector('.cell-content');
-            
-            if (content.textContent || content.dataset.range || 
-                cell.style.backgroundColor || content.style.color) {
-                cellsData[cellId] = {
-                    text: String(content.textContent || ''),
-                    backgroundColor: String(cell.style.backgroundColor || ''),
-                    textColor: String(content.style.color || ''),
-                    rangeData: String(content.dataset.range || ''),
-                    hasRange: Boolean(content.classList.contains('has-range'))
-                };
-            }
-        });
-        
-        // Create complete app state object
-        const appData = {
-            cellsData: cellsData,
-            currentColors: [...currentColors],
-            currentWeights: [...currentWeights],
-            recentColors: [...recentColors],
-            currentFormat: Number(currentFormat),
-            version: "1.0"
-        };
-        
-        // Create unique filename with timestamp to avoid browser caching issues
-        const timestamp = new Date().getTime();
-        const filename = `ranger-data-${timestamp}.json`;
+        // [your existing collection code here]
         
         // Create and trigger download
         const dataStr = JSON.stringify(appData, null, 2);
@@ -1450,26 +1422,28 @@ function exportToJson() {
         const url = URL.createObjectURL(blob);
         
         const a = document.createElement('a');
-        a.style.display = 'none';
         a.href = url;
-        a.download = filename;
+        a.download = 'ranger-data.json';
         document.body.appendChild(a);
+        a.click();
         
-        // Use a longer timeout to ensure browser has time to process
+        // Reset flag regardless of success/failure after a delay
         setTimeout(() => {
-            a.click();
-            
-            // Use a nested timeout for cleanup to ensure download starts first
-            setTimeout(() => {
+            try {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                exportInProgress = false;
-            }, 500);
-        }, 100);
+            } catch (cleanupError) {
+                console.error("Cleanup error:", cleanupError);
+            }
+            
+            exportInProgress = false;
+            console.log("Export completed, flag reset to false"); // Debug logging
+        }, 500);
     } catch (error) {
         console.error('Export error:', error);
         alert('Error exporting data: ' + error.message);
-        exportInProgress = false;
+        exportInProgress = false; // Reset flag on error
+        console.log("Export failed, flag reset to false"); // Debug logging
     }
 }
         // Event Handlers and Selection Functions
