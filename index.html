@@ -732,8 +732,7 @@ let isDragging = false;
 let dragStartX, dragStartY;
 let clipboardData = null;
 let currentFormat = 1; // 1 for decimal format, 2 for bracket format
-let exportInProgress = false;
-let exportTimeoutId = null;
+
 
 // Create a single reusable popup element
 const hoverPopup = document.createElement('div');
@@ -821,7 +820,6 @@ function createColorSwatch(color, rowIndex) {
     swatch.dataset.rowIndex = rowIndex;
     return swatch;
 }
-
 function selectColor(color, rowIndex) {
     // Update color immediately
     currentColors[rowIndex] = color;
@@ -1351,315 +1349,34 @@ function updateStats() {
     });
 }
 
-// Cell selection function
-function selectCell(e) {
-    if (!isViewMode) return;
-    
-    document.querySelectorAll('.cell').forEach(c => 
-        c.style.outline = 'none'
-    );
-    
-    const cell = e.currentTarget;
-    cell.style.outline = '3px solid #4CAF50';
-    cell.style.outlineOffset = '-3px';
-    selectedCell = cell;
-}
-
-// Toggle view mode function
-function toggleViewMode() {
-    isViewMode = !isViewMode;
-    isRangeBuilderOpen = false;
-    
-    document.getElementById('viewModeBtn').classList.toggle('active', isViewMode);
-    document.getElementById('rangeBuilderBtn').classList.toggle('active', !isViewMode);
-    document.getElementById('sidebar').style.display = 'none';
-    
-    // Update cursor and interactions based on mode
-    const gridCells = document.querySelectorAll('.cell');
-    gridCells.forEach(cell => {
-        cell.style.cursor = isViewMode ? 'pointer' : 'default';
-        cell.setAttribute('draggable', isViewMode);
-    });
-}
-
-// Toggle range builder function
-function toggleRangeBuilder() {
-    isRangeBuilderOpen = !isRangeBuilderOpen;
-    isViewMode = !isRangeBuilderOpen;
-    
-    document.getElementById('viewModeBtn').classList.toggle('active', isViewMode);
-    document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
-    
-    document.getElementById('sidebar').style.display = isRangeBuilderOpen ? 'flex' : 'none';
-    
-    // Load range data if a cell is selected
-    if (isRangeBuilderOpen && selectedCell) {
-        loadRangeFromCell(selectedCell);
-    }
-}
-
-// Range selection functions
-function startRangeSelection(e) {
-    isMouseDown = true;
-    const cell = e.target.closest('.range-cell');
-    if (!cell) return;
-    
-    // Set state based on current cell status
-    const selections = JSON.parse(cell.dataset.selections || '[]');
-    isSelecting = !selections.some(s => s.color === currentColors[activeRow]);
-    
-    // Toggle the clicked cell
-    toggleRangeCell(cell);
-}
-
-function updateRangeSelection(e) {
-    if (!isMouseDown || isSelecting === null) return;
-    const cell = e.target.closest('.range-cell');
-    if (!cell) return;
-    
-    const selections = JSON.parse(cell.dataset.selections || '[]');
-    const hasCurrentColor = selections.some(s => s.color === currentColors[activeRow]);
-    
-     // Only toggle if not already in the desired state
-  if ((isSelecting && !hasCurrentColor) || (!isSelecting && hasCurrentColor)) {
-    toggleRangeCell(cell);
-  }
-}
-
-function endRangeSelection() {
-  isMouseDown = false;
-  isSelecting = null;
-}
-
-function updateRangeDisplay(viewType) {
-  currentView = viewType || 'all';
-  
-  const cells = document.querySelectorAll('.range-cell');
-  cells.forEach(cell => {
-    const selections = JSON.parse(cell.dataset.selections || '[]');
-    
-    switch(viewType) {
-      case 'row1':
-        cell.style.opacity = selections.some(s => s.color === currentColors[0]) ? '1' : '0.3';
-        break;
-      case 'row2':
-        cell.style.opacity = selections.some(s => s.color === currentColors[1]) ? '1' : '0.3';
-        break;
-      case 'all':
-      default:
-        cell.style.opacity = '1';
-        break;
-    }
-    
-    updateCellVisual(cell);
-  });
-}
-
-function updateRangeText() {
-  const cells = [...document.querySelectorAll('.range-cell')];
-  let output = '';
-  
-  const selections = cells
-    .filter(cell => {
-      const cellSelections = JSON.parse(cell.dataset.selections || '[]');
-      if (currentView === 'row1') {
-        return cellSelections.some(s => s.color === currentColors[0]);
-      } else if (currentView === 'row2') {
-        return cellSelections.some(s => s.color === currentColors[1]);
-      }
-      return cellSelections.length > 0;
-    })
-    .map(cell => {
-      const hand = cell.querySelector('span').textContent;
-      const cellSelections = JSON.parse(cell.dataset.selections || '[]');
-      
-      let weight = 0;
-      if (currentView === 'row1') {
-        const row1Selection = cellSelections.find(s => s.color === currentColors[0]);
-        weight = row1Selection ? row1Selection.weight : 0;
-      } else if (currentView === 'row2') {
-        const row2Selection = cellSelections.find(s => s.color === currentColors[1]);
-        weight = row2Selection ? row2Selection.weight : 0;
-      } else {
-        weight = Math.min(100, cellSelections.reduce((sum, s) => sum + s.weight, 0));
-      }
-      
-      return { hand, weight };
-    })
-    .filter(selection => selection.weight > 0);
-
-  if (currentFormat === 1) {
-    output = selections
-      .map(({ hand, weight }) => `${hand}:${(weight/100).toFixed(2)}`)
-      .join(', ');
-  } else {
-    output = selections
-      .map(({ hand, weight }) => {
-        if (weight === 100) return hand;
-        return `[${weight}%]${hand}[/${weight}%]`;
-      })
-      .join(', ');
-  }
-  
-  document.getElementById('rangeText').value = output;
-}
-
-function handleRangeTextChange(e) {
-  const text = e.target.value.trim();
-  
-  // Clear all selections first
-  document.querySelectorAll('.range-cell').forEach(cell => {
-    cell.dataset.selections = JSON.stringify([]);
-    updateCellVisual(cell);
-  });
-  
-  if (!text) return;
-
-  // Detect format and parse accordingly
-  if (text.includes('[')) {
-    // Format 2: bracket format
-    const parts = text.split(',');
-    parts.forEach(part => {
-      part = part.trim();
-      if (part.includes('[')) {
-        // Match pattern like "[50]AKs[/50]"
-        const match = part.match(/\[(\d+)\]([^[]+)\[\/\1\]/) || [];
-        if (match && match[1] && match[2]) {
-          const weight = parseInt(match[1]);
-          const hand = match[2].trim();
-          selectHandWithWeight(hand, weight);
-        }
-      } else {
-        // Handle parts without brackets (assumed 100%)
-        selectHandWithWeight(part, 100);
-      }
-    });
-  } else {
-    // Format 1: decimal format
-    const parts = text.split(',');
-    parts.forEach(part => {
-      part = part.trim();
-      if (part.includes(':')) {
-        const [hand, weightStr] = part.split(':');
-        if (hand && weightStr) {
-          const weight = Math.round(parseFloat(weightStr) * 100);
-          selectHandWithWeight(hand.trim(), weight);
-        }
-      } else if (part) {
-        // Handle parts without weight (assumed 100%)
-        selectHandWithWeight(part, 100);
-      }
-    });
-  }
-  
-  updateStats();
-}
-
-function selectHandWithWeight(hand, weight) {
-  // Find the cell with matching hand text
-  const cell = [...document.querySelectorAll('.range-cell')]
-    .find(cell => cell.querySelector('span').textContent.trim() === hand.trim());
-  
-  if (cell) {
-    let selections = JSON.parse(cell.dataset.selections || '[]');
-    // Filter out existing selection for this row
-    selections = selections.filter(s => s.color !== currentColors[activeRow]);
-    // Add new selection
-    selections.push({ color: currentColors[activeRow], weight });
-    
-    cell.dataset.selections = JSON.stringify(selections);
-    updateCellVisual(cell);
-  }
-}
-
-function handleRowToggle(e) {
-  const rowIndex = parseInt(e.currentTarget.dataset.row) - 1;
-  
-  // Update active row buttons
-  document.querySelectorAll('.row-toggle').forEach((btn, i) => {
-    const isActive = i === rowIndex;
-    btn.classList.toggle('active', isActive);
-  });
-  
-  // Update active row containers
-  document.querySelectorAll('.control-row').forEach((row, i) => {
-    const isActive = i === rowIndex;
-    row.classList.toggle('active', isActive);
-  });
-  
-  activeRow = rowIndex;
-}
-
-function toggleFormat() {
-  currentFormat = currentFormat === 1 ? 2 : 1;
-  document.getElementById('formatSwitch').classList.toggle('format-2', currentFormat === 2);
-  updateRangeText();
-}
-
-function loadRangeFromCell(cell) {
-  const content = cell.querySelector('.cell-content');
-  if (!content || !content.dataset.range) return;
-  
-  try {
-    const rangeData = JSON.parse(content.dataset.range);
-    
-    // Clear the current range selection
-    clearSelection();
-    
-    // Set the range text
-    document.getElementById('rangeText').value = rangeData.text || '';
-    
-    // Parse and apply the range text to the grid
-    handleRangeTextChange({ target: document.getElementById('rangeText') });
-    
-    // Restore view
-    if (rangeData.view) {
-      const threeWaySwitch = document.querySelector('.three-way-switch');
-      threeWaySwitch.dataset.view = rangeData.view;
-      updateRangeDisplay(rangeData.view);
-    }
-  } catch (error) {
-    console.error('Error loading range data:', error);
-  }
-}
-
-// JSON export/import functions
+// Now add the JSON export/import functions:
 function exportToJson() {
-  // Prevent multiple exports in quick succession
-  if (exportInProgress) {
-    alert("Export already in progress, please wait...");
-    return;
-  }
-  
-  exportInProgress = true;
-  
-  try {
     // Collect all cell data including ranges, styling, and content
     const cellsData = {};
     document.querySelectorAll('.cell').forEach(cell => {
-      const cellId = cell.dataset.id;
-      const content = cell.querySelector('.cell-content');
-      
-      if (content.textContent || content.dataset.range || 
-          cell.style.backgroundColor || content.style.color) {
-        cellsData[cellId] = {
-          text: String(content.textContent || ''),
-          backgroundColor: String(cell.style.backgroundColor || ''),
-          textColor: String(content.style.color || ''),
-          rangeData: String(content.dataset.range || ''),
-          hasRange: Boolean(content.classList.contains('has-range'))
-        };
-      }
+        const cellId = cell.dataset.id;
+        const content = cell.querySelector('.cell-content');
+        
+        if (content.textContent || content.dataset.range || 
+            cell.style.backgroundColor || content.style.color) {
+            cellsData[cellId] = {
+                text: content.textContent,
+                backgroundColor: cell.style.backgroundColor,
+                textColor: content.style.color,
+                rangeData: content.dataset.range || '',
+                hasRange: content.classList.contains('has-range')
+            };
+        }
     });
     
     // Create complete app state object
     const appData = {
-      cellsData: cellsData,
-      currentColors: [...currentColors],
-      currentWeights: [...currentWeights],
-      recentColors: [...recentColors],
-      currentFormat: Number(currentFormat),
-      version: "1.0"
+        cellsData: cellsData,
+        currentColors: currentColors,
+        currentWeights: currentWeights,
+        recentColors: recentColors,
+        currentFormat: currentFormat,
+        version: "1.0"
     };
     
     // Create and trigger download
@@ -1672,503 +1389,565 @@ function exportToJson() {
     a.download = 'ranger-data.json';
     document.body.appendChild(a);
     a.click();
-    
-    // Reset flag regardless of success/failure after a delay
-    setTimeout(() => {
-      try {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } catch (cleanupError) {
-        console.error("Cleanup error:", cleanupError);
-      }
-      
-      exportInProgress = false;
-    }, 500);
-  } catch (error) {
-    console.error('Export error:', error);
-    alert('Error exporting data: ' + error.message);
-    exportInProgress = false; // Reset flag on error
-  }
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 function importFromJson(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  
-  try {
-    // Reset the file input so the same file can be selected again if needed
-    document.getElementById('jsonFileInput').value = '';
+    const file = event.target.files[0];
+    if (!file) return;
     
     const reader = new FileReader();
-    
-    // Add loading indicator
-    const loadingMsg = document.createElement('div');
-    loadingMsg.textContent = 'Importing data...';
-    loadingMsg.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px;border-radius:5px;z-index:9999;';
-    document.body.appendChild(loadingMsg);
-    
     reader.onload = function(e) {
-      try {
-        const appData = JSON.parse(e.target.result);
-        
-        // Restore cell data
-        if (appData.cellsData) {
-          Object.entries(appData.cellsData).forEach(([cellId, data]) => {
-            const cell = document.querySelector(`[data-id="${cellId}"]`);
-            if (!cell) return;
+        try {
+            const appData = JSON.parse(e.target.result);
             
-            const content = cell.querySelector('.cell-content');
-            content.textContent = String(data.text || '');
-            cell.style.backgroundColor = String(data.backgroundColor || '');
-            content.style.color = String(data.textColor || '');
-            
-            if (data.rangeData) {
-              content.dataset.range = String(data.rangeData);
-              if (data.hasRange) {
-                content.classList.add('has-range');
-                addCellHover(cell);
-              }
+            // Restore cell data
+            if (appData.cellsData) {
+                Object.entries(appData.cellsData).forEach(([cellId, data]) => {
+                    const cell = document.querySelector(`[data-id="${cellId}"]`);
+                    if (!cell) return;
+                    
+                    const content = cell.querySelector('.cell-content');
+                    content.textContent = data.text || '';
+                    cell.style.backgroundColor = data.backgroundColor || '';
+                    content.style.color = data.textColor || '';
+                    
+                    if (data.rangeData) {
+                        content.dataset.range = data.rangeData;
+                        if (data.hasRange) {
+                            content.classList.add('has-range');
+                            addCellHover(cell);
+                        }
+                    }
+                    
+                    if (data.text) {
+                        cellData.set(cellId, data.text);
+                    }
+                });
             }
             
-            if (data.text) {
-              cellData.set(cellId, data.text);
+            // Restore settings
+            if (appData.currentColors) currentColors = appData.currentColors;
+            if (appData.currentWeights) currentWeights = appData.currentWeights;
+            if (appData.recentColors) {
+                recentColors = appData.recentColors;
+                localStorage.setItem('recentColors', JSON.stringify(recentColors));
             }
-          });
+            if (appData.currentFormat) {
+                currentFormat = appData.currentFormat;
+                document.getElementById('formatSwitch').classList.toggle('format-2', currentFormat === 2);
+            }
+            
+            // Update UI
+            loadSavedColors();
+            
+            alert('Data imported successfully!');
+        } catch (err) {
+            alert('Error importing data: ' + err.message);
         }
-        
-        // Restore settings - use explicit copies for arrays
-        if (appData.currentColors) currentColors = [...appData.currentColors];
-        if (appData.currentWeights) currentWeights = [...appData.currentWeights];
-        if (appData.recentColors) {
-          recentColors = [...appData.recentColors];
-          localStorage.setItem('recentColors', JSON.stringify(recentColors));
-        }
-        if (appData.currentFormat) {
-          currentFormat = Number(appData.currentFormat);
-          document.getElementById('formatSwitch').classList.toggle('format-2', currentFormat === 2);
-        }
-        
-        // Update UI
-        loadSavedColors();
-        
-        // Remove loading indicator and show success
-        document.body.removeChild(loadingMsg);
-        alert('Data imported successfully!');
-      } catch (err) {
-        document.body.removeChild(loadingMsg);
-        console.error('Import parsing error:', err);
-        alert('Error parsing import data: ' + err.message);
-      }
     };
-    
-    reader.onerror = function() {
-      document.body.removeChild(loadingMsg);
-      console.error('File reading error');
-      alert('Error reading the file');
-    };
-    
-    // Use timeout to ensure browser has time to process
-    setTimeout(() => {
-      reader.readAsText(file);
-    }, 50);
-    
-  } catch (outerError) {
-    console.error('Import error:', outerError);
-    alert('Error importing data: ' + outerError.message);
-  }
+    reader.readAsText(file);
 }
-      
-async function saveToCell() {
-  if (!selectedCell) {
-    alert('Please select a cell first');
-    return;
-  }
-  
-  try {
-    const rangeText = document.getElementById('rangeText').value || '';
-    const currentView = document.querySelector('.three-way-switch').dataset.view || 'all';
+        // Event Handlers and Selection Functions
+function startRangeSelection(e) {
+    isMouseDown = true;
+    const cell = e.target.closest('.range-cell');
+    const selections = JSON.parse(cell.dataset.selections || '[]');
+    isSelecting = !selections.some(s => s.color === currentColors[activeRow]);
+    toggleRangeCell(cell);
+}
+
+function updateRangeSelection(e) {
+    if (!isMouseDown || isSelecting === null) return;
+    const cell = e.target.closest('.range-cell');
+    if (!cell) return;
     
-    // Ensure range display matches current switch position
-    updateRangeDisplay(currentView);
-    document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
+    const selections = JSON.parse(cell.dataset.selections || '[]');
+    const hasCurrentColor = selections.some(s => s.color === currentColors[activeRow]);
     
-    // Small delay to ensure visual update is complete
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
-    // Convert current view state to image
-    const rangeImage = await convertRangeToImage();
-    
-    // Save both text and image with explicit String conversions
-    const cellDataObj = {
-      text: String(rangeText),
-      image: String(rangeImage),
-      view: String(currentView)
-    };
-    
-    // Store in cell
-    const content = selectedCell.querySelector('.cell-content');
-    content.innerHTML = '';
-    
-    // Use safer JSON stringification
-    try {
-      content.dataset.range = JSON.stringify(cellDataObj);
-      content.classList.add('has-range');
-      
-async function saveToCell() {
-  if (!selectedCell) {
-    alert('Please select a cell first');
-    return;
-  }
-  
-  try {
-    const rangeText = document.getElementById('rangeText').value || '';
-    const currentView = document.querySelector('.three-way-switch').dataset.view || 'all';
-    
-    // Ensure range display matches current switch position
-    updateRangeDisplay(currentView);
-    document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
-    
-    // Small delay to ensure visual update is complete
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
-    // Convert current view state to image
-    const rangeImage = await convertRangeToImage();
-    
-    // Save both text and image with explicit String conversions
-    const cellDataObj = {
-      text: String(rangeText),
-      image: String(rangeImage),
-      view: String(currentView)
-    };
-    
-    // Store in cell
-    const content = selectedCell.querySelector('.cell-content');
-    content.innerHTML = '';
-    
-    // Use safer JSON stringification
-    try {
-      content.dataset.range = JSON.stringify(cellDataObj);
-      content.classList.add('has-range');
-      
-      // Add hover functionality
-      addCellHover(selectedCell);
-      
-      toggleRangeBuilder();
-    } catch (jsonError) {
-      console.error('JSON error in saveToCell:', jsonError);
-      alert('Error saving range data: ' + jsonError.message);
+    if (hasCurrentColor !== isSelecting) {
+        toggleRangeCell(cell);
     }
-  } catch (error) {
-    console.error('Save error:', error);
-    alert('Error saving to cell: ' + error.message);
-  }
+}
+
+function endRangeSelection() {
+    isMouseDown = false;
+    isSelecting = null;
+}
+
+function handleViewChange(e) {
+    document.querySelectorAll('.view-button').forEach(btn => btn.classList.remove('active'));
+    e.target.classList.add('active');
+    
+    currentView = e.target.dataset.view;
+    updateRangeDisplay(currentView);
+    
+    // Update all cell visuals to reflect new view
+    document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
+    
+    // Update text output to match current view
+    updateRangeText();
+}
+
+function handleRowToggle(e) {
+    document.querySelectorAll('.row-toggle').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.control-row').forEach(row => row.classList.remove('active'));
+    
+    e.target.classList.add('active');
+    e.target.closest('.control-row').classList.add('active');
+    
+    activeRow = parseInt(e.target.dataset.row) - 1;
+}
+
+function updateRangeDisplay(view) {
+    const cells = document.querySelectorAll('.range-cell');
+    
+    cells.forEach(cell => {
+        const selections = JSON.parse(cell.dataset.selections || '[]');
+        
+        switch(view) {
+            case 'row1':
+                cell.style.opacity = selections.some(s => s.color === currentColors[0]) ? '1' : '0.3';
+                break;
+            case 'row2':
+                cell.style.opacity = selections.some(s => s.color === currentColors[1]) ? '1' : '0.3';
+                break;
+            case 'all':
+                cell.style.opacity = '1';
+                break;
+        }
+    });
+}
+
+// View Mode and Range Builder Toggle Functions
+function toggleViewMode() {
+    isViewMode = true;
+    isRangeBuilderOpen = false;
+    
+    document.getElementById('viewModeBtn').classList.add('active');
+    document.getElementById('rangeBuilderBtn').classList.remove('active');
+    
+    document.getElementById('sidebar').style.display = 'none';
+}
+
+function toggleRangeBuilder() {
+    isRangeBuilderOpen = !isRangeBuilderOpen;
+    isViewMode = !isRangeBuilderOpen;
+    
+    document.getElementById('viewModeBtn').classList.toggle('active', !isRangeBuilderOpen);
+    document.getElementById('rangeBuilderBtn').classList.toggle('active', isRangeBuilderOpen);
+    
+    document.getElementById('sidebar').style.display = isRangeBuilderOpen ? 'flex' : 'none';
+}
+
+function toggleFormat() {
+    currentFormat = currentFormat === 1 ? 2 : 1;
+    document.getElementById('formatSwitch').classList.toggle('format-2');
+    updateRangeText();
+}
+        
+// Cell and Range Text Functions
+function updateRangeText() {
+    const cells = [...document.querySelectorAll('.range-cell')];
+    let output = '';
+    
+    const selections = cells
+        .filter(cell => {
+            const cellSelections = JSON.parse(cell.dataset.selections || '[]');
+            if (currentView === 'row1') {
+                return cellSelections.some(s => s.color === currentColors[0]);
+            } else if (currentView === 'row2') {
+                return cellSelections.some(s => s.color === currentColors[1]);
+            }
+            return cellSelections.length > 0;
+        })
+        .map(cell => {
+            const hand = cell.querySelector('span').textContent;
+            const cellSelections = JSON.parse(cell.dataset.selections || '[]');
+            
+            let weight = 0;
+            if (currentView === 'row1') {
+                const row1Selection = cellSelections.find(s => s.color === currentColors[0]);
+                weight = row1Selection ? row1Selection.weight : 0;
+            } else if (currentView === 'row2') {
+                const row2Selection = cellSelections.find(s => s.color === currentColors[1]);
+                weight = row2Selection ? row2Selection.weight : 0;
+            } else {
+                weight = Math.min(100, cellSelections.reduce((sum, s) => sum + s.weight, 0));
+            }
+            
+            return { hand, weight };
+        })
+        .filter(selection => selection.weight > 0);
+
+    if (currentFormat === 1) {
+        output = selections
+            .map(({ hand, weight }) => `${hand}:${(weight/100).toFixed(3)}`)
+            .join(',');
+    } else {
+        output = selections
+            .map(({ hand, weight }) => {
+                if (weight === 100) return hand;
+                return `[${weight}%]${hand}[/${weight}%]`;
+            })
+            .join(',');
+    }
+    
+    document.getElementById('rangeText').value = output;
+}
+
+function handleRangeTextChange(e) {
+    const text = e.target.value.trim();
+    
+    // Clear all selections first
+    document.querySelectorAll('.range-cell').forEach(cell => {
+        cell.dataset.selections = JSON.stringify([]);
+        updateCellVisual(cell);
+    });
+    
+    if (!text) return;
+
+    // Detect format and parse accordingly
+    if (text.includes('[')) {
+        // Format 2: bracket format
+        const parts = text.split(',');
+        parts.forEach(part => {
+            part = part.trim();
+            if (part.includes('[')) {
+                // Match pattern like "[50]AKs[/50]"
+                const match = part.match(/\[(\d+)\]([^[]+)\[\/\1\]/) || [];
+                if (match && match[1] && match[2]) {
+                    const weight = parseInt(match[1]);
+                    const hand = match[2].trim();
+                    selectHandWithWeight(hand, weight);
+                }
+            } else {
+                // Handle parts without brackets (assumed 100%)
+                selectHandWithWeight(part, 100);
+            }
+        });
+    } else {
+        // Format 1: decimal format
+        const parts = text.split(',');
+        parts.forEach(part => {
+            const [hand, weightStr] = part.split(':');
+            if (hand && weightStr) {
+                const weight = Math.round(parseFloat(weightStr) * 100);
+                selectHandWithWeight(hand.trim(), weight);
+            }
+        });
+    }
+    
+    updateStats();
+}
+
+function selectHandWithWeight(hand, weight) {
+    const cell = [...document.querySelectorAll('.range-cell')]
+        .find(cell => cell.querySelector('span').textContent === hand);
+    
+    if (cell) {
+        const selections = JSON.parse(cell.dataset.selections || '[]');
+        selections.push({
+            color: currentColors[activeRow],
+            weight: weight
+        });
+        cell.dataset.selections = JSON.stringify(selections);
+        updateCellVisual(cell);
+    }
+}
+        
+// Cell Handling Functions
+function selectCell(e) {
+    if (!isViewMode) return;
+    if (selectedCell) {
+        selectedCell.style.outline = 'none';
+    }
+    selectedCell = e.currentTarget;
+    selectedCell.style.outline = '3px solid #4CAF50';
+    selectedCell.style.outlineOffset = '-3px';
+}
+
+async function saveToCell() {
+    if (!selectedCell) {
+        alert('Please select a cell first');
+        return;
+    }
+    
+    const rangeText = document.getElementById('rangeText').value;
+    const currentView = document.querySelector('.three-way-switch').dataset.view; // gets 'all', 'row1', or 'row2'
+    
+    // Ensure range display matches current switch position
+    updateRangeDisplay(currentView);
+    document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
+    
+    // Small delay to ensure visual update is complete
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Convert current view state to image
+    const rangeImage = await convertRangeToImage();
+    
+    // Save both text and image
+    const cellData = {
+        text: rangeText,
+        image: rangeImage,
+        view: currentView
+    };
+    
+    // Store in cell
+    const content = selectedCell.querySelector('.cell-content');
+    content.innerHTML = '';
+    content.dataset.range = JSON.stringify(cellData);
+    content.classList.add('has-range');
+    
+    // Add hover functionality
+    addCellHover(selectedCell);
+    
+    toggleRangeBuilder();
 }
 
 function clearSelection() {
-  document.querySelectorAll('.range-cell').forEach(cell => {
-    cell.dataset.selections = JSON.stringify([]);
-    updateCellVisual(cell);
-  });
-  document.getElementById('rangeText').value = '';
-  updateStats();
+    document.querySelectorAll('.range-cell').forEach(cell => {
+        cell.dataset.selections = JSON.stringify([]);
+        updateCellVisual(cell);
+    });
+    document.getElementById('rangeText').value = '';
+    updateStats();
 }
 
 function handleDragStart(e) {
-  if (!isViewMode) return;
-  e.dataTransfer.setData('text/plain', e.target.dataset.id);
+    if (!isViewMode) return;
+    e.dataTransfer.setData('text/plain', e.target.dataset.id);
 }
 
 function handleDragOver(e) {
-  if (!isViewMode) return;
-  e.preventDefault();
+    if (!isViewMode) return;
+    e.preventDefault();
 }
 
 function handleDrop(e) {
-  if (!isViewMode) return;
-  e.preventDefault();
-  const sourceId = e.dataTransfer.getData('text/plain');
-  const targetId = e.target.closest('.cell').dataset.id;
-  
-  const sourceData = cellData.get(sourceId);
-  const targetData = cellData.get(targetId);
-  
-  if (sourceData) cellData.set(targetId, sourceData);
-  if (targetData) cellData.set(sourceId, targetData);
-  
-  updateCellContent(sourceId);
-  updateCellContent(targetId);
+    if (!isViewMode) return;
+    e.preventDefault();
+    const sourceId = e.dataTransfer.getData('text/plain');
+    const targetId = e.target.closest('.cell').dataset.id;
+    
+    const sourceData = cellData.get(sourceId);
+    const targetData = cellData.get(targetId);
+    
+    if (sourceData) cellData.set(targetId, sourceData);
+    if (targetData) cellData.set(sourceId, targetData);
+    
+    updateCellContent(sourceId);
+    updateCellContent(targetId);
 }
 
 function updateCellContent(cellId) {
-  const cell = document.querySelector(`[data-id="${cellId}"]`);
-  const content = cell.querySelector('.cell-content');
-  const data = cellData.get(cellId);
-  
-  if (data) {
-    content.textContent = data;
-  } else {
-    content.innerHTML = '';
-  }
+    const cell = document.querySelector(`[data-id="${cellId}"]`);
+    const content = cell.querySelector('.cell-content');
+    const data = cellData.get(cellId);
+    
+    if (data) {
+        content.textContent = data;
+    } else {
+        content.innerHTML = '';
+    }
 }
 
 // Weight and Color Settings Functions
 function updateWeight(value, rowIndex) {
-  const adjustedIndex = rowIndex - 1;
-  currentWeights[adjustedIndex] = Math.min(Math.max(0, parseInt(value)), 100);
-  document.getElementById(`weightInput${rowIndex}`).value = currentWeights[adjustedIndex];
-  activeRow = adjustedIndex;
-  saveColorSettings(adjustedIndex);
-  updateStats();
+    const adjustedIndex = rowIndex - 1;
+    currentWeights[adjustedIndex] = Math.min(Math.max(0, parseInt(value)), 100);
+    document.getElementById(`weightInput${rowIndex}`).value = currentWeights[adjustedIndex];
+    activeRow = adjustedIndex;
+    saveColorSettings(adjustedIndex);
+    updateStats();
 }
 
 function saveColorSettings(rowIndex) {
-  const color = currentColors[rowIndex];
-  const weight = currentWeights[rowIndex];
-  localStorage.setItem(`savedColor${rowIndex + 1}`, JSON.stringify({ color, weight }));
+    const color = currentColors[rowIndex];
+    const weight = currentWeights[rowIndex];
+    localStorage.setItem(`savedColor${rowIndex + 1}`, JSON.stringify({ color, weight }));
 }
 
 function loadSavedColors() {
-  for (let i = 1; i <= 2; i++) {
-    const saved = localStorage.getItem(`savedColor${i}`);
-    if (saved) {
-      const { color, weight } = JSON.parse(saved);
-      const button = document.getElementById(`colorPicker${i}`);
-      button.querySelector('.current-color').style.backgroundColor = color;
-      document.getElementById(`weightInput${i}`).value = weight;
-      currentColors[i - 1] = color;
-      currentWeights[i - 1] = weight;
+    for (let i = 1; i <= 2; i++) {
+        const saved = localStorage.getItem(`savedColor${i}`);
+        if (saved) {
+            const { color, weight } = JSON.parse(saved);
+            const button = document.getElementById(`colorPicker${i}`);
+            button.querySelector('.current-color').style.backgroundColor = color;
+            document.getElementById(`weightInput${i}`).value = weight;
+            currentColors[i - 1] = color;
+            currentWeights[i - 1] = weight;
+        }
     }
-  }
 }
 
-// Image functions
+// Add these new functions
 function convertRangeToImage() {
-  const rangeGrid = document.getElementById('rangeGrid');
-  if (!rangeGrid) {
-    console.error('Range grid element not found');
-    return '';
-  }
-  
-  return html2canvas(rangeGrid, {
-    allowTaint: true,
-    useCORS: true,
-    logging: false
-  })
-  .then(canvas => {
-    try {
-      return canvas.toDataURL('image/png');
-    } catch (error) {
-      console.error('Canvas to data URL error:', error);
-      return '';
-    }
-  })
-  .catch(error => {
-    console.error('HTML2Canvas error:', error);
-    return '';
-  });
+    const rangeGrid = document.getElementById('rangeGrid');
+    return html2canvas(rangeGrid).then(canvas => {
+        return canvas.toDataURL('image/png');
+    });
 }
 
 function addCellHover(cell) {
-  cell.addEventListener('mouseenter', () => {
-    try {
-      const content = cell.querySelector('.cell-content');
-      if (!content || !content.dataset.range) return;
+    cell.addEventListener('mouseenter', () => {
+        const content = cell.querySelector('.cell-content');
+        if (!content.dataset.range) return;
 
-      let rangeData;
-      try {
-        rangeData = JSON.parse(content.dataset.range);
-      } catch (parseError) {
-        console.error('Error parsing range data:', parseError);
-        return;
-      }
-      
-      if (rangeData && rangeData.image) {
-        const img = new Image();
-        img.onerror = () => console.error('Error loading range image');
-        img.src = rangeData.image;
-        
+        const rangeData = JSON.parse(content.dataset.range);
+        if (rangeData && rangeData.image) {
+            const img = new Image();
+            img.src = rangeData.image;
+            hoverPopup.innerHTML = '';
+            hoverPopup.appendChild(img);
+            
+            // Position popup
+            const cellRect = cell.getBoundingClientRect();
+            hoverPopup.style.left = `${cellRect.right + 5}px`;
+            hoverPopup.style.top = `${cellRect.top}px`;
+            hoverPopup.style.display = 'block';
+        }
+    });
+    
+    cell.addEventListener('mouseleave', () => {
+        hoverPopup.style.display = 'none';
         hoverPopup.innerHTML = '';
-        hoverPopup.appendChild(img);
-        
-        // Position popup
-        const cellRect = cell.getBoundingClientRect();
-        hoverPopup.style.left = `${cellRect.right + 5}px`;
-        hoverPopup.style.top = `${cellRect.top}px`;
-        hoverPopup.style.display = 'block';
-      }
-    } catch (error) {
-      console.error('Hover display error:', error);
-    }
-  });
-  
-  cell.addEventListener('mouseleave', () => {
-    hoverPopup.style.display = 'none';
-    hoverPopup.innerHTML = '';
-  });
+    });
 }
 
 function copyCell(cell) {
-  const content = cell.querySelector('.cell-content');
-  return {
-    text: content.textContent,
-    backgroundColor: cell.style.backgroundColor,
-    textColor: content.style.color,
-    rangeData: content.dataset.range || '',
-    hasRange: content.classList.contains('has-range')
-  };
+    const content = cell.querySelector('.cell-content');
+    return {
+        text: content.textContent,
+        backgroundColor: cell.style.backgroundColor,
+        textColor: content.style.color,
+        rangeData: content.dataset.range || '',
+        hasRange: content.classList.contains('has-range')
+    };
 }
 
 function clearCell(cell) {
-  const content = cell.querySelector('.cell-content');
-  content.innerHTML = '';
-  content.dataset.range = '';
-  content.classList.remove('has-range');
-  cell.style.backgroundColor = '';
-  content.style.color = '';
-  cellData.delete(cell.dataset.id);
+    const content = cell.querySelector('.cell-content');
+    content.innerHTML = '';
+    content.dataset.range = '';
+    content.classList.remove('has-range');
+    cell.style.backgroundColor = '';
+    content.style.color = '';
+    cellData.delete(cell.dataset.id);
 }
 
 function pasteCell(cell, data) {
-  if (!data) return;
-  
-  const content = cell.querySelector('.cell-content');
-  content.textContent = data.text;
-  cell.style.backgroundColor = data.backgroundColor;
-  content.style.color = data.textColor;
-  
-  if (data.rangeData) {
-    content.dataset.range = data.rangeData;
-    if (data.hasRange) {
-      content.classList.add('has-range');
-      addCellHover(cell);
+    if (!data) return;
+    
+    const content = cell.querySelector('.cell-content');
+    content.textContent = data.text;
+    cell.style.backgroundColor = data.backgroundColor;
+    content.style.color = data.textColor;
+    
+    if (data.rangeData) {
+        content.dataset.range = data.rangeData;
+        if (data.hasRange) {
+            content.classList.add('has-range');
+            addCellHover(cell);
+        }
     }
-  }
-  
-  if (data.text || data.rangeData) {
-    cellData.set(cell.dataset.id, data.text);
-  }
+    
+    if (data.text || data.rangeData) {
+        cellData.set(cell.dataset.id, data.text);
+    }
 }
-
+        
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
-  createGrid();
-  createRangeGrid();
-  
-  // Add labels to three-way switch
-  const threeWaySwitch = document.querySelector('.three-way-switch');
-  if (threeWaySwitch && !threeWaySwitch.querySelector('.switch-labels')) {
-    const labels = document.createElement('div');
-    labels.className = 'switch-labels';
-    labels.innerHTML = `
-      <span>Row 1</span>
-      <span>All</span>
-      <span>Row 2</span>
-    `;
-    threeWaySwitch.appendChild(labels);
-  }
-  
-  toggleViewMode();
-  
-  // Add global keyboard shortcuts
-  document.addEventListener('keydown', (e) => {
-    if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
-      switch(e.key.toLowerCase()) {
-        case 'c':
-          e.preventDefault();
-          clipboardData = copyCell(selectedCell);
-          break;
-        case 'x':
-          e.preventDefault();
-          clipboardData = copyCell(selectedCell);
-          clearCell(selectedCell);
-          break;
-        case 'v':
-          e.preventDefault();
-          pasteCell(selectedCell, clipboardData);
-          break;
-      }
-    }
-  });
-  
-  // Color picker event listeners
-  document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
-  document.getElementById('colorPicker2').addEventListener('click', handleColorPickerClick);
-  
-  // Three-way switch handler
-  threeWaySwitch.dataset.view = 'all'; // Default position
-  
-  threeWaySwitch.addEventListener('click', (e) => {
-    const rect = threeWaySwitch.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const width = rect.width;
+    createGrid();
+    createRangeGrid();
+    toggleViewMode();
     
-    let newView;
-    if (x < width / 3) {
-      newView = 'row1';
-    } else if (x < (width * 2) / 3) {
-      newView = 'all';
-    } else {
-      newView = 'row2';
-    }
+    // Add global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
+            switch(e.key.toLowerCase()) {
+                case 'c':
+                    e.preventDefault();
+                    clipboardData = copyCell(selectedCell);
+                    break;
+                case 'x':
+                    e.preventDefault();
+                    clipboardData = copyCell(selectedCell);
+                    clearCell(selectedCell);
+                    break;
+                case 'v':
+                    e.preventDefault();
+                    pasteCell(selectedCell, clipboardData);
+                    break;
+            }
+        }
+    });
     
-    threeWaySwitch.dataset.view = newView;
-    currentView = newView;
-    updateRangeDisplay(newView);
-    document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
-    updateRangeText();
-  });
-  
-  document.querySelectorAll('.row-toggle').forEach(button => {
-    button.addEventListener('click', handleRowToggle);
-  });
-  
-  // Event delegation for color swatches
-  document.addEventListener('click', e => {
-    const swatch = e.target.closest('.color-swatch');
-    if (swatch) {
-      const color = swatch.dataset.color;
-      const rowIndex = parseInt(swatch.dataset.rowIndex);
-      selectColor(color, rowIndex);
-    }
-  });
-  
-  // Add format switch event listener
-  document.getElementById('formatSwitch').addEventListener('click', toggleFormat);
-  
-  loadSavedColors();
-  initializeDragging();
+    // Color picker event listeners
+    document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
+    document.getElementById('colorPicker2').addEventListener('click', handleColorPickerClick);
+    
+    // Three-way switch handler
+    const threeWaySwitch = document.querySelector('.three-way-switch');
+    threeWaySwitch.dataset.view = 'all'; // Default position
+    
+    threeWaySwitch.addEventListener('click', (e) => {
+        const rect = threeWaySwitch.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const width = rect.width;
+        
+        let newView;
+        if (x < width / 3) {
+            newView = 'row1';
+        } else if (x < (width * 2) / 3) {
+            newView = 'all';
+        } else {
+            newView = 'row2';
+        }
+        
+        threeWaySwitch.dataset.view = newView;
+        currentView = newView;
+        updateRangeDisplay(newView);
+        document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
+        updateRangeText();
+    });
+    
+    document.querySelectorAll('.row-toggle').forEach(button => {
+        button.addEventListener('click', handleRowToggle);
+    });
+    
+    // Event delegation for color swatches
+    document.addEventListener('click', e => {
+        const swatch = e.target.closest('.color-swatch');
+        if (swatch) {
+            const color = swatch.dataset.color;
+            const rowIndex = parseInt(swatch.dataset.rowIndex);
+            selectColor(color, rowIndex);
+        }
+    });
+    
+    // Add format switch event listener
+    document.getElementById('formatSwitch').addEventListener('click', toggleFormat);
+    
+    loadSavedColors();
+    initializeDragging();
 
-  // Fix for range text copying
-  document.getElementById('rangeText').addEventListener('copy', (e) => {
-    e.preventDefault();
-    const text = e.target.value.slice(e.target.selectionStart, e.target.selectionEnd);
-    e.clipboardData.setData('text/plain', text);
-  });
-  
-  // Add JSON export/import functionality
-  document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
-  document.getElementById('importJsonBtn').addEventListener('click', () => {
-    // Create a new file input each time to avoid browser caching issues
-    const oldInput = document.getElementById('jsonFileInput');
-    const newInput = document.createElement('input');
-    newInput.type = 'file';
-    newInput.id = 'jsonFileInput';
-    newInput.accept = '.json';
-    newInput.style.display = 'none';
+    // Fix for range text copying
+    document.getElementById('rangeText').addEventListener('copy', (e) => {
+        e.preventDefault();
+        const text = e.target.value.slice(e.target.selectionStart, e.target.selectionEnd);
+        e.clipboardData.setData('text/plain', text);
+    });
     
-    // Replace old input with new one
-    if (oldInput) {
-      oldInput.parentNode.replaceChild(newInput, oldInput);
-    } else {
-      document.body.appendChild(newInput);
-    }
-    
-    // Add event listener to new input
-    newInput.addEventListener('change', importFromJson);
-    
-    // Trigger click on new input
-    newInput.click();
-  });
+    // Add JSON export/import functionality
+    document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
+    document.getElementById('importJsonBtn').addEventListener('click', () => {
+        document.getElementById('jsonFileInput').click();
+    });
+    document.getElementById('jsonFileInput').addEventListener('change', importFromJson);
 });
 </script>
 </body>
