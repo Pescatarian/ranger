@@ -1397,7 +1397,9 @@ function updateStats() {
 // Simplified export/import functions
 function exportToJson() {
     try {
-        // Collect all cell data including ranges, styling, and content
+        console.log("Starting export...");
+        
+        // Collect all cell data
         const cellsData = {};
         document.querySelectorAll('.cell').forEach(cell => {
             const cellId = cell.dataset.id;
@@ -1425,23 +1427,38 @@ function exportToJson() {
             version: "1.0"
         };
         
-        // Create downloadable string using data URI approach
-        const dataStr = "data:text/json;charset=utf-8," + 
-                      encodeURIComponent(JSON.stringify(appData, null, 2));
+        // Add timestamp to filename to prevent caching
+        const timestamp = new Date().getTime();
+        const filename = `ranger-data-${timestamp}.json`;
         
-        // Create and trigger download
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "ranger-data.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        document.body.removeChild(downloadAnchorNode);
+        // Create blob and URL
+        const blob = new Blob([JSON.stringify(appData, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        
+        // Create a temporary download link
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        
+        console.log("Download element created, clicking...");
+        
+        // Trigger download
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up - use timeout to ensure download starts before revoking
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            console.log("Export cleanup complete");
+        }, 100);
+        
     } catch (error) {
         console.error('Export error:', error);
         alert('Error exporting data: ' + error.message);
     }
 }
-
 function importFromJson(event) {
     const file = event.target.files[0];
     if (!file) return;
