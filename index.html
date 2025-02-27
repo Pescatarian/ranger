@@ -1351,46 +1351,55 @@ function updateStats() {
 
 // Now add the JSON export/import functions:
 function exportToJson() {
-    // Collect all cell data including ranges, styling, and content
-    const cellsData = {};
-    document.querySelectorAll('.cell').forEach(cell => {
-        const cellId = cell.dataset.id;
-        const content = cell.querySelector('.cell-content');
+    try {
+        // Collect all cell data including ranges, styling, and content
+        const cellsData = {};
+        document.querySelectorAll('.cell').forEach(cell => {
+            const cellId = cell.dataset.id;
+            const content = cell.querySelector('.cell-content');
+            
+            if (content.textContent || content.dataset.range || 
+                cell.style.backgroundColor || content.style.color) {
+                cellsData[cellId] = {
+                    text: String(content.textContent || ''),
+                    backgroundColor: String(cell.style.backgroundColor || ''),
+                    textColor: String(content.style.color || ''),
+                    rangeData: String(content.dataset.range || ''),
+                    hasRange: Boolean(content.classList.contains('has-range'))
+                };
+            }
+        });
         
-        if (content.textContent || content.dataset.range || 
-            cell.style.backgroundColor || content.style.color) {
-            cellsData[cellId] = {
-                text: content.textContent,
-                backgroundColor: cell.style.backgroundColor,
-                textColor: content.style.color,
-                rangeData: content.dataset.range || '',
-                hasRange: content.classList.contains('has-range')
-            };
-        }
-    });
-    
-    // Create complete app state object
-    const appData = {
-        cellsData: cellsData,
-        currentColors: currentColors,
-        currentWeights: currentWeights,
-        recentColors: recentColors,
-        currentFormat: currentFormat,
-        version: "1.0"
-    };
-    
-    // Create and trigger download
-    const dataStr = JSON.stringify(appData, null, 2);
-    const blob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'ranger-data.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+        // Create complete app state object
+        const appData = {
+            cellsData: cellsData,
+            currentColors: [...currentColors],
+            currentWeights: [...currentWeights],
+            recentColors: [...recentColors],
+            currentFormat: Number(currentFormat),
+            version: "1.0"
+        };
+        
+        // Create and trigger download
+        const dataStr = JSON.stringify(appData, null, 2);
+        const blob = new Blob([dataStr], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ranger-data.json';
+        document.body.appendChild(a);
+        a.click();
+        
+        // Delay cleanup to ensure download starts
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
+    } catch (error) {
+        console.error('Export error:', error);
+        alert('Error exporting data: ' + error.message);
+    }
 }
 
 function importFromJson(event) {
