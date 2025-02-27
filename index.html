@@ -310,7 +310,7 @@
     padding: 8px;
     width: 220px;
     display: none;
-    z-index: 1000;
+    z-index: 10000; /* Increase this value to ensure it's on top */
     box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
@@ -622,6 +622,7 @@
                             <span class="current-color" style="background-color: #4CAF50"></span>
                         </button>
                         <div class="color-picker-panel">
+                            <div class="color-picker-header">⋮⋮</div>
                             <div class="color-section">
                                 <div class="section-label">Theme Colors</div>
                                 <div class="theme-colors-grid"></div>
@@ -800,40 +801,57 @@ const standardColors = [
 
 // Color Picker Core Functions
 function handleColorPickerClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
     const button = e.currentTarget;
-    const panel = button.nextElementSibling;
-    const rowIndex = button.id === 'colorPicker1' ? 0 : 1;
-
+    if (!button) return;
+    
+    let panel = button.nextElementSibling;
+    if (!panel || !panel.classList.contains('color-picker-panel')) {
+        // Try to find it by ID
+        const rowIndex = button.id === 'colorPicker1' ? 0 : 1;
+        panel = document.querySelector(`.color-picker-panel[data-row="${rowIndex + 1}"]`);
+        
+        if (!panel) {
+            console.error('Could not find color picker panel');
+            return;
+        }
+    }
+    
     // Close any other open panels first
     document.querySelectorAll('.color-picker-panel').forEach(p => {
         if (p !== panel) p.classList.remove('active');
     });
 
-    // Make panel active first (don't toggle)
-    panel.classList.add('active');
+    // Toggle this panel
+    panel.classList.toggle('active');
     
     // Generate colors if needed
     if (!panel.dataset.initialized) {
+        const rowIndex = button.id === 'colorPicker1' ? 0 : 1;
+        panel.dataset.row = rowIndex + 1;
         generateColorPalette(panel, rowIndex);
         panel.dataset.initialized = 'true';
     }
     
-    // Use setTimeout to ensure panel is visible before positioning
+    // Position panel
     setTimeout(() => {
         positionColorPicker(panel, button);
     }, 10);
 
-    // Close panel when clicking outside (same logic)
-    const closePanel = (event) => {
-        if (!panel.contains(event.target) && event.target !== button) {
-            panel.classList.remove('active');
-            document.removeEventListener('click', closePanel);
-        }
-    };
-    
+    // Close panel when clicking outside
     setTimeout(() => {
+        const closePanel = (event) => {
+            if (!panel.contains(event.target) && event.target !== button) {
+                panel.classList.remove('active');
+                document.removeEventListener('click', closePanel);
+            }
+        };
         document.addEventListener('click', closePanel);
-    }, 0);
+    }, 10);
+    
+    return false;
 }
 
 function generateColorPalette(panel, rowIndex) {
@@ -880,9 +898,10 @@ function selectColor(color, rowIndex) {
     updateRangeDisplay(currentView);
     saveColorSettings(rowIndex);
 
-    // Close panel
-    const panel = button.nextElementSibling;
-    panel.classList.remove('active');
+    // Close all active panels - more robust approach
+    document.querySelectorAll('.color-picker-panel.active').forEach(p => {
+        p.classList.remove('active');
+    });
 }
 
 function addToRecentColors(color) {
@@ -908,8 +927,13 @@ function addToRecentColors(color) {
 }
 
 function updateRecentColorsPanel(panel) {
+    if (!panel) return;
+    
     const recentGrid = panel.querySelector('.recent-colors-grid');
+    if (!recentGrid) return;
+    
     const section = recentGrid.closest('.color-section');
+    if (!section) return;
     
     if (recentColors.length === 0) {
         section.style.display = 'none';
@@ -919,7 +943,13 @@ function updateRecentColorsPanel(panel) {
     section.style.display = 'block';
     recentGrid.innerHTML = '';
     
-    const rowIndex = panel.closest('.control-row').dataset.row - 1;
+    // Safer approach to get rowIndex
+    let rowIndex = 0;
+    const rowToggle = panel.closest('.control-row')?.querySelector('.row-toggle');
+    if (rowToggle && rowToggle.dataset.row) {
+        rowIndex = parseInt(rowToggle.dataset.row) - 1;
+    }
+    
     recentColors.forEach(color => {
         const swatch = createColorSwatch(color, rowIndex);
         recentGrid.appendChild(swatch);
@@ -2011,15 +2041,31 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', handleRowToggle);
     });
     
-    // Event delegation for color swatches
-    document.addEventListener('click', e => {
-        const swatch = e.target.closest('.color-swatch');
-        if (swatch) {
-            const color = swatch.dataset.color;
-            const rowIndex = parseInt(swatch.dataset.rowIndex);
-            selectColor(color, rowIndex);
+   // Event delegation for color swatches
+document.addEventListener('click', e => {
+    const swatch = e.target.closest('.color-swatch');
+    if (swatch) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const color = swatch.dataset.color;
+        let rowIndex = 0;
+        
+        // Get rowIndex more reliably
+        if (swatch.dataset.rowIndex !== undefined) {
+            rowIndex = parseInt(swatch.dataset.rowIndex);
+        } else {
+            // Try to determine from parent structure
+            const controlRow = swatch.closest('.control-row');
+            if (controlRow && controlRow.querySelector('.row-toggle')) {
+                rowIndex = parseInt(controlRow.querySelector('.row-toggle').dataset.row) - 1;
+            }
         }
-    });
+        
+        selectColor(color, rowIndex);
+        return false;
+    }
+});
     
     // Add event listeners for buttons and inputs
     document.getElementById('viewModeBtn').addEventListener('click', toggleViewMode);
