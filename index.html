@@ -1384,104 +1384,120 @@ function exportToJson() {
             version: "1.0"
         };
         
-        // Create and trigger download
+        // Create unique filename with timestamp
+        const timestamp = new Date().getTime();
+        const filename = `ranger-data-${timestamp}.json`;
+        
+        // Create a blob and URL for downloading
         const dataStr = JSON.stringify(appData, null, 2);
         const blob = new Blob([dataStr], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
         
+        // Create and trigger the download
         const a = document.createElement('a');
+        a.style.display = 'none';
         a.href = url;
-        a.download = 'ranger-data.json';
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         
-        // Delay cleanup to ensure download starts
+        // Delay URL revocation to ensure download starts
         setTimeout(() => {
-            document.body.removeChild(a);
             URL.revokeObjectURL(url);
-        }, 100);
+        }, 1000);
+        
     } catch (error) {
         console.error('Export error:', error);
         alert('Error exporting data: ' + error.message);
     }
 }
 
-function exportToJson() {
-    // Check if export is already in progress
-    if (exportInProgress) {
-        alert("Export already in progress, please wait...");
-        return;
-    }
-    
-    // Set flag and add safety reset
-    exportInProgress = true;
-    console.log("Export started, flag set to true");
-    
-    // Create a safety timeout that will always reset the flag after 3 seconds
-    if (exportTimeoutId) clearTimeout(exportTimeoutId);
-    exportTimeoutId = setTimeout(() => {
-        exportInProgress = false;
-        console.log("Safety reset of export flag");
-    }, 3000);
+function importFromJson(event) {
+    const file = event.target.files[0];
+    if (!file) return;
     
     try {
-        // Collect all cell data including ranges, styling, and content
-        const cellsData = {};
-        document.querySelectorAll('.cell').forEach(cell => {
-            const cellId = cell.dataset.id;
-            const content = cell.querySelector('.cell-content');
-            
-            if (content.textContent || content.dataset.range || 
-                cell.style.backgroundColor || content.style.color) {
-                cellsData[cellId] = {
-                    text: String(content.textContent || ''),
-                    backgroundColor: String(cell.style.backgroundColor || ''),
-                    textColor: String(content.style.color || ''),
-                    rangeData: String(content.dataset.range || ''),
-                    hasRange: Boolean(content.classList.contains('has-range'))
-                };
-            }
-        });
+        // Reset the file input so the same file can be selected again if needed
+        document.getElementById('jsonFileInput').value = '';
         
-        // Create complete app state object
-        const appData = {
-            cellsData: cellsData,
-            currentColors: [...currentColors],
-            currentWeights: [...currentWeights],
-            recentColors: [...recentColors],
-            currentFormat: Number(currentFormat),
-            version: "1.0"
+        const reader = new FileReader();
+        
+        // Add loading indicator
+        const loadingMsg = document.createElement('div');
+        loadingMsg.textContent = 'Importing data...';
+        loadingMsg.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px;border-radius:5px;z-index:9999;';
+        document.body.appendChild(loadingMsg);
+        
+        reader.onload = function(e) {
+            try {
+                const appData = JSON.parse(e.target.result);
+                
+                // Restore cell data
+                if (appData.cellsData) {
+                    Object.entries(appData.cellsData).forEach(([cellId, data]) => {
+                        const cell = document.querySelector(`[data-id="${cellId}"]`);
+                        if (!cell) return;
+                        
+                        const content = cell.querySelector('.cell-content');
+                        content.textContent = String(data.text || '');
+                        cell.style.backgroundColor = String(data.backgroundColor || '');
+                        content.style.color = String(data.textColor || '');
+                        
+                        if (data.rangeData) {
+                            content.dataset.range = String(data.rangeData);
+                            if (data.hasRange) {
+                                content.classList.add('has-range');
+                                addCellHover(cell);
+                            }
+                        }
+                        
+                        if (data.text) {
+                            cellData.set(cellId, data.text);
+                        }
+                    });
+                }
+                
+                // Restore settings - use explicit copies for arrays
+                if (appData.currentColors) currentColors = [...appData.currentColors];
+                if (appData.currentWeights) currentWeights = [...appData.currentWeights];
+                if (appData.recentColors) {
+                    recentColors = [...appData.recentColors];
+                    localStorage.setItem('recentColors', JSON.stringify(recentColors));
+                }
+                if (appData.currentFormat) {
+                    currentFormat = Number(appData.currentFormat);
+                    document.getElementById('formatSwitch').classList.toggle('format-2', currentFormat === 2);
+                }
+                
+                // Update UI
+                loadSavedColors();
+                
+                // Remove loading indicator and show success
+                document.body.removeChild(loadingMsg);
+                alert('Data imported successfully!');
+            } catch (err) {
+                document.body.removeChild(loadingMsg);
+                console.error('Import parsing error:', err);
+                alert('Error parsing import data: ' + err.message);
+            }
         };
         
-        // Create and trigger download
-        const dataStr = JSON.stringify(appData, null, 2);
-        const blob = new Blob([dataStr], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
+        reader.onerror = function() {
+            document.body.removeChild(loadingMsg);
+            console.error('File reading error');
+            alert('Error reading the file');
+        };
         
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'ranger-data.json';
-        document.body.appendChild(a);
-        a.click();
+        reader.readAsText(file);
         
-        // Normal cleanup with flag reset
-        setTimeout(() => {
-            try {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                exportInProgress = false;
-                console.log("Export completed, flag reset to false");
-            } catch (cleanupError) {
-                console.error("Cleanup error:", cleanupError);
-                exportInProgress = false; // Still reset the flag
-            }
-        }, 500);
-    } catch (error) {
-        console.error('Export error:', error);
-        alert('Error exporting data: ' + error.message);
-        exportInProgress = false; // Reset flag on error
+    } catch (outerError) {
+        console.error('Import error:', outerError);
+        alert('Error importing data: ' + outerError.message);
     }
 }
+
+        
         // Event Handlers and Selection Functions
 function startRangeSelection(e) {
     isMouseDown = true;
@@ -2019,30 +2035,29 @@ document.addEventListener('DOMContentLoaded', () => {
         e.clipboardData.setData('text/plain', text);
     });
     
-    // Add JSON export/import functionality
-    document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
-    document.getElementById('importJsonBtn').addEventListener('click', () => {
-        // Create a new file input each time to avoid browser caching issues
-        const oldInput = document.getElementById('jsonFileInput');
-        const newInput = document.createElement('input');
-        newInput.type = 'file';
-        newInput.id = 'jsonFileInput';
-        newInput.accept = '.json';
-        newInput.style.display = 'none';
-        
-        // Replace old input with new one
-        if (oldInput) {
-            oldInput.parentNode.replaceChild(newInput, oldInput);
-        } else {
-            document.body.appendChild(newInput);
-        }
-        
-        // Add event listener to new input
-        newInput.addEventListener('change', importFromJson);
-        
-        // Trigger click on new input
-        newInput.click();
-    });
+   // Add JSON export/import functionality
+document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
+document.getElementById('importJsonBtn').addEventListener('click', () => {
+    // Create a new file input each time to avoid browser caching issues
+    const oldInput = document.getElementById('jsonFileInput');
+    const newInput = document.createElement('input');
+    newInput.type = 'file';
+    newInput.id = 'jsonFileInput';
+    newInput.accept = '.json';
+    newInput.style.display = 'none';
+    
+    // Replace old input with new one
+    if (oldInput) {
+        oldInput.parentNode.replaceChild(newInput, oldInput);
+    } else {
+        document.body.appendChild(newInput);
+    }
+    
+    // Add event listener to new input
+    newInput.addEventListener('change', importFromJson);
+    
+    // Trigger click on new input
+    newInput.click();
 });
 </script>
 </body>
