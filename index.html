@@ -1406,57 +1406,87 @@ function importFromJson(event) {
     const file = event.target.files[0];
     if (!file) return;
     
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const appData = JSON.parse(e.target.result);
-            
-            // Restore cell data
-            if (appData.cellsData) {
-                Object.entries(appData.cellsData).forEach(([cellId, data]) => {
-                    const cell = document.querySelector(`[data-id="${cellId}"]`);
-                    if (!cell) return;
-                    
-                    const content = cell.querySelector('.cell-content');
-                    content.textContent = data.text || '';
-                    cell.style.backgroundColor = data.backgroundColor || '';
-                    content.style.color = data.textColor || '';
-                    
-                    if (data.rangeData) {
-                        content.dataset.range = data.rangeData;
-                        if (data.hasRange) {
-                            content.classList.add('has-range');
-                            addCellHover(cell);
+    try {
+        // Reset the file input so the same file can be selected again if needed
+        document.getElementById('jsonFileInput').value = '';
+        
+        const reader = new FileReader();
+        
+        // Add loading indicator
+        const loadingMsg = document.createElement('div');
+        loadingMsg.textContent = 'Importing data...';
+        loadingMsg.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px;border-radius:5px;z-index:9999;';
+        document.body.appendChild(loadingMsg);
+        
+        reader.onload = function(e) {
+            try {
+                const appData = JSON.parse(e.target.result);
+                
+                // Restore cell data
+                if (appData.cellsData) {
+                    Object.entries(appData.cellsData).forEach(([cellId, data]) => {
+                        const cell = document.querySelector(`[data-id="${cellId}"]`);
+                        if (!cell) return;
+                        
+                        const content = cell.querySelector('.cell-content');
+                        content.textContent = String(data.text || '');
+                        cell.style.backgroundColor = String(data.backgroundColor || '');
+                        content.style.color = String(data.textColor || '');
+                        
+                        if (data.rangeData) {
+                            content.dataset.range = String(data.rangeData);
+                            if (data.hasRange) {
+                                content.classList.add('has-range');
+                                addCellHover(cell);
+                            }
                         }
-                    }
-                    
-                    if (data.text) {
-                        cellData.set(cellId, data.text);
-                    }
-                });
+                        
+                        if (data.text) {
+                            cellData.set(cellId, data.text);
+                        }
+                    });
+                }
+                
+                // Restore settings - use explicit copies for arrays
+                if (appData.currentColors) currentColors = [...appData.currentColors];
+                if (appData.currentWeights) currentWeights = [...appData.currentWeights];
+                if (appData.recentColors) {
+                    recentColors = [...appData.recentColors];
+                    localStorage.setItem('recentColors', JSON.stringify(recentColors));
+                }
+                if (appData.currentFormat) {
+                    currentFormat = Number(appData.currentFormat);
+                    document.getElementById('formatSwitch').classList.toggle('format-2', currentFormat === 2);
+                }
+                
+                // Update UI
+                loadSavedColors();
+                
+                // Remove loading indicator and show success
+                document.body.removeChild(loadingMsg);
+                alert('Data imported successfully!');
+            } catch (err) {
+                document.body.removeChild(loadingMsg);
+                console.error('Import parsing error:', err);
+                alert('Error parsing import data: ' + err.message);
             }
-            
-            // Restore settings
-            if (appData.currentColors) currentColors = appData.currentColors;
-            if (appData.currentWeights) currentWeights = appData.currentWeights;
-            if (appData.recentColors) {
-                recentColors = appData.recentColors;
-                localStorage.setItem('recentColors', JSON.stringify(recentColors));
-            }
-            if (appData.currentFormat) {
-                currentFormat = appData.currentFormat;
-                document.getElementById('formatSwitch').classList.toggle('format-2', currentFormat === 2);
-            }
-            
-            // Update UI
-            loadSavedColors();
-            
-            alert('Data imported successfully!');
-        } catch (err) {
-            alert('Error importing data: ' + err.message);
-        }
-    };
-    reader.readAsText(file);
+        };
+        
+        reader.onerror = function() {
+            document.body.removeChild(loadingMsg);
+            console.error('File reading error');
+            alert('Error reading the file');
+        };
+        
+        // Use timeout to ensure browser has time to process
+        setTimeout(() => {
+            reader.readAsText(file);
+        }, 50);
+        
+    } catch (outerError) {
+        console.error('Import error:', outerError);
+        alert('Error importing data: ' + outerError.message);
+    }
 }
         // Event Handlers and Selection Functions
 function startRangeSelection(e) {
