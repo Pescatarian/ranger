@@ -804,26 +804,26 @@ function handleColorPickerClick(e) {
     const panel = button.nextElementSibling;
     const rowIndex = button.id === 'colorPicker1' ? 0 : 1;
 
-    // Close any other open panels
+    // Close any other open panels first
     document.querySelectorAll('.color-picker-panel').forEach(p => {
         if (p !== panel) p.classList.remove('active');
     });
 
-    // Toggle current panel
-    panel.classList.toggle('active');
-
-    if (panel.classList.contains('active')) {
-        // Position the panel
-        positionColorPicker(panel, button);
-
-        // Generate colors if not already done
-        if (!panel.dataset.initialized) {
-            generateColorPalette(panel, rowIndex);
-            panel.dataset.initialized = 'true';
-        }
+    // Make panel active first (don't toggle)
+    panel.classList.add('active');
+    
+    // Generate colors if needed
+    if (!panel.dataset.initialized) {
+        generateColorPalette(panel, rowIndex);
+        panel.dataset.initialized = 'true';
     }
+    
+    // Use setTimeout to ensure panel is visible before positioning
+    setTimeout(() => {
+        positionColorPicker(panel, button);
+    }, 10);
 
-    // Close panel when clicking outside
+    // Close panel when clicking outside (same logic)
     const closePanel = (event) => {
         if (!panel.contains(event.target) && event.target !== button) {
             panel.classList.remove('active');
