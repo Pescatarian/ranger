@@ -1713,36 +1713,48 @@ async function saveToCell() {
         return;
     }
     
-    const rangeText = document.getElementById('rangeText').value;
-    const currentView = document.querySelector('.three-way-switch').dataset.view; // gets 'all', 'row1', or 'row2'
-    
-    // Ensure range display matches current switch position
-    updateRangeDisplay(currentView);
-    document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
-    
-    // Small delay to ensure visual update is complete
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
-    // Convert current view state to image
-    const rangeImage = await convertRangeToImage();
-    
-    // Save both text and image
-    const cellData = {
-        text: rangeText,
-        image: rangeImage,
-        view: currentView
-    };
-    
-    // Store in cell
-    const content = selectedCell.querySelector('.cell-content');
-    content.innerHTML = '';
-    content.dataset.range = JSON.stringify(cellData);
-    content.classList.add('has-range');
-    
-    // Add hover functionality
-    addCellHover(selectedCell);
-    
-    toggleRangeBuilder();
+    try {
+        const rangeText = document.getElementById('rangeText').value || '';
+        const currentView = document.querySelector('.three-way-switch').dataset.view || 'all';
+        
+        // Ensure range display matches current switch position
+        updateRangeDisplay(currentView);
+        document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
+        
+        // Small delay to ensure visual update is complete
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Convert current view state to image
+        const rangeImage = await convertRangeToImage();
+        
+        // Save both text and image with explicit String conversions
+        const cellDataObj = {
+            text: String(rangeText),
+            image: String(rangeImage),
+            view: String(currentView)
+        };
+        
+        // Store in cell
+        const content = selectedCell.querySelector('.cell-content');
+        content.innerHTML = '';
+        
+        // Use safer JSON stringification
+        try {
+            content.dataset.range = JSON.stringify(cellDataObj);
+            content.classList.add('has-range');
+            
+            // Add hover functionality
+            addCellHover(selectedCell);
+            
+            toggleRangeBuilder();
+        } catch (jsonError) {
+            console.error('JSON error in saveToCell:', jsonError);
+            alert('Error saving range data: ' + jsonError.message);
+        }
+    } catch (error) {
+        console.error('Save error:', error);
+        alert('Error saving to cell: ' + error.message);
+    }
 }
 
 function clearSelection() {
@@ -1832,21 +1844,34 @@ function convertRangeToImage() {
 
 function addCellHover(cell) {
     cell.addEventListener('mouseenter', () => {
-        const content = cell.querySelector('.cell-content');
-        if (!content.dataset.range) return;
+        try {
+            const content = cell.querySelector('.cell-content');
+            if (!content || !content.dataset.range) return;
 
-        const rangeData = JSON.parse(content.dataset.range);
-        if (rangeData && rangeData.image) {
-            const img = new Image();
-            img.src = rangeData.image;
-            hoverPopup.innerHTML = '';
-            hoverPopup.appendChild(img);
+            let rangeData;
+            try {
+                rangeData = JSON.parse(content.dataset.range);
+            } catch (parseError) {
+                console.error('Error parsing range data:', parseError);
+                return;
+            }
             
-            // Position popup
-            const cellRect = cell.getBoundingClientRect();
-            hoverPopup.style.left = `${cellRect.right + 5}px`;
-            hoverPopup.style.top = `${cellRect.top}px`;
-            hoverPopup.style.display = 'block';
+            if (rangeData && rangeData.image) {
+                const img = new Image();
+                img.onerror = () => console.error('Error loading range image');
+                img.src = rangeData.image;
+                
+                hoverPopup.innerHTML = '';
+                hoverPopup.appendChild(img);
+                
+                // Position popup
+                const cellRect = cell.getBoundingClientRect();
+                hoverPopup.style.left = `${cellRect.right + 5}px`;
+                hoverPopup.style.top = `${cellRect.top}px`;
+                hoverPopup.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Hover display error:', error);
         }
     });
     
