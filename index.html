@@ -733,7 +733,7 @@ let dragStartX, dragStartY;
 let clipboardData = null;
 let currentFormat = 1; // 1 for decimal format, 2 for bracket format
 
-        
+
 // Create a single reusable popup element
 const hoverPopup = document.createElement('div');
 hoverPopup.className = 'range-popup';
@@ -1351,149 +1351,104 @@ function updateStats() {
 
 // Now add the JSON export/import functions:
 function exportToJson() {
-    try {
-        // Collect all cell data including ranges, styling, and content
-        const cellsData = {};
-        document.querySelectorAll('.cell').forEach(cell => {
-            const cellId = cell.dataset.id;
-            const content = cell.querySelector('.cell-content');
-            
-            if (content.textContent || content.dataset.range || 
-                cell.style.backgroundColor || content.style.color) {
-                cellsData[cellId] = {
-                    text: String(content.textContent || ''),
-                    backgroundColor: String(cell.style.backgroundColor || ''),
-                    textColor: String(content.style.color || ''),
-                    rangeData: String(content.dataset.range || ''),
-                    hasRange: Boolean(content.classList.contains('has-range'))
-                };
-            }
-        });
+    // Collect all cell data including ranges, styling, and content
+    const cellsData = {};
+    document.querySelectorAll('.cell').forEach(cell => {
+        const cellId = cell.dataset.id;
+        const content = cell.querySelector('.cell-content');
         
-        // Create complete app state object
-        const appData = {
-            cellsData: cellsData,
-            currentColors: [...currentColors],
-            currentWeights: [...currentWeights],
-            recentColors: [...recentColors],
-            currentFormat: Number(currentFormat),
-            version: "1.0"
-        };
-        
-        // Create unique filename with timestamp
-        const timestamp = new Date().getTime();
-        const filename = `ranger-data-${timestamp}.json`;
-        
-        // Create a blob and URL for downloading
-        const dataStr = JSON.stringify(appData, null, 2);
-        const blob = new Blob([dataStr], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        
-        // Create and trigger the download
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        // Delay URL revocation to ensure download starts
-        setTimeout(() => {
-            URL.revokeObjectURL(url);
-        }, 1000);
-        
-    } catch (error) {
-        console.error('Export error:', error);
-        alert('Error exporting data: ' + error.message);
-    }
+        if (content.textContent || content.dataset.range || 
+            cell.style.backgroundColor || content.style.color) {
+            cellsData[cellId] = {
+                text: content.textContent,
+                backgroundColor: cell.style.backgroundColor,
+                textColor: content.style.color,
+                rangeData: content.dataset.range || '',
+                hasRange: content.classList.contains('has-range')
+            };
+        }
+    });
+    
+    // Create complete app state object
+    const appData = {
+        cellsData: cellsData,
+        currentColors: currentColors,
+        currentWeights: currentWeights,
+        recentColors: recentColors,
+        currentFormat: currentFormat,
+        version: "1.0"
+    };
+    
+    // Create and trigger download
+    const dataStr = JSON.stringify(appData, null, 2);
+    const blob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ranger-data.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 function importFromJson(event) {
     const file = event.target.files[0];
     if (!file) return;
     
-    try {
-        // Reset the file input so the same file can be selected again if needed
-        document.getElementById('jsonFileInput').value = '';
-        
-        const reader = new FileReader();
-        
-        // Add loading indicator
-        const loadingMsg = document.createElement('div');
-        loadingMsg.textContent = 'Importing data...';
-        loadingMsg.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px;border-radius:5px;z-index:9999;';
-        document.body.appendChild(loadingMsg);
-        
-        reader.onload = function(e) {
-            try {
-                const appData = JSON.parse(e.target.result);
-                
-                // Restore cell data
-                if (appData.cellsData) {
-                    Object.entries(appData.cellsData).forEach(([cellId, data]) => {
-                        const cell = document.querySelector(`[data-id="${cellId}"]`);
-                        if (!cell) return;
-                        
-                        const content = cell.querySelector('.cell-content');
-                        content.textContent = String(data.text || '');
-                        cell.style.backgroundColor = String(data.backgroundColor || '');
-                        content.style.color = String(data.textColor || '');
-                        
-                        if (data.rangeData) {
-                            content.dataset.range = String(data.rangeData);
-                            if (data.hasRange) {
-                                content.classList.add('has-range');
-                                addCellHover(cell);
-                            }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const appData = JSON.parse(e.target.result);
+            
+            // Restore cell data
+            if (appData.cellsData) {
+                Object.entries(appData.cellsData).forEach(([cellId, data]) => {
+                    const cell = document.querySelector(`[data-id="${cellId}"]`);
+                    if (!cell) return;
+                    
+                    const content = cell.querySelector('.cell-content');
+                    content.textContent = data.text || '';
+                    cell.style.backgroundColor = data.backgroundColor || '';
+                    content.style.color = data.textColor || '';
+                    
+                    if (data.rangeData) {
+                        content.dataset.range = data.rangeData;
+                        if (data.hasRange) {
+                            content.classList.add('has-range');
+                            addCellHover(cell);
                         }
-                        
-                        if (data.text) {
-                            cellData.set(cellId, data.text);
-                        }
-                    });
-                }
-                
-                // Restore settings - use explicit copies for arrays
-                if (appData.currentColors) currentColors = [...appData.currentColors];
-                if (appData.currentWeights) currentWeights = [...appData.currentWeights];
-                if (appData.recentColors) {
-                    recentColors = [...appData.recentColors];
-                    localStorage.setItem('recentColors', JSON.stringify(recentColors));
-                }
-                if (appData.currentFormat) {
-                    currentFormat = Number(appData.currentFormat);
-                    document.getElementById('formatSwitch').classList.toggle('format-2', currentFormat === 2);
-                }
-                
-                // Update UI
-                loadSavedColors();
-                
-                // Remove loading indicator and show success
-                document.body.removeChild(loadingMsg);
-                alert('Data imported successfully!');
-            } catch (err) {
-                document.body.removeChild(loadingMsg);
-                console.error('Import parsing error:', err);
-                alert('Error parsing import data: ' + err.message);
+                    }
+                    
+                    if (data.text) {
+                        cellData.set(cellId, data.text);
+                    }
+                });
             }
-        };
-        
-        reader.onerror = function() {
-            document.body.removeChild(loadingMsg);
-            console.error('File reading error');
-            alert('Error reading the file');
-        };
-        
-        reader.readAsText(file);
-        
-    } catch (outerError) {
-        console.error('Import error:', outerError);
-        alert('Error importing data: ' + outerError.message);
-    }
+            
+            // Restore settings
+            if (appData.currentColors) currentColors = appData.currentColors;
+            if (appData.currentWeights) currentWeights = appData.currentWeights;
+            if (appData.recentColors) {
+                recentColors = appData.recentColors;
+                localStorage.setItem('recentColors', JSON.stringify(recentColors));
+            }
+            if (appData.currentFormat) {
+                currentFormat = appData.currentFormat;
+                document.getElementById('formatSwitch').classList.toggle('format-2', currentFormat === 2);
+            }
+            
+            // Update UI
+            loadSavedColors();
+            
+            alert('Data imported successfully!');
+        } catch (err) {
+            alert('Error importing data: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
 }
-
-        
         // Event Handlers and Selection Functions
 function startRangeSelection(e) {
     isMouseDown = true;
@@ -1719,48 +1674,36 @@ async function saveToCell() {
         return;
     }
     
-    try {
-        const rangeText = document.getElementById('rangeText').value || '';
-        const currentView = document.querySelector('.three-way-switch').dataset.view || 'all';
-        
-        // Ensure range display matches current switch position
-        updateRangeDisplay(currentView);
-        document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
-        
-        // Small delay to ensure visual update is complete
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
-        // Convert current view state to image
-        const rangeImage = await convertRangeToImage();
-        
-        // Save both text and image with explicit String conversions
-        const cellDataObj = {
-            text: String(rangeText),
-            image: String(rangeImage),
-            view: String(currentView)
-        };
-        
-        // Store in cell
-        const content = selectedCell.querySelector('.cell-content');
-        content.innerHTML = '';
-        
-        // Use safer JSON stringification
-        try {
-            content.dataset.range = JSON.stringify(cellDataObj);
-            content.classList.add('has-range');
-            
-            // Add hover functionality
-            addCellHover(selectedCell);
-            
-            toggleRangeBuilder();
-        } catch (jsonError) {
-            console.error('JSON error in saveToCell:', jsonError);
-            alert('Error saving range data: ' + jsonError.message);
-        }
-    } catch (error) {
-        console.error('Save error:', error);
-        alert('Error saving to cell: ' + error.message);
-    }
+    const rangeText = document.getElementById('rangeText').value;
+    const currentView = document.querySelector('.three-way-switch').dataset.view; // gets 'all', 'row1', or 'row2'
+    
+    // Ensure range display matches current switch position
+    updateRangeDisplay(currentView);
+    document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
+    
+    // Small delay to ensure visual update is complete
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Convert current view state to image
+    const rangeImage = await convertRangeToImage();
+    
+    // Save both text and image
+    const cellData = {
+        text: rangeText,
+        image: rangeImage,
+        view: currentView
+    };
+    
+    // Store in cell
+    const content = selectedCell.querySelector('.cell-content');
+    content.innerHTML = '';
+    content.dataset.range = JSON.stringify(cellData);
+    content.classList.add('has-range');
+    
+    // Add hover functionality
+    addCellHover(selectedCell);
+    
+    toggleRangeBuilder();
 }
 
 function clearSelection() {
@@ -1843,60 +1786,28 @@ function loadSavedColors() {
 // Add these new functions
 function convertRangeToImage() {
     const rangeGrid = document.getElementById('rangeGrid');
-    if (!rangeGrid) {
-        console.error('Range grid element not found');
-        return '';
-    }
-    
-    return html2canvas(rangeGrid, {
-        allowTaint: true,
-        useCORS: true,
-        logging: false
-    })
-    .then(canvas => {
-        try {
-            return canvas.toDataURL('image/png');
-        } catch (error) {
-            console.error('Canvas to data URL error:', error);
-            return '';
-        }
-    })
-    .catch(error => {
-        console.error('HTML2Canvas error:', error);
-        return '';
+    return html2canvas(rangeGrid).then(canvas => {
+        return canvas.toDataURL('image/png');
     });
 }
 
 function addCellHover(cell) {
     cell.addEventListener('mouseenter', () => {
-        try {
-            const content = cell.querySelector('.cell-content');
-            if (!content || !content.dataset.range) return;
+        const content = cell.querySelector('.cell-content');
+        if (!content.dataset.range) return;
 
-            let rangeData;
-            try {
-                rangeData = JSON.parse(content.dataset.range);
-            } catch (parseError) {
-                console.error('Error parsing range data:', parseError);
-                return;
-            }
+        const rangeData = JSON.parse(content.dataset.range);
+        if (rangeData && rangeData.image) {
+            const img = new Image();
+            img.src = rangeData.image;
+            hoverPopup.innerHTML = '';
+            hoverPopup.appendChild(img);
             
-            if (rangeData && rangeData.image) {
-                const img = new Image();
-                img.onerror = () => console.error('Error loading range image');
-                img.src = rangeData.image;
-                
-                hoverPopup.innerHTML = '';
-                hoverPopup.appendChild(img);
-                
-                // Position popup
-                const cellRect = cell.getBoundingClientRect();
-                hoverPopup.style.left = `${cellRect.right + 5}px`;
-                hoverPopup.style.top = `${cellRect.top}px`;
-                hoverPopup.style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Hover display error:', error);
+            // Position popup
+            const cellRect = cell.getBoundingClientRect();
+            hoverPopup.style.left = `${cellRect.right + 5}px`;
+            hoverPopup.style.top = `${cellRect.top}px`;
+            hoverPopup.style.display = 'block';
         }
     });
     
@@ -2031,29 +1942,12 @@ document.addEventListener('DOMContentLoaded', () => {
         e.clipboardData.setData('text/plain', text);
     });
     
-   // Add JSON export/import functionality
-document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
-document.getElementById('importJsonBtn').addEventListener('click', () => {
-    // Create a new file input each time to avoid browser caching issues
-    const oldInput = document.getElementById('jsonFileInput');
-    const newInput = document.createElement('input');
-    newInput.type = 'file';
-    newInput.id = 'jsonFileInput';
-    newInput.accept = '.json';
-    newInput.style.display = 'none';
-    
-    // Replace old input with new one
-    if (oldInput) {
-        oldInput.parentNode.replaceChild(newInput, oldInput);
-    } else {
-        document.body.appendChild(newInput);
-    }
-    
-    // Add event listener to new input
-    newInput.addEventListener('change', importFromJson);
-    
-    // Trigger click on new input
-    newInput.click();
+    // Add JSON export/import functionality
+    document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
+    document.getElementById('importJsonBtn').addEventListener('click', () => {
+        document.getElementById('jsonFileInput').click();
+    });
+    document.getElementById('jsonFileInput').addEventListener('change', importFromJson);
 });
 </script>
 </body>
