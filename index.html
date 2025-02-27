@@ -733,6 +733,10 @@ let dragStartX, dragStartY;
 let clipboardData = null;
 let currentFormat = 1; // 1 for decimal format, 2 for bracket format
 let exportInProgress = false;
+let exportTimeoutId = null;
+
+
+
         
 // Create a single reusable popup element
 const hoverPopup = document.createElement('div');
@@ -1403,13 +1407,22 @@ function exportToJson() {
 }
 
 function exportToJson() {
-    // Prevent multiple exports in quick succession
+    // Check if export is already in progress
     if (exportInProgress) {
         alert("Export already in progress, please wait...");
         return;
     }
     
+    // Set flag and add safety reset
     exportInProgress = true;
+    console.log("Export started, flag set to true");
+    
+    // Create a safety timeout that will always reset the flag after 3 seconds
+    if (exportTimeoutId) clearTimeout(exportTimeoutId);
+    exportTimeoutId = setTimeout(() => {
+        exportInProgress = false;
+        console.log("Safety reset of export flag");
+    }, 3000);
     
     try {
         // Collect all cell data including ranges, styling, and content
@@ -1430,7 +1443,7 @@ function exportToJson() {
             }
         });
         
-        // Create complete app state object - THIS IS THE MISSING PART
+        // Create complete app state object
         const appData = {
             cellsData: cellsData,
             currentColors: [...currentColors],
@@ -1451,16 +1464,17 @@ function exportToJson() {
         document.body.appendChild(a);
         a.click();
         
-        // Reset flag regardless of success/failure after a delay
+        // Normal cleanup with flag reset
         setTimeout(() => {
             try {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+                exportInProgress = false;
+                console.log("Export completed, flag reset to false");
             } catch (cleanupError) {
                 console.error("Cleanup error:", cleanupError);
+                exportInProgress = false; // Still reset the flag
             }
-            
-            exportInProgress = false;
         }, 500);
     } catch (error) {
         console.error('Export error:', error);
