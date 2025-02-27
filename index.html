@@ -1410,11 +1410,35 @@ function exportToJson() {
     }
     
     exportInProgress = true;
-    console.log("Export started, flag set to true"); // Debug logging
     
     try {
         // Collect all cell data including ranges, styling, and content
-        // [your existing collection code here]
+        const cellsData = {};
+        document.querySelectorAll('.cell').forEach(cell => {
+            const cellId = cell.dataset.id;
+            const content = cell.querySelector('.cell-content');
+            
+            if (content.textContent || content.dataset.range || 
+                cell.style.backgroundColor || content.style.color) {
+                cellsData[cellId] = {
+                    text: String(content.textContent || ''),
+                    backgroundColor: String(cell.style.backgroundColor || ''),
+                    textColor: String(content.style.color || ''),
+                    rangeData: String(content.dataset.range || ''),
+                    hasRange: Boolean(content.classList.contains('has-range'))
+                };
+            }
+        });
+        
+        // Create complete app state object - THIS IS THE MISSING PART
+        const appData = {
+            cellsData: cellsData,
+            currentColors: [...currentColors],
+            currentWeights: [...currentWeights],
+            recentColors: [...recentColors],
+            currentFormat: Number(currentFormat),
+            version: "1.0"
+        };
         
         // Create and trigger download
         const dataStr = JSON.stringify(appData, null, 2);
@@ -1437,13 +1461,11 @@ function exportToJson() {
             }
             
             exportInProgress = false;
-            console.log("Export completed, flag reset to false"); // Debug logging
         }, 500);
     } catch (error) {
         console.error('Export error:', error);
         alert('Error exporting data: ' + error.message);
         exportInProgress = false; // Reset flag on error
-        console.log("Export failed, flag reset to false"); // Debug logging
     }
 }
         // Event Handlers and Selection Functions
