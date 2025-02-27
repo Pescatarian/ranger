@@ -1397,7 +1397,7 @@ function updateStats() {
 // Simplified export/import functions
 function exportToJson() {
     try {
-        // Collect data
+        // Collect data as before
         const cellsData = {};
         document.querySelectorAll('.cell').forEach(cell => {
             const cellId = cell.dataset.id;
@@ -1423,30 +1423,29 @@ function exportToJson() {
             currentFormat: currentFormat,
             version: "1.0"
         };
-        
-        // Add timestamp to filename to avoid caching issues
-        const timestamp = new Date().getTime();
-        const filename = `ranger-data-${timestamp}.json`;
-        
-        // Clean approach - create and trigger download in one go
+
         const jsonString = JSON.stringify(appData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonString);
         
-        // Create a new anchor for each download to avoid Chrome's blocking
-        const downloadLink = document.createElement('a');
-        downloadLink.setAttribute('href', dataUri);
-        downloadLink.setAttribute('download', filename);
-        downloadLink.style.display = 'none';
-        document.body.appendChild(downloadLink);
+        // Create a Blob object
+        const blob = new Blob([jsonString], {type: 'application/json'});
         
-        // Use setTimeout to ensure the DOM has time to update
-        setTimeout(() => {
-            downloadLink.click();
-            // Remove the element after clicking
-            setTimeout(() => {
-                document.body.removeChild(downloadLink);
-            }, 100);
-        }, 10);
+        // Use navigator.msSaveBlob for IE/Edge, or create object URL for other browsers
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveBlob(blob, 'ranger-data.json');
+        } else {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'ranger-data.json';
+            
+            // Append to document, click, and clean up in one atomic operation
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Revoke the object URL later to free memory
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }
     } catch (error) {
         console.error('Export error:', error);
         alert('Error exporting data: ' + error.message);
