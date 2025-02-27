@@ -1837,8 +1837,27 @@ function loadSavedColors() {
 // Add these new functions
 function convertRangeToImage() {
     const rangeGrid = document.getElementById('rangeGrid');
-    return html2canvas(rangeGrid).then(canvas => {
-        return canvas.toDataURL('image/png');
+    if (!rangeGrid) {
+        console.error('Range grid element not found');
+        return '';
+    }
+    
+    return html2canvas(rangeGrid, {
+        allowTaint: true,
+        useCORS: true,
+        logging: false
+    })
+    .then(canvas => {
+        try {
+            return canvas.toDataURL('image/png');
+        } catch (error) {
+            console.error('Canvas to data URL error:', error);
+            return '';
+        }
+    })
+    .catch(error => {
+        console.error('HTML2Canvas error:', error);
+        return '';
     });
 }
 
