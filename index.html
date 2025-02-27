@@ -1406,11 +1406,11 @@ function exportToJson() {
             if (content.textContent || content.dataset.range || 
                 cell.style.backgroundColor || content.style.color) {
                 cellsData[cellId] = {
-                    text: String(content.textContent || ''),
-                    backgroundColor: String(cell.style.backgroundColor || ''),
-                    textColor: String(content.style.color || ''),
-                    rangeData: String(content.dataset.range || ''),
-                    hasRange: Boolean(content.classList.contains('has-range'))
+                    text: content.textContent || '',
+                    backgroundColor: cell.style.backgroundColor || '',
+                    textColor: content.style.color || '',
+                    rangeData: content.dataset.range || '',
+                    hasRange: content.classList.contains('has-range')
                 };
             }
         });
@@ -1418,24 +1418,24 @@ function exportToJson() {
         // Create app state object
         const appData = {
             cellsData: cellsData,
-            currentColors: [...currentColors],
-            currentWeights: [...currentWeights],
-            recentColors: [...recentColors],
-            currentFormat: Number(currentFormat),
+            currentColors: currentColors,
+            currentWeights: currentWeights,
+            recentColors: recentColors,
+            currentFormat: currentFormat,
             version: "1.0"
         };
         
-        // Create downloadable string
+        // Create downloadable string using data URI approach
         const dataStr = "data:text/json;charset=utf-8," + 
                       encodeURIComponent(JSON.stringify(appData, null, 2));
         
-        // Create download link
+        // Create and trigger download
         const downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataStr);
         downloadAnchorNode.setAttribute("download", "ranger-data.json");
         document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
-        downloadAnchorNode.remove();
+        document.body.removeChild(downloadAnchorNode);
     } catch (error) {
         console.error('Export error:', error);
         alert('Error exporting data: ' + error.message);
