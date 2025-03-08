@@ -1796,31 +1796,41 @@ function handleRangeTextChange(e) {
 
     try {
         // Group hands by standard notation
-        const handGroups = new Map(); // Maps standard notation to weight
+        const handGroups = new Map();
         
-        // Use a direct matching approach instead of regex.exec for more reliable results
-        // Extract all weight blocks as a whole first
-        const weightBlocks = text.match(/\[\d+(?:\.\d+)?\].*?\[\/\d+(?:\.\d+)?\]/gs);
+        // Match complete weight blocks with a simple regex pattern
+        // This specifically targets your [weight]hands...[/weight] format
+        const blocks = text.match(/\[\d+(?:\.\d+)?\].*?\[\/\d+(?:\.\d+)?\]/g);
         
-        if (weightBlocks && weightBlocks.length > 0) {
-            // Process each weight block
-            weightBlocks.forEach(block => {
-                // Extract the weight value
+        if (blocks && blocks.length > 0) {
+            blocks.forEach(block => {
+                // Extract weight value - get the number between first [ and ]
                 const weightMatch = block.match(/\[(\d+(?:\.\d+)?)\]/);
                 if (!weightMatch) return;
                 
-                const weight = Math.min(100, Math.max(0, parseFloat(weightMatch[1])));
+                const weight = parseFloat(weightMatch[1]);
+                if (isNaN(weight)) return;
                 
-                // Extract the hands part (everything between the weight tags)
-                let handsText = block.replace(/\[\d+(?:\.\d+)?\]/, '') // Remove opening tag
-                                    .replace(/\[\/\d+(?:\.\d+)?\]$/, ''); // Remove closing tag
+                // Get everything between the first ] and [/
+                const handsSection = block.substring(
+                    block.indexOf(']') + 1, 
+                    block.lastIndexOf('[/')
+                );
                 
-                // Split into individual hands
-                const hands = handsText.split(',').map(h => h.trim()).filter(h => h);
+                // Split by comma, trim, and filter out ellipses
+                const hands = handsSection
+                    .split(',')
+                    .map(h => h.trim())
+                    .filter(h => h && h.length === 4 && !h.includes('...'));
                 
                 // Process each hand
                 hands.forEach(handWithSuits => {
-                    processHandWithSuits(handWithSuits, weight, handGroups);
+                    const notation = convertToStandardNotation(handWithSuits);
+                    if (notation) {
+                        if (!handGroups.has(notation) || handGroups.get(notation) < weight) {
+                            handGroups.set(notation, weight);
+                        }
+                    }
                 });
             });
             
@@ -1828,10 +1838,10 @@ function handleRangeTextChange(e) {
             for (const [notation, weight] of handGroups.entries()) {
                 selectHandWithWeight(notation, weight);
             }
+            
+            updateStats();
+            updateRangeDisplay(currentView);
         }
-        
-        updateStats();
-        updateRangeDisplay(currentView);
     } catch (error) {
         console.error('Error parsing range:', error);
     }
