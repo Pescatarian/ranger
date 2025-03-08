@@ -1785,109 +1785,79 @@ function updateRangeText() {
 
 function handleRangeTextChange(e) {
     const text = e.target.value.trim();
-    
-    // Clear all selections first
+
     document.querySelectorAll('.range-cell').forEach(cell => {
         cell.dataset.selections = JSON.stringify([]);
         updateCellVisual(cell);
     });
-    
+
     if (!text) return;
 
     try {
-        // Create a map to store hand -> weight mappings
-        const handWeights = new Map();
-        
-        // Step 1: Extract all weighted blocks first
-        const blockPattern = /\[(\d+(?:\.?\d+)?)\](.*?)\[\/\1\]/gs;
+        const blockPattern = /\[(\d+(?:\.\d+)?)\](.*?)\[\/\1\]/gs;
         let match;
-        
+
         while ((match = blockPattern.exec(text)) !== null) {
             const weight = parseFloat(match[1]);
             const handsText = match[2];
 
-            console.log("Found weight block:", weight, "with hands:", handsText);
-            
-            // Split hands by comma and process each one
             handsText.split(',').forEach(rawHand => {
                 const hand = rawHand.trim();
-                
-                // Skip empty hands or ellipses
-                if (!hand || hand === '...' || hand.includes('...')) return;
-                
-                // Only process 4-character hands with suits
+
+                if (!hand || hand.includes('...')) return;
+
                 if (hand.length === 4) {
-                    // Get the two card ranks and suits
                     const card1Rank = hand[0].toUpperCase();
                     const card1Suit = hand[1].toLowerCase();
                     const card2Rank = hand[2].toUpperCase();
                     const card2Suit = hand[3].toLowerCase();
-                    
-                    // Validate ranks and suits
+
                     const validRanks = 'AKQJT98765432';
                     const validSuits = 'hdcs';
-                    
+
                     if (!validRanks.includes(card1Rank) || !validRanks.includes(card2Rank) ||
                         !validSuits.includes(card1Suit) || !validSuits.includes(card2Suit)) {
                         return;
                     }
-                    
+
                     let standardNotation;
-                    
-                    // Handle pairs
+
                     if (card1Rank === card2Rank) {
                         standardNotation = card1Rank + card2Rank;
-                    }
-                    // Handle non-pairs
-                    else {
-                        // Determine which rank is higher
+                    } else {
                         const rank1Index = validRanks.indexOf(card1Rank);
                         const rank2Index = validRanks.indexOf(card2Rank);
-                        
+
                         if (rank1Index < rank2Index) {
-                            // First card is higher (e.g., A in AKs)
                             standardNotation = card1Rank + card2Rank + (card1Suit === card2Suit ? 's' : 'o');
                         } else {
-                            // Second card is higher (e.g., K in 2Ks)
                             standardNotation = card2Rank + card1Rank + (card1Suit === card2Suit ? 's' : 'o');
                         }
                     }
-                    
-                    // Store the standardized hand with its weight
-                    handWeights.set(standardNotation, weight);
+
+                    const cell = [...document.querySelectorAll('.range-cell')]
+                        .find(cell => cell.querySelector('span').textContent === standardNotation);
+
+                    if (cell) {
+                        const selections = JSON.parse(cell.dataset.selections || '[]');
+                        const currentColor = currentColors[activeRow];
+
+                        const filteredSelections = selections.filter(s => s.color !== currentColor);
+
+                        filteredSelections.push({
+                            color: currentColor,
+                            weight: weight
+                        });
+
+                        cell.dataset.selections = JSON.stringify(filteredSelections);
+                        updateCellVisual(cell);
+                    }
                 }
             });
-        }
-        
-        // Apply weights to the grid - use activeRow for coloring
-        for (const [hand, weight] of handWeights) {
-            // Find the cell in the grid that matches this hand
-            const cell = [...document.querySelectorAll('.range-cell')]
-                .find(cell => cell.querySelector('span').textContent === hand);
-            
-            if (cell) {
-                // Apply the selection to the cell
-                const selections = JSON.parse(cell.dataset.selections || '[]');
-                const currentColor = currentColors[activeRow];
-                
-                // Remove any existing selection for this color
-                const filteredSelections = selections.filter(s => s.color !== currentColor);
-                
-                // Add the new selection
-                filteredSelections.push({
-                    color: currentColor,
-                    weight: weight
-                });
-                
-                cell.dataset.selections = JSON.stringify(filteredSelections);
-                updateCellVisual(cell);
-            }
-        }
-        
-        // Update stats and display
+        });
+
         updateStats();
         updateRangeDisplay(currentView);
-        
     } catch (error) {
         console.error('Error parsing range:', error);
     }
