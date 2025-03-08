@@ -1794,17 +1794,16 @@ function handleRangeTextChange(e) {
     
     if (!text) return;
 
-    // Group hands by standard notation
-    const handGroups = new Map(); // Maps standard notation to weight
-    
     try {
+        // Group hands by standard notation
+        const handGroups = new Map(); // Maps standard notation to weight
+        
         // Parse blocks with format [weight]...hands...[/weight]
-        let remainingText = text;
         const blockRegex = /\[(\d+(?:\.\d+)?)\](.*?)\[\/\1\]/g;
         let blockMatch;
         
         while ((blockMatch = blockRegex.exec(text)) !== null) {
-            const weight = parseFloat(blockMatch[1]);
+            const weight = Math.min(100, Math.max(0, parseFloat(blockMatch[1]))); // Constrain weight to 0-100
             const handsBlock = blockMatch[2];
             
             // Split the hands in this block
@@ -1816,51 +1815,21 @@ function handleRangeTextChange(e) {
             });
         }
         
-        // If no blocks matched or there are hands outside blocks, try parsing those
-        if (handGroups.size === 0 || !text.match(/^\s*\[\d/)) {
-            // Split by commas for individual hands (outside of weight blocks)
-            const individualHands = text.split(',').map(h => h.trim()).filter(h => h);
-            
-            individualHands.forEach(handPart => {
-                // Skip if this looks like part of a weight block
-                if (handPart.includes('[') || handPart.includes(']')) return;
-                
-                processHandWithSuits(handPart, 100, handGroups);
-            });
-        }
-        
         // Apply all the processed hands to the grid
         for (const [notation, weight] of handGroups.entries()) {
-            const cell = [...document.querySelectorAll('.range-cell')]
-                .find(cell => cell.querySelector('span').textContent === notation);
-            
-            if (cell) {
-                const selections = JSON.parse(cell.dataset.selections || '[]');
-                const existingIndex = selections.findIndex(s => s.color === currentColors[activeRow]);
-                
-                if (existingIndex >= 0) {
-                    selections[existingIndex].weight = weight;
-                } else {
-                    selections.push({
-                        color: currentColors[activeRow],
-                        weight: weight
-                    });
-                }
-                
-                cell.dataset.selections = JSON.stringify(selections);
-                updateCellVisual(cell);
-            }
+            selectHandWithWeight(notation, weight);
         }
+        
+        updateStats();
+        updateRangeDisplay(currentView);
     } catch (error) {
         console.error('Error parsing range:', error);
     }
-    
-    updateStats();
-    updateRangeDisplay(currentView);
 }
-
+     
+// Helper function to process a single hand with suits
 function processHandWithSuits(handWithSuits, weight, handGroups) {
-    if (!handWithSuits || handWithSuits.length < 4) return;
+    if (!handWithSuits || handWithSuits.length !== 4) return;
     
     // Convert to standard notation
     const notation = convertToStandardNotation(handWithSuits);
@@ -1874,12 +1843,6 @@ function processHandWithSuits(handWithSuits, weight, handGroups) {
 
 // Convert explicit hands like "Ah2h" to standard notation like "A2s"
 function convertToStandardNotation(handWithSuits) {
-    // Normalize hand format (remove spaces)
-    handWithSuits = handWithSuits.trim();
-    
-    // Check for valid format - we need exactly 4 chars for rank+suit, rank+suit
-    if (handWithSuits.length !== 4) return null;
-    
     // Extract card components
     const rank1 = handWithSuits.charAt(0).toUpperCase(); // First rank
     const suit1 = handWithSuits.charAt(1).toLowerCase(); // First suit
@@ -1926,9 +1889,6 @@ function handleRangeKeyDown(e) {
 }
 
 function selectHandWithWeight(hand, weight) {
-    // Handle potential whitespace and normalize the hand
-    hand = hand.trim();
-    
     // Find the cell with this hand
     const cell = [...document.querySelectorAll('.range-cell')]
         .find(cell => cell.querySelector('span').textContent === hand);
