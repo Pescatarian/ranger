@@ -1798,29 +1798,36 @@ function handleRangeTextChange(e) {
         // Group hands by standard notation
         const handGroups = new Map(); // Maps standard notation to weight
         
-        // Parse blocks with format [weight]...hands...[/weight]
-        // More robust regex that handles whitespace and percent signs
-        const blockRegex = /\[\s*(\d+(?:\.\d+)?(?:%)?)\s*\](.*?)\[\/\s*\1\s*\]/gs;
-        let blockMatch;
+        // Use a direct matching approach instead of regex.exec for more reliable results
+        // Extract all weight blocks as a whole first
+        const weightBlocks = text.match(/\[\d+(?:\.\d+)?\].*?\[\/\d+(?:\.\d+)?\]/gs);
         
-        while ((blockMatch = blockRegex.exec(text)) !== null) {
-            // Parse weight, removing % if present
-            let weight = parseFloat(blockMatch[1].replace('%', ''));
-            weight = Math.min(100, Math.max(0, weight)); // Constrain weight to 0-100
-            const handsBlock = blockMatch[2];
-            
-            // Split the hands in this block
-            const hands = handsBlock.split(',').map(h => h.trim()).filter(h => h);
-            
-            // Process each hand in this block
-            hands.forEach(handWithSuits => {
-                processHandWithSuits(handWithSuits, weight, handGroups);
+        if (weightBlocks && weightBlocks.length > 0) {
+            // Process each weight block
+            weightBlocks.forEach(block => {
+                // Extract the weight value
+                const weightMatch = block.match(/\[(\d+(?:\.\d+)?)\]/);
+                if (!weightMatch) return;
+                
+                const weight = Math.min(100, Math.max(0, parseFloat(weightMatch[1])));
+                
+                // Extract the hands part (everything between the weight tags)
+                let handsText = block.replace(/\[\d+(?:\.\d+)?\]/, '') // Remove opening tag
+                                    .replace(/\[\/\d+(?:\.\d+)?\]$/, ''); // Remove closing tag
+                
+                // Split into individual hands
+                const hands = handsText.split(',').map(h => h.trim()).filter(h => h);
+                
+                // Process each hand
+                hands.forEach(handWithSuits => {
+                    processHandWithSuits(handWithSuits, weight, handGroups);
+                });
             });
-        }
-        
-        // Apply all the processed hands to the grid
-        for (const [notation, weight] of handGroups.entries()) {
-            selectHandWithWeight(notation, weight);
+            
+            // Apply all processed hands to the grid
+            for (const [notation, weight] of handGroups.entries()) {
+                selectHandWithWeight(notation, weight);
+            }
         }
         
         updateStats();
