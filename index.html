@@ -2116,6 +2116,7 @@ document.addEventListener('click', e => {
     
     // Range text and action buttons
     document.getElementById('rangeText').addEventListener('input', handleRangeTextChange);
+    document.getElementById('rangeText').addEventListener('keydown', handleRangeKeyDown);
     document.querySelector('.save-button').addEventListener('click', saveToCell);
     document.querySelector('.clear-button').addEventListener('click', clearSelection);
     
