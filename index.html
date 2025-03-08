@@ -1808,7 +1808,7 @@ function handleRangeTextChange(e) {
                     const hand = match[2].trim();
                     selectHandWithWeight(hand, weight);
                 }
-            } else {
+            } else if (part) {
                 // Handle parts without brackets (assumed 100%)
                 selectHandWithWeight(part, 100);
             }
@@ -1817,29 +1817,66 @@ function handleRangeTextChange(e) {
         // Format 1: decimal format
         const parts = text.split(',');
         parts.forEach(part => {
-            const [hand, weightStr] = part.split(':');
-            if (hand && weightStr) {
-                const weight = Math.round(parseFloat(weightStr) * 100);
-                selectHandWithWeight(hand.trim(), weight);
+            part = part.trim();
+            if (!part) return;
+            
+            if (part.includes(':')) {
+                // Format with weight like "AKs:0.75"
+                const [hand, weightStr] = part.split(':');
+                if (hand) {
+                    const weight = Math.round(parseFloat(weightStr || "1.0") * 100);
+                    selectHandWithWeight(hand.trim(), weight);
+                }
+            } else {
+                // Format without weight like "AKs" (assumed 100%)
+                selectHandWithWeight(part, 100);
             }
         });
     }
     
     updateStats();
+    // Update the visual display after parsing
+    updateRangeDisplay(currentView);
+}
+
+function handleRangeKeyDown(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        handleRangeTextChange({ target: e.target });
+    }
 }
 
 function selectHandWithWeight(hand, weight) {
+    // Handle potential whitespace and normalize the hand
+    hand = hand.trim();
+    
+    // Find the cell with this hand
     const cell = [...document.querySelectorAll('.range-cell')]
         .find(cell => cell.querySelector('span').textContent === hand);
     
     if (cell) {
+        // Get existing selections or create new array
         const selections = JSON.parse(cell.dataset.selections || '[]');
-        selections.push({
-            color: currentColors[activeRow],
-            weight: weight
-        });
+        
+        // Check if this color already exists in selections
+        const existingIndex = selections.findIndex(s => s.color === currentColors[activeRow]);
+        
+        if (existingIndex >= 0) {
+            // Update existing selection
+            selections[existingIndex].weight = weight;
+        } else {
+            // Add new selection
+            selections.push({
+                color: currentColors[activeRow],
+                weight: weight
+            });
+        }
+        
+        // Update the cell's dataset and visual
         cell.dataset.selections = JSON.stringify(selections);
         updateCellVisual(cell);
+    } else {
+        console.warn(`Hand not found in grid: ${hand}`);
     }
 }
 
