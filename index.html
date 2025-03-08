@@ -1794,51 +1794,130 @@ function handleRangeTextChange(e) {
     
     if (!text) return;
 
-    // Detect format and parse accordingly
-    if (text.includes('[')) {
-        // Format 2: bracket format
-        const parts = text.split(',');
-        parts.forEach(part => {
-            part = part.trim();
-            if (part.includes('[')) {
-                // Match pattern like "[50]AKs[/50]"
-                const match = part.match(/\[(\d+)\]([^[]+)\[\/\1\]/) || [];
-                if (match && match[1] && match[2]) {
-                    const weight = parseInt(match[1]);
-                    const hand = match[2].trim();
-                    selectHandWithWeight(hand, weight);
-                }
-            } else if (part) {
-                // Handle parts without brackets (assumed 100%)
-                selectHandWithWeight(part, 100);
-            }
-        });
-    } else {
-        // Format 1: decimal format
-        const parts = text.split(',');
-        parts.forEach(part => {
-            part = part.trim();
-            if (!part) return;
+    // Group hands by standard notation
+    const handGroups = new Map(); // Maps standard notation to weight
+    
+    try {
+        // Parse blocks with format [weight]...hands...[/weight]
+        let remainingText = text;
+        const blockRegex = /\[(\d+(?:\.\d+)?)\](.*?)\[\/\1\]/g;
+        let blockMatch;
+        
+        while ((blockMatch = blockRegex.exec(text)) !== null) {
+            const weight = parseFloat(blockMatch[1]);
+            const handsBlock = blockMatch[2];
             
-            if (part.includes(':')) {
-                // Format with weight like "AKs:0.75"
-                const [hand, weightStr] = part.split(':');
-                if (hand) {
-                    const weight = Math.round(parseFloat(weightStr || "1.0") * 100);
-                    selectHandWithWeight(hand.trim(), weight);
+            // Split the hands in this block
+            const hands = handsBlock.split(',').map(h => h.trim()).filter(h => h);
+            
+            // Process each hand in this block
+            hands.forEach(handWithSuits => {
+                processHandWithSuits(handWithSuits, weight, handGroups);
+            });
+        }
+        
+        // If no blocks matched or there are hands outside blocks, try parsing those
+        if (handGroups.size === 0 || !text.match(/^\s*\[\d/)) {
+            // Split by commas for individual hands (outside of weight blocks)
+            const individualHands = text.split(',').map(h => h.trim()).filter(h => h);
+            
+            individualHands.forEach(handPart => {
+                // Skip if this looks like part of a weight block
+                if (handPart.includes('[') || handPart.includes(']')) return;
+                
+                processHandWithSuits(handPart, 100, handGroups);
+            });
+        }
+        
+        // Apply all the processed hands to the grid
+        for (const [notation, weight] of handGroups.entries()) {
+            const cell = [...document.querySelectorAll('.range-cell')]
+                .find(cell => cell.querySelector('span').textContent === notation);
+            
+            if (cell) {
+                const selections = JSON.parse(cell.dataset.selections || '[]');
+                const existingIndex = selections.findIndex(s => s.color === currentColors[activeRow]);
+                
+                if (existingIndex >= 0) {
+                    selections[existingIndex].weight = weight;
+                } else {
+                    selections.push({
+                        color: currentColors[activeRow],
+                        weight: weight
+                    });
                 }
-            } else {
-                // Format without weight like "AKs" (assumed 100%)
-                selectHandWithWeight(part, 100);
+                
+                cell.dataset.selections = JSON.stringify(selections);
+                updateCellVisual(cell);
             }
-        });
+        }
+    } catch (error) {
+        console.error('Error parsing range:', error);
     }
     
     updateStats();
-    // Update the visual display after parsing
     updateRangeDisplay(currentView);
 }
 
+function processHandWithSuits(handWithSuits, weight, handGroups) {
+    if (!handWithSuits || handWithSuits.length < 4) return;
+    
+    // Convert to standard notation
+    const notation = convertToStandardNotation(handWithSuits);
+    if (!notation) return;
+    
+    // If we already have this notation with a higher weight, keep the higher weight
+    if (!handGroups.has(notation) || handGroups.get(notation) < weight) {
+        handGroups.set(notation, weight);
+    }
+}
+
+// Convert explicit hands like "Ah2h" to standard notation like "A2s"
+function convertToStandardNotation(handWithSuits) {
+    // Normalize hand format (remove spaces)
+    handWithSuits = handWithSuits.trim();
+    
+    // Check for valid format - we need exactly 4 chars for rank+suit, rank+suit
+    if (handWithSuits.length !== 4) return null;
+    
+    // Extract card components
+    const rank1 = handWithSuits.charAt(0).toUpperCase(); // First rank
+    const suit1 = handWithSuits.charAt(1).toLowerCase(); // First suit
+    const rank2 = handWithSuits.charAt(2).toUpperCase(); // Second rank
+    const suit2 = handWithSuits.charAt(3).toLowerCase(); // Second suit
+    
+    // Validate ranks
+    const validRanks = 'AKQJT98765432';
+    if (!validRanks.includes(rank1) || !validRanks.includes(rank2)) {
+        return null;
+    }
+    
+    // Validate suits
+    const validSuits = 'hdcs';
+    if (!validSuits.includes(suit1) || !validSuits.includes(suit2)) {
+        return null;
+    }
+    
+    // Determine hand type
+    if (rank1 === rank2) {
+        // It's a pair
+        return rank1 + rank2;
+    } else {
+        // Determine higher rank
+        const rank1Index = validRanks.indexOf(rank1);
+        const rank2Index = validRanks.indexOf(rank2);
+        
+        // Always put higher rank first in standard notation
+        if (rank1Index < rank2Index) {
+            // rank1 is higher
+            return rank1 + rank2 + (suit1 === suit2 ? 's' : 'o');
+        } else {
+            // rank2 is higher
+            return rank2 + rank1 + (suit1 === suit2 ? 's' : 'o');
+        }
+    }
+}
+        
 function handleRangeKeyDown(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
