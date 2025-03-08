@@ -1797,6 +1797,9 @@ function handleRangeTextChange(e) {
         const blockPattern = /\[(\d+(?:\.\d+)?)\](.*?)\[\/\1\]/gs;
         let match;
 
+        const validRanks = 'AKQJT98765432';
+        const validSuits = 'hdcs';
+
         while ((match = blockPattern.exec(text)) !== null) {
             const weight = parseFloat(match[1]);
             const handsText = match[2];
@@ -1811,9 +1814,6 @@ function handleRangeTextChange(e) {
                     const card1Suit = hand[1].toLowerCase();
                     const card2Rank = hand[2].toUpperCase();
                     const card2Suit = hand[3].toLowerCase();
-
-                    const validRanks = 'AKQJT98765432';
-                    const validSuits = 'hdcs';
 
                     if (!validRanks.includes(card1Rank) || !validRanks.includes(card2Rank) ||
                         !validSuits.includes(card1Suit) || !validSuits.includes(card2Suit)) {
@@ -1844,17 +1844,14 @@ function handleRangeTextChange(e) {
 
                         const filteredSelections = selections.filter(s => s.color !== currentColor);
 
-                        filteredSelections.push({
-                            color: currentColor,
-                            weight: weight
-                        });
+                        filteredSelections.push({ color: currentColor, weight });
 
                         cell.dataset.selections = JSON.stringify(filteredSelections);
                         updateCellVisual(cell);
                     }
                 }
             });
-        });
+        }
 
         updateStats();
         updateRangeDisplay(currentView);
