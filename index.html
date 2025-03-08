@@ -1799,12 +1799,14 @@ function handleRangeTextChange(e) {
         const handWeights = new Map();
         
         // Step 1: Extract all weighted blocks first
-        const blockPattern = /\[(\d+(?:\.\d+)?)\](.*?)\[\/\1\]/gs;
+        const blockPattern = /\[(\d+(?:\.?\d+)?)\](.*?)\[\/\1\]/gs;
         let match;
         
         while ((match = blockPattern.exec(text)) !== null) {
             const weight = parseFloat(match[1]);
             const handsText = match[2];
+
+            console.log("Found weight block:", weight, "with hands:", handsText);
             
             // Split hands by comma and process each one
             handsText.split(',').forEach(rawHand => {
