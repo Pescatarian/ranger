@@ -1799,11 +1799,14 @@ function handleRangeTextChange(e) {
         const handGroups = new Map(); // Maps standard notation to weight
         
         // Parse blocks with format [weight]...hands...[/weight]
-        const blockRegex = /\[(\d+(?:\.\d+)?)\](.*?)\[\/\1\]/g;
+        // More robust regex that handles whitespace and percent signs
+        const blockRegex = /\[\s*(\d+(?:\.\d+)?(?:%)?)\s*\](.*?)\[\/\s*\1\s*\]/gs;
         let blockMatch;
         
         while ((blockMatch = blockRegex.exec(text)) !== null) {
-            const weight = Math.min(100, Math.max(0, parseFloat(blockMatch[1]))); // Constrain weight to 0-100
+            // Parse weight, removing % if present
+            let weight = parseFloat(blockMatch[1].replace('%', ''));
+            weight = Math.min(100, Math.max(0, weight)); // Constrain weight to 0-100
             const handsBlock = blockMatch[2];
             
             // Split the hands in this block
@@ -1826,7 +1829,7 @@ function handleRangeTextChange(e) {
         console.error('Error parsing range:', error);
     }
 }
-     
+
 // Helper function to process a single hand with suits
 function processHandWithSuits(handWithSuits, weight, handGroups) {
     if (!handWithSuits || handWithSuits.length !== 4) return;
@@ -2059,139 +2062,148 @@ function pasteCell(cell, data) {
         
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
-    createGrid();
-    createRangeGrid();
-    toggleViewMode();
-    
-    // Add global keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
-            switch(e.key.toLowerCase()) {
-                case 'c':
-                    e.preventDefault();
-                    clipboardData = copyCell(selectedCell);
-                    break;
-                case 'x':
-                    e.preventDefault();
-                    clipboardData = copyCell(selectedCell);
-                    clearCell(selectedCell);
-                    break;
-                case 'v':
-                    e.preventDefault();
-                    pasteCell(selectedCell, clipboardData);
-                    break;
+    try {
+        createGrid();
+        createRangeGrid();
+        toggleViewMode();
+        
+        // Add global keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (selectedCell && e.ctrlKey && !selectedCell.querySelector('input')) {
+                switch(e.key.toLowerCase()) {
+                    case 'c':
+                        e.preventDefault();
+                        clipboardData = copyCell(selectedCell);
+                        break;
+                    case 'x':
+                        e.preventDefault();
+                        clipboardData = copyCell(selectedCell);
+                        clearCell(selectedCell);
+                        break;
+                    case 'v':
+                        e.preventDefault();
+                        pasteCell(selectedCell, clipboardData);
+                        break;
+                }
             }
-        }
-    });
-    
-    // Color picker event listeners
-    document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
-    document.getElementById('colorPicker2').addEventListener('click', handleColorPickerClick);
-    
-    // Three-way switch handler
-    const threeWaySwitch = document.querySelector('.three-way-switch');
-    threeWaySwitch.dataset.view = 'all'; // Default position
-    
-    threeWaySwitch.addEventListener('click', (e) => {
-        const rect = threeWaySwitch.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const width = rect.width;
+        });
         
-        let newView;
-        if (x < width / 3) {
-            newView = 'row1';
-        } else if (x < (width * 2) / 3) {
-            newView = 'all';
-        } else {
-            newView = 'row2';
-        }
+        // Color picker event listeners
+        document.getElementById('colorPicker1').addEventListener('click', handleColorPickerClick);
+        document.getElementById('colorPicker2').addEventListener('click', handleColorPickerClick);
         
-        threeWaySwitch.dataset.view = newView;
-        currentView = newView;
-        updateRangeDisplay(newView);
-        document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
-        updateRangeText();
-    });
-    
-    document.querySelectorAll('.row-toggle').forEach(button => {
-        button.addEventListener('click', handleRowToggle);
-    });
-    
-   // Event delegation for color swatches
-document.addEventListener('click', e => {
-    const swatch = e.target.closest('.color-swatch');
-    if (swatch) {
-        e.preventDefault();
-        e.stopPropagation();
+        // Three-way switch handler
+        const threeWaySwitch = document.querySelector('.three-way-switch');
+        threeWaySwitch.dataset.view = 'all'; // Default position
         
-        const color = swatch.dataset.color;
-        let rowIndex = 0;
-        
-        // Get rowIndex more reliably
-        if (swatch.dataset.rowIndex !== undefined) {
-            rowIndex = parseInt(swatch.dataset.rowIndex);
-        } else {
-            // Try to determine from parent structure
-            const controlRow = swatch.closest('.control-row');
-            if (controlRow && controlRow.querySelector('.row-toggle')) {
-                rowIndex = parseInt(controlRow.querySelector('.row-toggle').dataset.row) - 1;
+        threeWaySwitch.addEventListener('click', (e) => {
+            const rect = threeWaySwitch.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const width = rect.width;
+            
+            let newView;
+            if (x < width / 3) {
+                newView = 'row1';
+            } else if (x < (width * 2) / 3) {
+                newView = 'all';
+            } else {
+                newView = 'row2';
             }
+            
+            threeWaySwitch.dataset.view = newView;
+            currentView = newView;
+            updateRangeDisplay(newView);
+            document.querySelectorAll('.range-cell').forEach(cell => updateCellVisual(cell));
+            updateRangeText();
+        });
+        
+        document.querySelectorAll('.row-toggle').forEach(button => {
+            button.addEventListener('click', handleRowToggle);
+        });
+        
+        // Event delegation for color swatches
+        document.addEventListener('click', e => {
+            const swatch = e.target.closest('.color-swatch');
+            if (swatch) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const color = swatch.dataset.color;
+                let rowIndex = 0;
+                
+                // Get rowIndex more reliably
+                if (swatch.dataset.rowIndex !== undefined) {
+                    rowIndex = parseInt(swatch.dataset.rowIndex);
+                } else {
+                    // Try to determine from parent structure
+                    const controlRow = swatch.closest('.control-row');
+                    if (controlRow && controlRow.querySelector('.row-toggle')) {
+                        rowIndex = parseInt(controlRow.querySelector('.row-toggle').dataset.row) - 1;
+                    }
+                }
+                
+                selectColor(color, rowIndex);
+                return false;
+            }
+        });
+        
+        // Add event listeners for buttons and inputs
+        document.getElementById('viewModeBtn').addEventListener('click', toggleViewMode);
+        document.getElementById('rangeBuilderBtn').addEventListener('click', toggleRangeBuilder);
+        document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
+        document.getElementById('formatSwitch').addEventListener('click', toggleFormat);
+        
+        // Weight inputs
+        document.getElementById('weightInput1').addEventListener('change', (e) => updateWeight(e.target.value, 1));
+        document.getElementById('weightInput2').addEventListener('change', (e) => updateWeight(e.target.value, 2));
+        
+        // Range text and action buttons
+        const rangeTextInput = document.getElementById('rangeText');
+        if (rangeTextInput) {
+            rangeTextInput.addEventListener('input', handleRangeTextChange);
+            rangeTextInput.addEventListener('keydown', handleRangeKeyDown);
+            
+            // Fix for range text copying
+            rangeTextInput.addEventListener('copy', (e) => {
+                e.preventDefault();
+                const text = e.target.value.slice(e.target.selectionStart, e.target.selectionEnd);
+                e.clipboardData.setData('text/plain', text);
+            });
         }
         
-        selectColor(color, rowIndex);
-        return false;
+        document.querySelector('.save-button').addEventListener('click', saveToCell);
+        document.querySelector('.clear-button').addEventListener('click', clearSelection);
+        
+        // Import file handling with fresh input creation
+        document.getElementById('importJsonBtn').addEventListener('click', () => {
+            // Create a new file input each time to avoid browser caching issues
+            const oldInput = document.getElementById('jsonFileInput');
+            const newInput = document.createElement('input');
+            newInput.type = 'file';
+            newInput.id = 'jsonFileInput';
+            newInput.accept = '.json';
+            newInput.style.display = 'none';
+            
+            // Replace old input with new one
+            if (oldInput) {
+                oldInput.parentNode.replaceChild(newInput, oldInput);
+            } else {
+                document.body.appendChild(newInput);
+            }
+            
+            // Add event listener to new input
+            newInput.addEventListener('change', importFromJson);
+            
+            // Trigger click on new input
+            newInput.click();
+        });
+        
+        loadSavedColors();
+        initializeDragging();
+        
+    } catch (error) {
+        console.error('Initialization error:', error);
     }
-});
-    
-    // Add event listeners for buttons and inputs
-    document.getElementById('viewModeBtn').addEventListener('click', toggleViewMode);
-    document.getElementById('rangeBuilderBtn').addEventListener('click', toggleRangeBuilder);
-    document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
-    document.getElementById('formatSwitch').addEventListener('click', toggleFormat);
-    
-    // Weight inputs
-    document.getElementById('weightInput1').addEventListener('change', (e) => updateWeight(e.target.value, 1));
-    document.getElementById('weightInput2').addEventListener('change', (e) => updateWeight(e.target.value, 2));
-    
-    // Range text and action buttons
-    document.getElementById('rangeText').addEventListener('input', handleRangeTextChange);
-    document.getElementById('rangeText').addEventListener('keydown', handleRangeKeyDown);
-    document.querySelector('.save-button').addEventListener('click', saveToCell);
-    document.querySelector('.clear-button').addEventListener('click', clearSelection);
-    
-    // Import file handling with fresh input creation
-    document.getElementById('importJsonBtn').addEventListener('click', () => {
-        // Create a new file input each time to avoid browser caching issues
-        const oldInput = document.getElementById('jsonFileInput');
-        const newInput = document.createElement('input');
-        newInput.type = 'file';
-        newInput.id = 'jsonFileInput';
-        newInput.accept = '.json';
-        newInput.style.display = 'none';
-        
-        // Replace old input with new one
-        if (oldInput) {
-            oldInput.parentNode.replaceChild(newInput, oldInput);
-        } else {
-            document.body.appendChild(newInput);
-        }
-        
-        // Add event listener to new input
-        newInput.addEventListener('change', importFromJson);
-        
-        // Trigger click on new input
-        newInput.click();
-    });
-
-    // Fix for range text copying
-    document.getElementById('rangeText').addEventListener('copy', (e) => {
-        e.preventDefault();
-        const text = e.target.value.slice(e.target.selectionStart, e.target.selectionEnd);
-        e.clipboardData.setData('text/plain', text);
-    });
-    
-    loadSavedColors();
-    initializeDragging();
 });
 </script>
 </body>
