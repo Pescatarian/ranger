@@ -1,258 +1,49 @@
 {
   "project": "Rangebuilder",
-  "last_updated": "2026-01-17",
-  "overall_progress": {
-    "part_a_range_creation": "85% complete",
-    "part_b_trainer_mode": "45% complete"
-  },
-  "features": [
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "auth_login",
-      "description": "User can log in with email and password",
-      "passes": true,
-      "priority": "High"
+  "lastUpdated": "2026-01-17",
+  "passRate": "82%",
+  "totalFeatures": 33,
+  "passingFeatures": 27,
+  "features": {
+    "backend_infrastructure": {
+      "express_server": { "passes": true, "notes": "app.js running on Railway" },
+      "mongodb_connection": { "passes": true, "notes": "Atlas with connection pooling" },
+      "jwt_authentication": { "passes": true, "notes": "Login register token validation working" },
+      "cors_configuration": { "passes": true, "notes": "Allows Vercel and localhost origins" },
+      "health_endpoint": { "passes": true, "notes": "health returns status" },
+      "railway_deployment": { "passes": true, "notes": "Auto-deploys from GitHub main branch" }
     },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "auth_signup",
-      "description": "User can create a new account",
-      "passes": true,
-      "priority": "High"
+    "api_endpoints": {
+      "auth_register": { "passes": true, "notes": "POST api users register" },
+      "auth_login": { "passes": true, "notes": "POST api users login" },
+      "auth_me": { "passes": true, "notes": "GET api users me" },
+      "ranges_crud": { "passes": true, "notes": "CRUD api ranges" },
+      "workbooks_crud": { "passes": true, "notes": "CRUD api workbooks" },
+      "trainer_spots_crud": { "passes": true, "notes": "CRUD api trainer spots" },
+      "range_clone": { "passes": false, "notes": "Not yet implemented" }
     },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "range_create_basic",
-      "description": "User can create a new range with a name",
-      "passes": true,
-      "priority": "High"
+    "frontend_infrastructure": {
+      "react_app": { "passes": true, "notes": "Create React App with all components" },
+      "vercel_deployment": { "passes": true, "notes": "Live at ranger-app-client.vercel.app" },
+      "api_integration": { "passes": true, "notes": "api.js with proper baseURL" },
+      "auth_context": { "passes": true, "notes": "Login logout session persistence working" },
+      "routing": { "passes": true, "notes": "React Router with protected routes" }
     },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "range_save",
-      "description": "Range is saved to database",
-      "passes": true,
-      "priority": "High"
+    "range_builder": {
+      "grid_ui": { "passes": true, "notes": "13x13 hand matrix" },
+      "hand_selection": { "passes": true, "notes": "Click drag selection" },
+      "range_persistence": { "passes": true, "notes": "Save load from MongoDB" },
+      "folder_organization": { "passes": true, "notes": "Client-side with localStorage" },
+      "import_export": { "passes": true, "notes": "GTOw Pio format" },
+      "backend_folders": { "passes": false, "notes": "Need folder model and API" }
     },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "range_load",
-      "description": "User can load a saved range",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "range_edit",
-      "description": "User can edit an existing range",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "range_delete",
-      "description": "User can delete a range",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "range_format_conversion",
-      "description": "Range can be converted between GTOw/Pio and Flopzilla+ formats",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "range_inline_rename",
-      "description": "User can rename range by double-clicking",
-      "passes": true,
-      "priority": "Medium"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "folder_create",
-      "description": "User can create folders to organize ranges",
-      "passes": true,
-      "priority": "Medium"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "folder_management_client",
-      "description": "Folders are managed client-side in UI",
-      "passes": true,
-      "priority": "Medium"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "folder_inline_rename",
-      "description": "User can rename folder by double-clicking",
-      "passes": true,
-      "priority": "Medium"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "context_menu_folders",
-      "description": "Right-click context menu for folders and ranges",
-      "passes": true,
-      "priority": "Medium"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "delete_confirmation_modal",
-      "description": "Custom dark-themed delete confirmation modal",
-      "passes": true,
-      "priority": "Medium"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "folder_persistence_client",
-      "description": "Folders persist on page refresh (client-side)",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "range_clone",
-      "description": "User can clone an existing range (POST /api/ranges/:id/clone)",
-      "passes": false,
-      "priority": "High",
-      "blockers": "None - ready to implement"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "folder_backend_persistence",
-      "description": "Folders are persisted in backend database",
-      "passes": false,
-      "priority": "Medium",
-      "blockers": "Requires backend folder API (routes/folders.js, models/folder.js)"
-    },
-    {
-      "category": "Part A: Range Creation & Organization",
-      "id": "folder_drag_drop_reorder",
-      "description": "User can drag and drop to reorder folders and ranges",
-      "passes": false,
-      "priority": "Low",
-      "blockers": "UI implementation pending"
-    },
-    {
-      "category": "Part B: Trainer Mode",
-      "id": "trainer_mode_load",
-      "description": "Trainer mode can load a range for training",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Part B: Trainer Mode",
-      "id": "trainer_spot_selection",
-      "description": "User can select spots to train on",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Part B: Trainer Mode",
-      "id": "trainer_hand_display",
-      "description": "Trainer displays a poker hand to the user",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Part B: Trainer Mode",
-      "id": "trainer_user_input",
-      "description": "User can input their decision (fold/call/raise)",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Part B: Trainer Mode",
-      "id": "trainer_feedback",
-      "description": "Trainer gives feedback on user's decision",
-      "passes": false,
-      "priority": "High",
-      "blockers": "Needs EV calculation integration"
-    },
-    {
-      "category": "Part B: Trainer Mode",
-      "id": "trainer_stats_tracking",
-      "description": "Trainer tracks user performance (accuracy, improvement)",
-      "passes": false,
-      "priority": "Medium",
-      "blockers": "Needs backend stats API"
-    },
-    {
-      "category": "Part B: Trainer Mode",
-      "id": "trainer_hand_history",
-      "description": "User can review past hands in trainer",
-      "passes": false,
-      "priority": "Medium",
-      "blockers": "Needs hand history storage"
-    },
-    {
-      "category": "Backend & Infrastructure",
-      "id": "api_auth",
-      "description": "Authentication API endpoints working",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Backend & Infrastructure",
-      "id": "api_ranges_crud",
-      "description": "Ranges CRUD API endpoints working",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Backend & Infrastructure",
-      "id": "api_workbooks",
-      "description": "Workbooks API endpoints working",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Backend & Infrastructure",
-      "id": "api_trainer_spots",
-      "description": "Trainer spots API endpoints working (/api/trainer/spots)",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Backend & Infrastructure",
-      "id": "mongodb_connection_local",
-      "description": "MongoDB Atlas connection works locally",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Backend & Infrastructure",
-      "id": "mongodb_connection_production",
-      "description": "MongoDB Atlas connection works in production",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Backend & Infrastructure",
-      "id": "deployment_vercel_frontend",
-      "description": "Frontend successfully deployed to Vercel",
-      "passes": true,
-      "priority": "High"
-    },
-    {
-      "category": "Backend & Infrastructure",
-      "id": "deployment_backend",
-      "description": "Backend deployed to Railway and accessible",
-      "passes": true,
-      "priority": "High"
+    "trainer_mode": {
+      "trainer_ui": { "passes": true, "notes": "TrainingMode.js component" },
+      "trainer_spots_api": { "passes": true, "notes": "CRUD endpoints working" },
+      "ev_calculation": { "passes": false, "notes": "Need eval7 treys integration" },
+      "feedback_system": { "passes": false, "notes": "Depends on EV calculation" },
+      "session_tracking": { "passes": false, "notes": "Not yet implemented" },
+      "statistics": { "passes": false, "notes": "Not yet implemented" }
     }
-  ],
-  "summary": {
-    "total_features": 33,
-    "passing": 25,
-    "failing": 8,
-    "pass_rate": "76%"
-  },
-  "next_priorities": [
-    "Implement range clone endpoint",
-    "Add trainer feedback with frequency comparison",
-    "Backend folder API for cross-device sync"
-  ]
+  }
 }
