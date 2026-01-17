@@ -226,37 +226,33 @@
       "category": "Backend & Infrastructure",
       "id": "mongodb_connection_production",
       "description": "MongoDB Atlas connection works in production",
-      "passes": false,
-      "priority": "High",
-      "blockers": "Production deployment only - local works"
+      "passes": true,
+      "priority": "High"
     },
     {
       "category": "Backend & Infrastructure",
       "id": "deployment_vercel_frontend",
       "description": "Frontend successfully deployed to Vercel",
-      "passes": false,
-      "priority": "High",
-      "blockers": "Backend connection timeout - considering Railway/Render/Fly.io"
+      "passes": true,
+      "priority": "High"
     },
     {
       "category": "Backend & Infrastructure",
       "id": "deployment_backend",
-      "description": "Backend deployed and accessible",
-      "passes": false,
-      "priority": "High",
-      "blockers": "Not yet deployed - evaluating Railway, Render, Fly.io"
+      "description": "Backend deployed to Railway and accessible",
+      "passes": true,
+      "priority": "High"
     }
   ],
   "summary": {
     "total_features": 33,
-    "passing": 23,
-    "failing": 10,
-    "pass_rate": "70%"
+    "passing": 25,
+    "failing": 8,
+    "pass_rate": "76%"
   },
   "next_priorities": [
-    "Deploy backend to Railway/Render/Fly.io",
-    "Fix Vercel frontend connection to backend",
     "Implement range clone endpoint",
-    "Add trainer feedback with EV calculations"
+    "Add trainer feedback with frequency comparison",
+    "Backend folder API for cross-device sync"
   ]
 }
