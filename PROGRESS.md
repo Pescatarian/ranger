@@ -1,7 +1,7 @@
 # PROGRESS.md - Rangebuilder Project
 
-**Last Updated:** 2026-01-17  
-**Verified Against:** Actual codebase and features_v2.json
+**Last Updated:** 2026-01-17
+**Verified Against:** Actual codebase and features.json
 
 ---
 
@@ -11,20 +11,26 @@
 |----------|----------|--------|
 | Part A: Range Creation & Organization | 85% | In Progress |
 | Part B: Trainer Mode | 45% | In Progress |
-| **Overall** | **70%** (23/33 features passing) | **On Track** |
+| Backend & Infrastructure | **95%** | ✅ Deployed |
+| **Overall** | **75%** (25/33 features passing) | **On Track** |
 
 ---
 
 ## Quick Reference
 
+### Production URLs
+- **Frontend:** https://ranger-app-client.vercel.app
+- **Backend:** https://ranger-back-production.up.railway.app
+- **Health Check:** https://ranger-back-production.up.railway.app/health
+
 ### Local Development
 ```bash
 # Backend (localhost:3000)
-cd D:\Dropbox\TurnProPoker\Rangeranger
+cd D:\Dropbox\TurnProPoker\Ranger\ranger
 node app.js
 
 # Frontend (localhost:3002)
-cd D:\Dropbox\TurnProPoker\Rangeranger-app-client
+cd D:\Dropbox\TurnProPoker\Ranger\ranger-app-client
 npm start
 ```
 
@@ -36,21 +42,20 @@ npm start
 | Range converter | `src/utils/RangeFormatConverter.js` |
 | Auth context | `src/context/AuthContext.js` |
 | Backend models | `models/user.js`, `range.js`, `workbook.js`, `trainerSpot.js` |
-| API routes | `routes/auth.js`, `ranges.js`, `workbooks.js`, `trainer.js` |
+| API routes | `routes/auth.js`, `ranges.js`, `workbooks.js`, `trainerSpots.js` |
 
 ### Environment Variables
-**Backend (.env)**
+**Backend (Railway)**
 ```
-MONGODB_URI=mongodb+srv://rangerapp:rangerapp19831125@rangerdb.9yhnn.mongodb.net/rangerdb
-JWT_SECRET=your_jwt_secret_here
+MONGODB_URI=mongodb+srv://rangerapp:***@rangerdb.9yhnn.mongodb.net/rangerdb
+JWT_SECRET=***
 PORT=3000
-NODE_ENV=development
+NODE_ENV=production
 ```
 
-**Frontend (.env)**
+**Frontend (Vercel)**
 ```
-REACT_APP_API_URL=http://localhost:3000/api
-REACT_APP_ENV=development
+REACT_APP_API_URL=https://ranger-back-production.up.railway.app
 ```
 
 ---
@@ -94,13 +99,13 @@ REACT_APP_ENV=development
 ### ⏳ Not Started / Blocked
 | Feature | Priority | Blocker | Technical Notes |
 |---------|----------|---------|-----------------|
-| **trainer_feedback** | High | EV calculation integration | Integrate `eval7` or `treys` library. Compare user action vs GTO range frequencies. Calculate EV delta. |
-| **trainer_stats_tracking** | Medium | Backend stats API | Create `routes/stats.js`, `models/userStats.js`. Track accuracy per spot, session history. |
-| **trainer_hand_history** | Medium | Hand history storage | Add `handHistory` array to user model or separate collection. Store hand, action, result, timestamp. |
+| **trainer_feedback** | High | EV calculation integration | Integrate `eval7` or `treys` library. Compare user action vs GTO range frequencies. |
+| **trainer_stats_tracking** | Medium | Backend stats API | Create `routes/stats.js`, `models/userStats.js`. |
+| **trainer_hand_history** | Medium | Hand history storage | Add `handHistory` array to user model or separate collection. |
 
 ---
 
-## Backend & Infrastructure
+## Backend & Infrastructure (95% Complete)
 
 ### ✅ Working
 - [x] **api_auth** — `POST /api/auth` (login), `POST /api/users` (signup)
@@ -108,13 +113,14 @@ REACT_APP_ENV=development
 - [x] **api_workbooks** — `GET/POST/PUT/DELETE /api/workbooks`
 - [x] **api_trainer_spots** — `GET/POST/PUT/DELETE /api/trainer/spots`
 - [x] **mongodb_connection_local** — MongoDB Atlas works locally
+- [x] **mongodb_connection_production** — MongoDB Atlas works in production ✅
+- [x] **deployment_backend** — Backend deployed to Railway ✅
+- [x] **deployment_vercel_frontend** — Frontend deployed to Vercel ✅
 
-### ⏳ Not Started / Blocked
-| Feature | Priority | Blocker | Technical Notes |
-|---------|----------|---------|-----------------|
-| **mongodb_connection_production** | High | Production deployment | Configure connection pooling: `maxPoolSize=10`, `serverSelectionTimeoutMS=5000` |
-| **deployment_backend** | High | Platform selection | **Recommended: Railway** — Simple Node.js deploy, free tier available. Set env vars in dashboard. |
-| **deployment_vercel_frontend** | High | Backend not deployed | Once backend is live, update `REACT_APP_API_URL`. Check CORS: `app.use(cors({ origin: 'https://your-vercel-url.vercel.app' }))` |
+### Configuration Updates (2026-01-17)
+- **CORS**: Configured to allow `https://ranger-app-client.vercel.app` and localhost
+- **MongoDB**: Added connection pooling (`maxPoolSize=10`, `serverSelectionTimeoutMS=5000`)
+- **Health Check**: Added `/health` endpoint for Railway monitoring
 
 ---
 
@@ -122,8 +128,8 @@ REACT_APP_ENV=development
 
 | # | Blocker | Impact | Priority | Resolution Path |
 |---|---------|--------|----------|-----------------|
-| 1 | Backend not deployed | No production testing | **High** | Deploy to Railway (recommended). Set MONGODB_URI, JWT_SECRET env vars. |
-| 2 | Vercel frontend timeout | Can't test full flow | **High** | Depends on #1. Update REACT_APP_API_URL after backend deploy. |
+| ~~1~~ | ~~Backend not deployed~~ | ~~No production testing~~ | ~~High~~ | ✅ **RESOLVED** - Deployed to Railway |
+| ~~2~~ | ~~Vercel frontend timeout~~ | ~~Can't test full flow~~ | ~~High~~ | ✅ **RESOLVED** - CORS configured |
 | 3 | EV calculation missing | Trainer feedback broken | **High** | Integrate eval7/treys. Start with simple frequency comparison. |
 | 4 | Backend folder API | Folders don't sync across devices | **Medium** | Create folder model & routes. ~2-3 hours work. |
 
@@ -133,11 +139,9 @@ REACT_APP_ENV=development
 
 | # | Task | Priority | Estimated Time | Dependencies |
 |---|------|----------|----------------|--------------|
-| 1 | Deploy backend to Railway | High | 1 hour | None |
-| 2 | Fix Vercel frontend connection | High | 30 min | #1 complete |
-| 3 | Implement range_clone endpoint | High | 1 hour | None |
-| 4 | Add trainer feedback (basic) | High | 3-4 hours | None (can use frequency comparison first) |
-| 5 | Backend folder API | Medium | 2-3 hours | None |
+| 1 | Implement range_clone endpoint | High | 1 hour | None |
+| 2 | Add trainer feedback (basic) | High | 3-4 hours | None |
+| 3 | Backend folder API | Medium | 2-3 hours | None |
 
 ---
 
@@ -150,20 +154,28 @@ A feature is considered **complete** when:
 3. ✅ Edge cases handled (empty inputs, invalid data, network errors)
 4. ✅ Committed to GitHub with descriptive message
 5. ✅ PROGRESS.md updated with completion status
-6. ✅ features_v2.json updated (`passes: true`)
+6. ✅ features.json updated (`passes: true`)
 
 ---
 
 ## Session Log
 
-*Updated after each feature completion by Coding Agent*
+### [2026-01-17] Deployment Fix Session
+- **Session Goal:** Fix Vercel frontend & Railway backend deployments
+- **Status:** ✅ COMPLETED
+- **Changes Made:**
+  - Updated `app.js` with production CORS configuration
+  - Added MongoDB connection pooling for production
+  - Added `/health` endpoint for Railway monitoring
+  - Verified frontend-backend-MongoDB connection flow
+- **Resolved Blockers:** deployment_backend, deployment_vercel_frontend, mongodb_connection_production
+- **Next Session:** Implement range_clone endpoint
 
 ### [2026-01-17] Initial Progress Baseline
 - **Session Goal:** Establish progress tracking workflow
 - **Status:** Part A 85%, Part B 45%, Overall 70%
-- **Completed:** Created PROGRESS.md, features_v2.json, CLAUDE_v3.md
-- **Blockers Identified:** 4 (see table above)
-- **Next Session:** Deploy backend to Railway
+- **Completed:** Created PROGRESS.md, features.json, CLAUDE.md
+- **Blockers Identified:** 4 (deployment issues now resolved)
 
 ---
 
