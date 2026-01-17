@@ -1,0 +1,208 @@
+{
+  "project": "Rangebuilder",
+  "last_updated": "2026-01-17",
+  "overall_progress": {
+    "part_a_range_creation": "85% complete",
+    "part_b_trainer_mode": "45% complete"
+  },
+  "features": [
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "auth_login",
+      "description": "User can log in with email and password",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "auth_signup",
+      "description": "User can create a new account",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "range_create_basic",
+      "description": "User can create a new range with a name",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "range_save",
+      "description": "Range is saved to database",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "range_load",
+      "description": "User can load a saved range",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "range_edit",
+      "description": "User can edit an existing range",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "range_delete",
+      "description": "User can delete a range",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "range_format_conversion",
+      "description": "Range can be converted between GTOw/Pio and Flopzilla+ formats",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "folder_create",
+      "description": "User can create folders to organize ranges",
+      "passes": true,
+      "priority": "Medium"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "folder_management_client",
+      "description": "Folders are managed client-side in UI",
+      "passes": true,
+      "priority": "Medium"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "range_clone",
+      "description": "User can clone an existing range (POST /api/ranges/:id/clone)",
+      "passes": false,
+      "priority": "High",
+      "blockers": "None - ready to implement"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "folder_backend_persistence",
+      "description": "Folders are persisted in backend database",
+      "passes": false,
+      "priority": "Medium",
+      "blockers": "Depends on backend folder API"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "folder_drag_drop_reorder",
+      "description": "User can drag and drop to reorder folders and ranges",
+      "passes": false,
+      "priority": "Low",
+      "blockers": "UI implementation"
+    },
+    {
+      "category": "Part B: Trainer Mode",
+      "id": "trainer_mode_load",
+      "description": "Trainer mode can load a range for training",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part B: Trainer Mode",
+      "id": "trainer_spot_selection",
+      "description": "User can select spots to train on",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part B: Trainer Mode",
+      "id": "trainer_hand_display",
+      "description": "Trainer displays a poker hand to the user",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part B: Trainer Mode",
+      "id": "trainer_user_input",
+      "description": "User can input their decision (fold/call/raise)",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Part B: Trainer Mode",
+      "id": "trainer_feedback",
+      "description": "Trainer gives feedback on user's decision",
+      "passes": false,
+      "priority": "High",
+      "blockers": "Needs EV calculation integration"
+    },
+    {
+      "category": "Part B: Trainer Mode",
+      "id": "trainer_stats_tracking",
+      "description": "Trainer tracks user performance (accuracy, improvement)",
+      "passes": false,
+      "priority": "Medium",
+      "blockers": "Needs backend stats API"
+    },
+    {
+      "category": "Part B: Trainer Mode",
+      "id": "trainer_hand_history",
+      "description": "User can review past hands in trainer",
+      "passes": false,
+      "priority": "Medium",
+      "blockers": "Needs hand history storage"
+    },
+    {
+      "category": "Backend & Infrastructure",
+      "id": "api_auth",
+      "description": "Authentication API endpoints working",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Backend & Infrastructure",
+      "id": "api_ranges_crud",
+      "description": "Ranges CRUD API endpoints working",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Backend & Infrastructure",
+      "id": "api_workbooks",
+      "description": "Workbooks API endpoints working",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Backend & Infrastructure",
+      "id": "api_trainer_spots",
+      "description": "Trainer spots API endpoints working",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Backend & Infrastructure",
+      "id": "mongodb_connection",
+      "description": "MongoDB Atlas connection is stable",
+      "passes": false,
+      "priority": "High",
+      "blockers": "Connection pooling issue"
+    },
+    {
+      "category": "Backend & Infrastructure",
+      "id": "deployment_vercel_frontend",
+      "description": "Frontend successfully deployed to Vercel",
+      "passes": false,
+      "priority": "High",
+      "blockers": "Backend connection issue"
+    },
+    {
+      "category": "Backend & Infrastructure",
+      "id": "deployment_backend",
+      "description": "Backend deployed and accessible",
+      "passes": false,
+      "priority": "High",
+      "blockers": "MongoDB connection needed first"
+    }
+  ]
+}
