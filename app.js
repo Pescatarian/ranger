@@ -58,7 +58,8 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/ranges', require('./routes/ranges'));
 app.use('/api/workbooks', require('./routes/workbooks'));
 app.use('/api/trainer', require('./routes/trainer'));
-app.use('/api/range-engine', require('./routes/rangeEngine'));
+// Range Engine temporarily disabled - debugging crash
+// app.use('/api/range-engine', require('./routes/rangeEngine'));
 
 // Root route
 app.get('/', (req, res) => {
