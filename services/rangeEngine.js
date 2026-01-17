@@ -1,8 +1,7 @@
 /**
  * Range Engine - Core poker range calculation logic
- * CONFIDENTIAL - This runs server-side only
- * 
- * @module services/rangeEngine
+ * This module contains all business logic for hand ranges
+ * PROTECTED - runs server-side only
  */
 
 // Constants
@@ -11,49 +10,46 @@ const SUITS = ['h', 'd', 'c', 's'];
 const TOTAL_COMBOS = 1326;
 
 /**
- * Creates an empty 13x13 range grid with all hand combinations
- * @returns {Object} Grid object with hand data
+ * Creates an empty 13x13 range grid
+ * @returns {Array} 13x13 grid with hand info
  */
 function createRangeGrid() {
-  const grid = {};
+  const grid = [];
   
-  for (let i = 0; i < RANKS.length; i++) {
-    for (let j = 0; j < RANKS.length; j++) {
+  for (let i = 0; i < 13; i++) {
+    const row = [];
+    for (let j = 0; j < 13; j++) {
       const rank1 = RANKS[i];
       const rank2 = RANKS[j];
-      let handKey;
-      let handType;
-      let numCombos;
+      
+      let hand, type, combos;
       
       if (i === j) {
-        // Pocket pair (diagonal)
-        handKey = rank1 + rank2;
-        handType = 'pair';
-        numCombos = 6;
+        // Pocket pair
+        hand = rank1 + rank2;
+        type = 'pair';
+        combos = 6;
       } else if (i < j) {
-        // Suited hand (above diagonal)
-        handKey = rank1 + rank2 + 's';
-        handType = 'suited';
-        numCombos = 4;
+        // Suited (above diagonal)
+        hand = rank1 + rank2 + 's';
+        type = 'suited';
+        combos = 4;
       } else {
-        // Offsuit hand (below diagonal)
-        handKey = rank2 + rank1 + 'o';
-        handType = 'offsuit';
-        numCombos = 12;
+        // Offsuit (below diagonal)
+        hand = rank2 + rank1 + 'o';
+        type = 'offsuit';
+        combos = 12;
       }
       
-      grid[handKey] = {
-        key: handKey,
-        rank1: i < j ? rank1 : rank2,
-        rank2: i < j ? rank2 : rank1,
-        type: handType,
-        combos: numCombos,
+      row.push({
+        hand,
+        type,
+        combos,
         selected: false,
-        weight: 0,
-        row: i,
-        col: j
-      };
+        weight: 0
+      });
     }
+    grid.push(row);
   }
   
   return grid;
@@ -61,26 +57,24 @@ function createRangeGrid() {
 
 /**
  * Expands a hand shorthand to all specific combos
- * @param {string} hand - Hand notation like "AK", "AKs", "AKo", "AA"
- * @returns {string[]} Array of specific combos like ["AhKs", "AhKc", ...]
+ * e.g., "AK" -> ["AhKs", "AhKc", "AhKd", "AsKh", ...]
+ * @param {string} hand - Hand in shorthand notation (e.g., "AK", "AKs", "AA")
+ * @returns {Array} Array of specific hand combos
  */
 function expandShorthand(hand) {
   const combos = [];
   
-  // Parse hand notation
-  let rank1, rank2, suited = null;
+  if (!hand || hand.length < 2) {
+    return combos;
+  }
   
-  if (hand.length === 2) {
-    // Pocket pair like "AA" or ambiguous like "AK"
-    rank1 = hand[0];
-    rank2 = hand[1];
-  } else if (hand.length === 3) {
-    // Suited/offsuit like "AKs" or "AKo"
-    rank1 = hand[0];
-    rank2 = hand[1];
-    suited = hand[2] === 's';
-  } else {
-    return combos; // Invalid format
+  const rank1 = hand[0];
+  const rank2 = hand[1];
+  const modifier = hand.length > 2 ? hand[2] : null;
+  
+  // Validate ranks
+  if (!RANKS.includes(rank1) || !RANKS.includes(rank2)) {
+    return combos;
   }
   
   if (rank1 === rank2) {
@@ -90,12 +84,12 @@ function expandShorthand(hand) {
         combos.push(rank1 + SUITS[i] + rank2 + SUITS[j]);
       }
     }
-  } else if (suited === true) {
+  } else if (modifier === 's') {
     // Suited - 4 combos
     for (const suit of SUITS) {
       combos.push(rank1 + suit + rank2 + suit);
     }
-  } else if (suited === false) {
+  } else if (modifier === 'o') {
     // Offsuit - 12 combos
     for (const suit1 of SUITS) {
       for (const suit2 of SUITS) {
@@ -105,10 +99,9 @@ function expandShorthand(hand) {
       }
     }
   } else {
-    // Ambiguous (no s/o) - return all 16 combos
+    // No modifier - all 16 combos (4 suited + 12 offsuit)
     for (const suit1 of SUITS) {
       for (const suit2 of SUITS) {
-        if (rank1 === rank2 && suit1 >= suit2) continue; // Skip duplicate pairs
         combos.push(rank1 + suit1 + rank2 + suit2);
       }
     }
@@ -118,310 +111,256 @@ function expandShorthand(hand) {
 }
 
 /**
+ * Parses range notation string and returns a grid with selections
+ * @param {string} notation - Range notation (e.g., "AA,KK,QQ,AKs,AKo")
+ * @returns {Array} Grid with selected hands marked
+ */
+function parseRangeNotation(notation) {
+  const grid = createRangeGrid();
+  
+  if (!notation || notation.trim() === '') {
+    return grid;
+  }
+  
+  const hands = notation.split(',').map(h => h.trim().toUpperCase());
+  
+  for (const hand of hands) {
+    if (!hand) continue;
+    
+    // Handle range notation like "AK+" or "77+"
+    if (hand.includes('+')) {
+      const baseHand = hand.replace('+', '');
+      const expandedHands = expandRangePlus(baseHand);
+      for (const eh of expandedHands) {
+        markHandInGrid(grid, eh);
+      }
+    } else if (hand.includes('-')) {
+      // Handle range notation like "AK-AT" or "77-22"
+      const expandedHands = expandRangeDash(hand);
+      for (const eh of expandedHands) {
+        markHandInGrid(grid, eh);
+      }
+    } else {
+      markHandInGrid(grid, hand);
+    }
+  }
+  
+  return grid;
+}
+
+/**
+ * Marks a hand as selected in the grid
+ * @param {Array} grid - The range grid
+ * @param {string} hand - Hand to mark (e.g., "AKs", "AA")
+ */
+function markHandInGrid(grid, hand) {
+  if (!hand || hand.length < 2) return;
+  
+  const rank1 = hand[0].toUpperCase();
+  const rank2 = hand[1].toUpperCase();
+  const modifier = hand.length > 2 ? hand[2].toLowerCase() : null;
+  
+  const i = RANKS.indexOf(rank1);
+  const j = RANKS.indexOf(rank2);
+  
+  if (i === -1 || j === -1) return;
+  
+  if (i === j) {
+    // Pocket pair
+    grid[i][j].selected = true;
+    grid[i][j].weight = 1;
+  } else if (modifier === 's') {
+    // Suited - above diagonal (smaller index first)
+    const row = Math.min(i, j);
+    const col = Math.max(i, j);
+    grid[row][col].selected = true;
+    grid[row][col].weight = 1;
+  } else if (modifier === 'o') {
+    // Offsuit - below diagonal (larger index first)
+    const row = Math.max(i, j);
+    const col = Math.min(i, j);
+    grid[row][col].selected = true;
+    grid[row][col].weight = 1;
+  } else {
+    // No modifier - select both suited and offsuit
+    const row1 = Math.min(i, j);
+    const col1 = Math.max(i, j);
+    const row2 = Math.max(i, j);
+    const col2 = Math.min(i, j);
+    grid[row1][col1].selected = true;
+    grid[row1][col1].weight = 1;
+    grid[row2][col2].selected = true;
+    grid[row2][col2].weight = 1;
+  }
+}
+
+/**
+ * Expands "+" notation (e.g., "AK+" -> ["AK", "AQ", "AJ", ...])
+ * @param {string} hand - Base hand
+ * @returns {Array} Expanded hands
+ */
+function expandRangePlus(hand) {
+  const expanded = [];
+  const rank1 = hand[0].toUpperCase();
+  const rank2 = hand[1].toUpperCase();
+  const modifier = hand.length > 2 ? hand[2].toLowerCase() : '';
+  
+  const idx1 = RANKS.indexOf(rank1);
+  const idx2 = RANKS.indexOf(rank2);
+  
+  if (idx1 === idx2) {
+    // Pocket pairs: "77+" means 77, 88, 99, TT, JJ, QQ, KK, AA
+    for (let i = idx1; i >= 0; i--) {
+      expanded.push(RANKS[i] + RANKS[i]);
+    }
+  } else {
+    // Broadway hands: "AK+" or "AKs+" 
+    const higherRank = RANKS[Math.min(idx1, idx2)];
+    const startIdx = Math.max(idx1, idx2);
+    
+    for (let i = startIdx; i > Math.min(idx1, idx2); i--) {
+      expanded.push(higherRank + RANKS[i] + modifier);
+    }
+  }
+  
+  return expanded;
+}
+
+/**
+ * Expands "-" notation (e.g., "AK-AT" -> ["AK", "AQ", "AJ", "AT"])
+ * @param {string} range - Range string
+ * @returns {Array} Expanded hands
+ */
+function expandRangeDash(range) {
+  const expanded = [];
+  const [start, end] = range.split('-');
+  
+  if (!start || !end) return expanded;
+  
+  const rank1Start = start[0].toUpperCase();
+  const rank2Start = start[1].toUpperCase();
+  const rank1End = end[0].toUpperCase();
+  const rank2End = end[1].toUpperCase();
+  const modifier = start.length > 2 ? start[2].toLowerCase() : '';
+  
+  const idx1 = RANKS.indexOf(rank1Start);
+  const idx2Start = RANKS.indexOf(rank2Start);
+  const idx2End = RANKS.indexOf(rank2End);
+  
+  if (rank1Start === rank2Start && rank1End === rank2End) {
+    // Pair range: "77-22"
+    const startPair = RANKS.indexOf(rank1Start);
+    const endPair = RANKS.indexOf(rank1End);
+    for (let i = Math.min(startPair, endPair); i <= Math.max(startPair, endPair); i++) {
+      expanded.push(RANKS[i] + RANKS[i]);
+    }
+  } else {
+    // Non-pair range: "AK-AT"
+    for (let i = Math.min(idx2Start, idx2End); i <= Math.max(idx2Start, idx2End); i++) {
+      if (i !== idx1) {
+        expanded.push(rank1Start + RANKS[i] + modifier);
+      }
+    }
+  }
+  
+  return expanded;
+}
+
+/**
+ * Toggles a cell's selection state
+ * @param {Array} grid - Current grid
+ * @param {number} row - Row index
+ * @param {number} col - Column index
+ * @param {boolean} selected - New selection state (optional, toggles if not provided)
+ * @returns {Array} Updated grid
+ */
+function toggleCell(grid, row, col, selected = null) {
+  const newGrid = JSON.parse(JSON.stringify(grid)); // Deep clone
+  
+  if (row >= 0 && row < 13 && col >= 0 && col < 13) {
+    if (selected !== null) {
+      newGrid[row][col].selected = selected;
+      newGrid[row][col].weight = selected ? 1 : 0;
+    } else {
+      newGrid[row][col].selected = !newGrid[row][col].selected;
+      newGrid[row][col].weight = newGrid[row][col].selected ? 1 : 0;
+    }
+  }
+  
+  return newGrid;
+}
+
+/**
  * Calculates range statistics
- * @param {Object} grid - Range grid object
- * @returns {Object} Stats including percentage, combo count
+ * @param {Array} grid - The range grid
+ * @returns {Object} Statistics object
  */
 function calculateRangeStats(grid) {
   let selectedCombos = 0;
   let selectedHands = 0;
-  let weightedCombos = 0;
+  let totalWeight = 0;
   
-  for (const hand of Object.values(grid)) {
-    if (hand.selected) {
-      selectedHands++;
-      const weight = hand.weight || 1;
-      weightedCombos += hand.combos * weight;
-      selectedCombos += hand.combos;
+  const breakdown = {
+    pairs: { selected: 0, total: 0, combos: 0 },
+    suited: { selected: 0, total: 0, combos: 0 },
+    offsuit: { selected: 0, total: 0, combos: 0 }
+  };
+  
+  for (let i = 0; i < 13; i++) {
+    for (let j = 0; j < 13; j++) {
+      const cell = grid[i][j];
+      
+      if (cell.type === 'pair') {
+        breakdown.pairs.total++;
+        if (cell.selected) {
+          breakdown.pairs.selected++;
+          breakdown.pairs.combos += cell.combos * (cell.weight || 1);
+        }
+      } else if (cell.type === 'suited') {
+        breakdown.suited.total++;
+        if (cell.selected) {
+          breakdown.suited.selected++;
+          breakdown.suited.combos += cell.combos * (cell.weight || 1);
+        }
+      } else {
+        breakdown.offsuit.total++;
+        if (cell.selected) {
+          breakdown.offsuit.selected++;
+          breakdown.offsuit.combos += cell.combos * (cell.weight || 1);
+        }
+      }
+      
+      if (cell.selected) {
+        selectedHands++;
+        selectedCombos += cell.combos * (cell.weight || 1);
+        totalWeight += cell.weight || 1;
+      }
     }
   }
   
+  const percentage = ((selectedCombos / TOTAL_COMBOS) * 100).toFixed(1);
+  
   return {
     selectedHands,
-    selectedCombos,
-    weightedCombos: Math.round(weightedCombos * 100) / 100,
-    totalHands: 169,
+    selectedCombos: Math.round(selectedCombos),
     totalCombos: TOTAL_COMBOS,
-    percentage: Math.round((weightedCombos / TOTAL_COMBOS) * 1000) / 10,
-    handsPercentage: Math.round((selectedHands / 169) * 1000) / 10
+    percentage: parseFloat(percentage),
+    breakdown
   };
 }
 
 /**
- * Parses range notation string to grid selection
- * @param {string} rangeText - Range notation like "AA,KK,QQ,AKs,AKo"
- * @param {Object} grid - Existing grid to update (optional)
- * @returns {Object} Updated grid with selections
- */
-function parseRangeNotation(rangeText, grid = null) {
-  if (!grid) {
-    grid = createRangeGrid();
-  }
-  
-  // Reset all selections
-  for (const hand of Object.values(grid)) {
-    hand.selected = false;
-    hand.weight = 0;
-  }
-  
-  if (!rangeText || rangeText.trim() === '') {
-    return grid;
-  }
-  
-  // Split by comma and process each hand
-  const hands = rangeText.split(',').map(h => h.trim()).filter(h => h);
-  
-  for (let hand of hands) {
-    // Handle weight notation like "AKs:0.5"
-    let weight = 1;
-    if (hand.includes(':')) {
-      const parts = hand.split(':');
-      hand = parts[0];
-      weight = parseFloat(parts[1]) || 1;
-    }
-    
-    // Handle range notation like "TT-77" or "ATs-A6s"
-    if (hand.includes('-')) {
-      const expandedHands = expandRangeNotation(hand);
-      for (const h of expandedHands) {
-        if (grid[h]) {
-          grid[h].selected = true;
-          grid[h].weight = weight;
-        }
-      }
-    } else {
-      // Handle plus notation like "JJ+"
-      if (hand.endsWith('+')) {
-        const baseHand = hand.slice(0, -1);
-        const expandedHands = expandPlusNotation(baseHand);
-        for (const h of expandedHands) {
-          if (grid[h]) {
-            grid[h].selected = true;
-            grid[h].weight = weight;
-          }
-        }
-      } else {
-        // Single hand
-        const normalizedHand = normalizeHandNotation(hand);
-        if (grid[normalizedHand]) {
-          grid[normalizedHand].selected = true;
-          grid[normalizedHand].weight = weight;
-        }
-      }
-    }
-  }
-  
-  return grid;
-}
-
-/**
- * Expands range notation like "TT-77" or "ATs-A6s"
- * @param {string} range - Range notation
- * @returns {string[]} Array of hand notations
- */
-function expandRangeNotation(range) {
-  const hands = [];
-  const parts = range.split('-');
-  
-  if (parts.length !== 2) return hands;
-  
-  const start = parts[0].trim();
-  const end = parts[1].trim();
-  
-  // Determine if it's pairs or broadway
-  const startRank1 = start[0];
-  const startRank2 = start[1];
-  const endRank1 = end[0];
-  const endRank2 = end[1];
-  
-  const startIdx1 = RANKS.indexOf(startRank1);
-  const startIdx2 = RANKS.indexOf(startRank2);
-  const endIdx1 = RANKS.indexOf(endRank1);
-  const endIdx2 = RANKS.indexOf(endRank2);
-  
-  // Pocket pairs like "TT-77"
-  if (startRank1 === startRank2 && endRank1 === endRank2) {
-    const highIdx = Math.min(startIdx1, endIdx1);
-    const lowIdx = Math.max(startIdx1, endIdx1);
-    
-    for (let i = highIdx; i <= lowIdx; i++) {
-      hands.push(RANKS[i] + RANKS[i]);
-    }
-  }
-  // Broadway hands like "ATs-A6s"
-  else if (startRank1 === endRank1) {
-    const suited = start.endsWith('s') ? 's' : (start.endsWith('o') ? 'o' : '');
-    const highIdx = Math.min(startIdx2, endIdx2);
-    const lowIdx = Math.max(startIdx2, endIdx2);
-    
-    for (let i = highIdx; i <= lowIdx; i++) {
-      hands.push(startRank1 + RANKS[i] + suited);
-    }
-  }
-  
-  return hands;
-}
-
-/**
- * Expands plus notation like "JJ+" or "ATs+"
- * @param {string} hand - Base hand notation
- * @returns {string[]} Array of hand notations
- */
-function expandPlusNotation(hand) {
-  const hands = [];
-  const rank1 = hand[0];
-  const rank2 = hand[1];
-  const suited = hand.length > 2 ? hand[2] : '';
-  
-  const idx1 = RANKS.indexOf(rank1);
-  const idx2 = RANKS.indexOf(rank2);
-  
-  // Pocket pairs like "JJ+"
-  if (rank1 === rank2) {
-    for (let i = 0; i <= idx1; i++) {
-      hands.push(RANKS[i] + RANKS[i]);
-    }
-  }
-  // Broadway like "ATs+" means ATs, AJs, AQs, AKs
-  else {
-    for (let i = idx1 + 1; i <= idx2; i++) {
-      hands.push(rank1 + RANKS[i] + suited);
-    }
-  }
-  
-  return hands;
-}
-
-/**
- * Normalizes hand notation to standard format
- * @param {string} hand - Hand notation
- * @returns {string} Normalized notation
- */
-function normalizeHandNotation(hand) {
-  if (!hand || hand.length < 2) return hand;
-  
-  const rank1 = hand[0].toUpperCase();
-  const rank2 = hand[1].toUpperCase();
-  const suffix = hand.length > 2 ? hand[2].toLowerCase() : '';
-  
-  const idx1 = RANKS.indexOf(rank1);
-  const idx2 = RANKS.indexOf(rank2);
-  
-  // Pocket pair
-  if (rank1 === rank2) {
-    return rank1 + rank2;
-  }
-  
-  // Ensure higher rank comes first
-  if (idx1 < idx2) {
-    return rank1 + rank2 + suffix;
-  } else {
-    return rank2 + rank1 + suffix;
-  }
-}
-
-/**
- * Converts grid selection to range notation string
- * @param {Object} grid - Range grid object
- * @returns {string} Range notation like "AA,KK,QQ,AKs"
+ * Converts grid to range notation string
+ * @param {Array} grid - The range grid
+ * @returns {string} Range notation
  */
 function gridToRangeNotation(grid) {
-  const selectedHands = [];
-  
-  for (const hand of Object.values(grid)) {
-    if (hand.selected) {
-      if (hand.weight && hand.weight !== 1) {
-        selectedHands.push(`${hand.key}:${hand.weight}`);
-      } else {
-        selectedHands.push(hand.key);
-      }
-    }
-  }
-  
-  // Sort by strength (pairs first, then suited, then offsuit)
-  selectedHands.sort((a, b) => {
-    const handA = a.split(':')[0];
-    const handB = b.split(':')[0];
-    
-    const rankA = RANKS.indexOf(handA[0]) * 13 + RANKS.indexOf(handA[1]);
-    const rankB = RANKS.indexOf(handB[0]) * 13 + RANKS.indexOf(handB[1]);
-    
-    return rankA - rankB;
-  });
-  
-  return selectedHands.join(',');
-}
-
-/**
- * Toggle a cell selection in the grid
- * @param {Object} grid - Range grid object
- * @param {string} handKey - Hand key to toggle
- * @param {boolean} selected - New selection state
- * @param {number} weight - Weight value (0-1)
- * @returns {Object} Updated grid
- */
-function toggleCell(grid, handKey, selected, weight = 1) {
-  if (grid[handKey]) {
-    grid[handKey].selected = selected;
-    grid[handKey].weight = weight;
-  }
-  return grid;
-}
-
-/**
- * Converts range between different formats
- * @param {string} rangeText - Input range text
- * @param {string} fromFormat - Source format ('gtow', 'flopzilla', 'standard')
- * @param {string} toFormat - Target format
- * @returns {string} Converted range text
- */
-function convertRangeFormat(rangeText, fromFormat, toFormat) {
-  // First parse to grid (normalized internal format)
-  const grid = parseRangeNotation(rangeText);
-  
-  // Then export to target format
-  if (toFormat === 'flopzilla') {
-    return gridToFlopzillaFormat(grid);
-  } else if (toFormat === 'gtow' || toFormat === 'pio') {
-    return gridToGTOwFormat(grid);
-  }
-  
-  return gridToRangeNotation(grid);
-}
-
-/**
- * Converts grid to Flopzilla format
- * @param {Object} grid - Range grid
- * @returns {string} Flopzilla format string
- */
-function gridToFlopzillaFormat(grid) {
-  // Flopzilla uses different notation
   const hands = [];
   
-  for (const hand of Object.values(grid)) {
-    if (hand.selected) {
-      // Flopzilla uses lowercase 's' and 'o'
-      hands.push(hand.key);
-    }
-  }
-  
-  return hands.join(', ');
-}
-
-/**
- * Converts grid to GTOw/Pio format
- * @param {Object} grid - Range grid
- * @returns {string} GTOw format string
- */
-function gridToGTOwFormat(grid) {
-  const hands = [];
-  
-  for (const hand of Object.values(grid)) {
-    if (hand.selected) {
-      if (hand.weight && hand.weight !== 1) {
-        hands.push(`${hand.key}:${hand.weight}`);
-      } else {
-        hands.push(hand.key);
+  for (let i = 0; i < 13; i++) {
+    for (let j = 0; j < 13; j++) {
+      if (grid[i][j].selected) {
+        hands.push(grid[i][j].hand);
       }
     }
   }
@@ -429,27 +368,116 @@ function gridToGTOwFormat(grid) {
   return hands.join(',');
 }
 
+/**
+ * Converts GTOw/Pio format to Flopzilla format
+ * GTOw: AhKh, AsKs (suit-specific)
+ * Flopzilla: AKs, AKo (suited/offsuit)
+ * @param {string} range - Range in GTOw format
+ * @returns {string} Range in Flopzilla format
+ */
+function gtowToFlopzilla(range) {
+  if (!range || range.trim() === '') return '';
+  
+  const hands = range.split(',').map(h => h.trim());
+  const handMap = new Map(); // Track unique hands
+  
+  for (const hand of hands) {
+    if (hand.length < 4) {
+      // Already in short format, pass through
+      handMap.set(hand, true);
+      continue;
+    }
+    
+    // Parse GTOw format: AhKs (4 chars)
+    const rank1 = hand[0].toUpperCase();
+    const suit1 = hand[1].toLowerCase();
+    const rank2 = hand[2].toUpperCase();
+    const suit2 = hand[3].toLowerCase();
+    
+    if (!RANKS.includes(rank1) || !RANKS.includes(rank2)) {
+      continue;
+    }
+    
+    // Determine if suited or offsuit
+    if (rank1 === rank2) {
+      // Pocket pair
+      handMap.set(rank1 + rank2, true);
+    } else if (suit1 === suit2) {
+      // Suited
+      const idx1 = RANKS.indexOf(rank1);
+      const idx2 = RANKS.indexOf(rank2);
+      const highRank = idx1 < idx2 ? rank1 : rank2;
+      const lowRank = idx1 < idx2 ? rank2 : rank1;
+      handMap.set(highRank + lowRank + 's', true);
+    } else {
+      // Offsuit
+      const idx1 = RANKS.indexOf(rank1);
+      const idx2 = RANKS.indexOf(rank2);
+      const highRank = idx1 < idx2 ? rank1 : rank2;
+      const lowRank = idx1 < idx2 ? rank2 : rank1;
+      handMap.set(highRank + lowRank + 'o', true);
+    }
+  }
+  
+  return Array.from(handMap.keys()).join(',');
+}
+
+/**
+ * Converts Flopzilla format to GTOw/Pio format
+ * Flopzilla: AKs, AKo (suited/offsuit)
+ * GTOw: AhKh, AsKs, ... (all specific combos)
+ * @param {string} range - Range in Flopzilla format
+ * @returns {string} Range in GTOw format
+ */
+function flopzillaToGtow(range) {
+  if (!range || range.trim() === '') return '';
+  
+  const hands = range.split(',').map(h => h.trim());
+  const allCombos = [];
+  
+  for (const hand of hands) {
+    const combos = expandShorthand(hand);
+    allCombos.push(...combos);
+  }
+  
+  return allCombos.join(',');
+}
+
+/**
+ * Converts range between formats
+ * @param {string} range - Input range
+ * @param {string} from - Source format ('gtow' or 'flopzilla')
+ * @param {string} to - Target format ('gtow' or 'flopzilla')
+ * @returns {string} Converted range
+ */
+function convertRangeFormat(range, from, to) {
+  if (!range || range.trim() === '') return '';
+  if (from === to) return range;
+  
+  if (from === 'gtow' && to === 'flopzilla') {
+    return gtowToFlopzilla(range);
+  } else if (from === 'flopzilla' && to === 'gtow') {
+    return flopzillaToGtow(range);
+  }
+  
+  return range;
+}
+
+// Export all functions
 module.exports = {
-  // Constants
   RANKS,
   SUITS,
   TOTAL_COMBOS,
-  
-  // Core functions
   createRangeGrid,
   expandShorthand,
-  calculateRangeStats,
   parseRangeNotation,
-  gridToRangeNotation,
+  markHandInGrid,
+  expandRangePlus,
+  expandRangeDash,
   toggleCell,
-  
-  // Helper functions
-  expandRangeNotation,
-  expandPlusNotation,
-  normalizeHandNotation,
-  
-  // Format conversion
-  convertRangeFormat,
-  gridToFlopzillaFormat,
-  gridToGTOwFormat
+  calculateRangeStats,
+  gridToRangeNotation,
+  gtowToFlopzilla,
+  flopzillaToGtow,
+  convertRangeFormat
 };
