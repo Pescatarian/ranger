@@ -64,6 +64,13 @@
     },
     {
       "category": "Part A: Range Creation & Organization",
+      "id": "range_inline_rename",
+      "description": "User can rename range by double-clicking",
+      "passes": true,
+      "priority": "Medium"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
       "id": "folder_create",
       "description": "User can create folders to organize ranges",
       "passes": true,
@@ -75,6 +82,34 @@
       "description": "Folders are managed client-side in UI",
       "passes": true,
       "priority": "Medium"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "folder_inline_rename",
+      "description": "User can rename folder by double-clicking",
+      "passes": true,
+      "priority": "Medium"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "context_menu_folders",
+      "description": "Right-click context menu for folders and ranges",
+      "passes": true,
+      "priority": "Medium"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "delete_confirmation_modal",
+      "description": "Custom dark-themed delete confirmation modal",
+      "passes": true,
+      "priority": "Medium"
+    },
+    {
+      "category": "Part A: Range Creation & Organization",
+      "id": "folder_persistence_client",
+      "description": "Folders persist on page refresh (client-side)",
+      "passes": true,
+      "priority": "High"
     },
     {
       "category": "Part A: Range Creation & Organization",
@@ -90,7 +125,7 @@
       "description": "Folders are persisted in backend database",
       "passes": false,
       "priority": "Medium",
-      "blockers": "Depends on backend folder API"
+      "blockers": "Requires backend folder API (routes/folders.js, models/folder.js)"
     },
     {
       "category": "Part A: Range Creation & Organization",
@@ -98,7 +133,7 @@
       "description": "User can drag and drop to reorder folders and ranges",
       "passes": false,
       "priority": "Low",
-      "blockers": "UI implementation"
+      "blockers": "UI implementation pending"
     },
     {
       "category": "Part B: Trainer Mode",
@@ -176,17 +211,24 @@
     {
       "category": "Backend & Infrastructure",
       "id": "api_trainer_spots",
-      "description": "Trainer spots API endpoints working",
+      "description": "Trainer spots API endpoints working (/api/trainer/spots)",
       "passes": true,
       "priority": "High"
     },
     {
       "category": "Backend & Infrastructure",
-      "id": "mongodb_connection",
-      "description": "MongoDB Atlas connection is stable",
+      "id": "mongodb_connection_local",
+      "description": "MongoDB Atlas connection works locally",
+      "passes": true,
+      "priority": "High"
+    },
+    {
+      "category": "Backend & Infrastructure",
+      "id": "mongodb_connection_production",
+      "description": "MongoDB Atlas connection works in production",
       "passes": false,
       "priority": "High",
-      "blockers": "Connection pooling issue"
+      "blockers": "Production deployment only - local works"
     },
     {
       "category": "Backend & Infrastructure",
@@ -194,7 +236,7 @@
       "description": "Frontend successfully deployed to Vercel",
       "passes": false,
       "priority": "High",
-      "blockers": "Backend connection issue"
+      "blockers": "Backend connection timeout - considering Railway/Render/Fly.io"
     },
     {
       "category": "Backend & Infrastructure",
@@ -202,7 +244,19 @@
       "description": "Backend deployed and accessible",
       "passes": false,
       "priority": "High",
-      "blockers": "MongoDB connection needed first"
+      "blockers": "Not yet deployed - evaluating Railway, Render, Fly.io"
     }
+  ],
+  "summary": {
+    "total_features": 33,
+    "passing": 23,
+    "failing": 10,
+    "pass_rate": "70%"
+  },
+  "next_priorities": [
+    "Deploy backend to Railway/Render/Fly.io",
+    "Fix Vercel frontend connection to backend",
+    "Implement range clone endpoint",
+    "Add trainer feedback with EV calculations"
   ]
 }
