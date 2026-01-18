@@ -154,9 +154,9 @@ router.post('/stats', auth, (req, res) => {
 /**
  * @route POST /api/range-engine/convert
  * @desc Convert range between formats (GTOw, Flopzilla, etc)
- * @access Public (temporarily for debugging - TODO: restore auth)
+ * @access Private
  */
-router.post('/convert', (req, res) => {
+router.post('/convert', auth, (req, res) => {
   try {
     // DIAGNOSTIC LOGGING - START
     console.log('[CONVERT] Raw request body:', JSON.stringify(req.body));
