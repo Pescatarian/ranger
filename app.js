@@ -16,7 +16,7 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -45,8 +45,8 @@ mongoose.connect(process.env.MONGODB_URI, mongoOptions)
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
@@ -58,7 +58,6 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/ranges', require('./routes/ranges'));
 app.use('/api/workbooks', require('./routes/workbooks'));
 app.use('/api/trainer', require('./routes/trainer'));
-app.use('/api/range-engine', require('./routes/rangeEngine'));
 
 // Root route
 app.get('/', (req, res) => {
