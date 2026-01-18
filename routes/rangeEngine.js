@@ -158,10 +158,26 @@ router.post('/stats', auth, (req, res) => {
  */
 router.post('/convert', auth, (req, res) => {
   try {
+    // DIAGNOSTIC LOGGING - START
+    console.log('[CONVERT] Raw request body:', JSON.stringify(req.body));
+    
     const { rangeText, fromFormat, toFormat } = req.body;
+    
+    console.log('[CONVERT] Extracted values:');
+    console.log('  rangeText:', rangeText, '(type:', typeof rangeText, ')');
+    console.log('  fromFormat:', fromFormat);
+    console.log('  toFormat:', toFormat);
+    // DIAGNOSTIC LOGGING - END
 
+    // INPUT VALIDATION - reject empty or whitespace
     if (!rangeText || typeof rangeText !== 'string') {
+      console.log('[CONVERT] VALIDATION FAILED: rangeText missing or not a string');
       return res.status(400).json({ success: false, msg: 'rangeText must be a string' });
+    }
+    
+    if (rangeText.trim() === '') {
+      console.log('[CONVERT] VALIDATION FAILED: rangeText is empty or whitespace');
+      return res.status(400).json({ success: false, msg: 'rangeText cannot be empty' });
     }
 
     const converted = rangeEngine.convertRangeFormat(
@@ -169,6 +185,9 @@ router.post('/convert', auth, (req, res) => {
       fromFormat || 'standard',
       toFormat || 'standard'
     );
+    
+    // DIAGNOSTIC LOGGING - RESULT
+    console.log('[CONVERT] Result:', converted);
 
     res.json({
       success: true,
@@ -180,7 +199,7 @@ router.post('/convert', auth, (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Error converting range:', err);
+    console.error('[CONVERT] ERROR:', err);
     res.status(500).json({ success: false, msg: 'Server error' });
   }
 });

@@ -15,15 +15,15 @@ const TOTAL_COMBOS = 1326;
  */
 function createRangeGrid() {
   const grid = [];
-  
+
   for (let i = 0; i < 13; i++) {
     const row = [];
     for (let j = 0; j < 13; j++) {
       const rank1 = RANKS[i];
       const rank2 = RANKS[j];
-      
+
       let hand, type, combos;
-      
+
       if (i === j) {
         // Pocket pair
         hand = rank1 + rank2;
@@ -40,7 +40,7 @@ function createRangeGrid() {
         type = 'offsuit';
         combos = 12;
       }
-      
+
       row.push({
         hand,
         type,
@@ -51,7 +51,7 @@ function createRangeGrid() {
     }
     grid.push(row);
   }
-  
+
   return grid;
 }
 
@@ -63,20 +63,20 @@ function createRangeGrid() {
  */
 function expandShorthand(hand) {
   const combos = [];
-  
+
   if (!hand || hand.length < 2) {
     return combos;
   }
-  
-  const rank1 = hand[0];
-  const rank2 = hand[1];
-  const modifier = hand.length > 2 ? hand[2] : null;
-  
+
+  const rank1 = hand[0].toUpperCase();
+  const rank2 = hand[1].toUpperCase();
+  const modifier = hand.length > 2 ? hand[2].toLowerCase() : null;
+
   // Validate ranks
   if (!RANKS.includes(rank1) || !RANKS.includes(rank2)) {
     return combos;
   }
-  
+
   if (rank1 === rank2) {
     // Pocket pair - 6 combos
     for (let i = 0; i < SUITS.length; i++) {
@@ -106,7 +106,7 @@ function expandShorthand(hand) {
       }
     }
   }
-  
+
   return combos;
 }
 
@@ -117,16 +117,16 @@ function expandShorthand(hand) {
  */
 function parseRangeNotation(notation) {
   const grid = createRangeGrid();
-  
+
   if (!notation || notation.trim() === '') {
     return grid;
   }
-  
+
   const hands = notation.split(',').map(h => h.trim().toUpperCase());
-  
+
   for (const hand of hands) {
     if (!hand) continue;
-    
+
     // Handle range notation like "AK+" or "77+"
     if (hand.includes('+')) {
       const baseHand = hand.replace('+', '');
@@ -144,7 +144,7 @@ function parseRangeNotation(notation) {
       markHandInGrid(grid, hand);
     }
   }
-  
+
   return grid;
 }
 
@@ -155,16 +155,16 @@ function parseRangeNotation(notation) {
  */
 function markHandInGrid(grid, hand) {
   if (!hand || hand.length < 2) return;
-  
+
   const rank1 = hand[0].toUpperCase();
   const rank2 = hand[1].toUpperCase();
   const modifier = hand.length > 2 ? hand[2].toLowerCase() : null;
-  
+
   const i = RANKS.indexOf(rank1);
   const j = RANKS.indexOf(rank2);
-  
+
   if (i === -1 || j === -1) return;
-  
+
   if (i === j) {
     // Pocket pair
     grid[i][j].selected = true;
@@ -204,25 +204,25 @@ function expandRangePlus(hand) {
   const rank1 = hand[0].toUpperCase();
   const rank2 = hand[1].toUpperCase();
   const modifier = hand.length > 2 ? hand[2].toLowerCase() : '';
-  
+
   const idx1 = RANKS.indexOf(rank1);
   const idx2 = RANKS.indexOf(rank2);
-  
+
   if (idx1 === idx2) {
     // Pocket pairs: "77+" means 77, 88, 99, TT, JJ, QQ, KK, AA
     for (let i = idx1; i >= 0; i--) {
       expanded.push(RANKS[i] + RANKS[i]);
     }
   } else {
-    // Broadway hands: "AK+" or "AKs+" 
+    // Broadway hands: "AK+" or "AKs+"
     const higherRank = RANKS[Math.min(idx1, idx2)];
     const startIdx = Math.max(idx1, idx2);
-    
+
     for (let i = startIdx; i > Math.min(idx1, idx2); i--) {
       expanded.push(higherRank + RANKS[i] + modifier);
     }
   }
-  
+
   return expanded;
 }
 
@@ -234,19 +234,19 @@ function expandRangePlus(hand) {
 function expandRangeDash(range) {
   const expanded = [];
   const [start, end] = range.split('-');
-  
+
   if (!start || !end) return expanded;
-  
+
   const rank1Start = start[0].toUpperCase();
   const rank2Start = start[1].toUpperCase();
   const rank1End = end[0].toUpperCase();
   const rank2End = end[1].toUpperCase();
   const modifier = start.length > 2 ? start[2].toLowerCase() : '';
-  
+
   const idx1 = RANKS.indexOf(rank1Start);
   const idx2Start = RANKS.indexOf(rank2Start);
   const idx2End = RANKS.indexOf(rank2End);
-  
+
   if (rank1Start === rank2Start && rank1End === rank2End) {
     // Pair range: "77-22"
     const startPair = RANKS.indexOf(rank1Start);
@@ -262,7 +262,7 @@ function expandRangeDash(range) {
       }
     }
   }
-  
+
   return expanded;
 }
 
@@ -276,7 +276,7 @@ function expandRangeDash(range) {
  */
 function toggleCell(grid, row, col, selected = null) {
   const newGrid = JSON.parse(JSON.stringify(grid)); // Deep clone
-  
+
   if (row >= 0 && row < 13 && col >= 0 && col < 13) {
     if (selected !== null) {
       newGrid[row][col].selected = selected;
@@ -286,7 +286,7 @@ function toggleCell(grid, row, col, selected = null) {
       newGrid[row][col].weight = newGrid[row][col].selected ? 1 : 0;
     }
   }
-  
+
   return newGrid;
 }
 
@@ -299,17 +299,17 @@ function calculateRangeStats(grid) {
   let selectedCombos = 0;
   let selectedHands = 0;
   let totalWeight = 0;
-  
+
   const breakdown = {
     pairs: { selected: 0, total: 0, combos: 0 },
     suited: { selected: 0, total: 0, combos: 0 },
     offsuit: { selected: 0, total: 0, combos: 0 }
   };
-  
+
   for (let i = 0; i < 13; i++) {
     for (let j = 0; j < 13; j++) {
       const cell = grid[i][j];
-      
+
       if (cell.type === 'pair') {
         breakdown.pairs.total++;
         if (cell.selected) {
@@ -329,7 +329,7 @@ function calculateRangeStats(grid) {
           breakdown.offsuit.combos += cell.combos * (cell.weight || 1);
         }
       }
-      
+
       if (cell.selected) {
         selectedHands++;
         selectedCombos += cell.combos * (cell.weight || 1);
@@ -337,9 +337,9 @@ function calculateRangeStats(grid) {
       }
     }
   }
-  
+
   const percentage = ((selectedCombos / TOTAL_COMBOS) * 100).toFixed(1);
-  
+
   return {
     selectedHands,
     selectedCombos: Math.round(selectedCombos),
@@ -356,7 +356,7 @@ function calculateRangeStats(grid) {
  */
 function gridToRangeNotation(grid) {
   const hands = [];
-  
+
   for (let i = 0; i < 13; i++) {
     for (let j = 0; j < 13; j++) {
       if (grid[i][j].selected) {
@@ -364,7 +364,7 @@ function gridToRangeNotation(grid) {
       }
     }
   }
-  
+
   return hands.join(',');
 }
 
@@ -376,50 +376,72 @@ function gridToRangeNotation(grid) {
  * @returns {string} Range in Flopzilla format
  */
 function gtowToFlopzilla(range) {
-  if (!range || range.trim() === '') return '';
+  // DIAGNOSTIC LOGGING
+  console.log('[gtowToFlopzilla] Input:', range);
   
+  if (!range || range.trim() === '') {
+    console.log('[gtowToFlopzilla] Empty input, returning empty string');
+    return '';
+  }
+
   const hands = range.split(',').map(h => h.trim());
-  const handMap = new Map(); // Track unique hands
+  console.log('[gtowToFlopzilla] Split hands:', hands);
   
+  const handMap = new Map(); // Track unique hands
+
   for (const hand of hands) {
+    console.log('[gtowToFlopzilla] Processing hand:', hand, 'length:', hand.length);
+    
     if (hand.length < 4) {
       // Already in short format, pass through
+      console.log('[gtowToFlopzilla] Short format, passing through:', hand);
       handMap.set(hand, true);
       continue;
     }
-    
+
     // Parse GTOw format: AhKs (4 chars)
     const rank1 = hand[0].toUpperCase();
     const suit1 = hand[1].toLowerCase();
     const rank2 = hand[2].toUpperCase();
     const suit2 = hand[3].toLowerCase();
     
+    console.log('[gtowToFlopzilla] Parsed:', { rank1, suit1, rank2, suit2 });
+
     if (!RANKS.includes(rank1) || !RANKS.includes(rank2)) {
+      console.log('[gtowToFlopzilla] Invalid ranks, skipping');
       continue;
     }
-    
+
     // Determine if suited or offsuit
     if (rank1 === rank2) {
       // Pocket pair
-      handMap.set(rank1 + rank2, true);
+      const result = rank1 + rank2;
+      console.log('[gtowToFlopzilla] Pocket pair:', result);
+      handMap.set(result, true);
     } else if (suit1 === suit2) {
       // Suited
       const idx1 = RANKS.indexOf(rank1);
       const idx2 = RANKS.indexOf(rank2);
       const highRank = idx1 < idx2 ? rank1 : rank2;
       const lowRank = idx1 < idx2 ? rank2 : rank1;
-      handMap.set(highRank + lowRank + 's', true);
+      const result = highRank + lowRank + 's';
+      console.log('[gtowToFlopzilla] Suited:', result);
+      handMap.set(result, true);
     } else {
       // Offsuit
       const idx1 = RANKS.indexOf(rank1);
       const idx2 = RANKS.indexOf(rank2);
       const highRank = idx1 < idx2 ? rank1 : rank2;
       const lowRank = idx1 < idx2 ? rank2 : rank1;
-      handMap.set(highRank + lowRank + 'o', true);
+      const result = highRank + lowRank + 'o';
+      console.log('[gtowToFlopzilla] Offsuit:', result);
+      handMap.set(result, true);
     }
   }
-  
-  return Array.from(handMap.keys()).join(',');
+
+  const output = Array.from(handMap.keys()).join(',');
+  console.log('[gtowToFlopzilla] Final output:', output);
+  return output;
 }
 
 /**
@@ -430,17 +452,29 @@ function gtowToFlopzilla(range) {
  * @returns {string} Range in GTOw format
  */
 function flopzillaToGtow(range) {
-  if (!range || range.trim() === '') return '';
+  // DIAGNOSTIC LOGGING
+  console.log('[flopzillaToGtow] Input:', range);
   
+  if (!range || range.trim() === '') {
+    console.log('[flopzillaToGtow] Empty input, returning empty string');
+    return '';
+  }
+
   const hands = range.split(',').map(h => h.trim());
-  const allCombos = [];
+  console.log('[flopzillaToGtow] Split hands:', hands);
   
+  const allCombos = [];
+
   for (const hand of hands) {
+    console.log('[flopzillaToGtow] Expanding hand:', hand);
     const combos = expandShorthand(hand);
+    console.log('[flopzillaToGtow] Expanded to:', combos.length, 'combos');
     allCombos.push(...combos);
   }
-  
-  return allCombos.join(',');
+
+  const output = allCombos.join(',');
+  console.log('[flopzillaToGtow] Final output length:', output.length);
+  return output;
 }
 
 /**
@@ -451,16 +485,36 @@ function flopzillaToGtow(range) {
  * @returns {string} Converted range
  */
 function convertRangeFormat(range, from, to) {
-  if (!range || range.trim() === '') return '';
-  if (from === to) return range;
+  // DIAGNOSTIC LOGGING
+  console.log('[convertRangeFormat] Called with:');
+  console.log('  range:', range);
+  console.log('  from:', from);
+  console.log('  to:', to);
   
-  if (from === 'gtow' && to === 'flopzilla') {
-    return gtowToFlopzilla(range);
-  } else if (from === 'flopzilla' && to === 'gtow') {
-    return flopzillaToGtow(range);
+  if (!range || range.trim() === '') {
+    console.log('[convertRangeFormat] Empty range, returning empty string');
+    return '';
   }
   
-  return range;
+  if (from === to) {
+    console.log('[convertRangeFormat] Same format, returning input');
+    return range;
+  }
+
+  let result;
+  if (from === 'gtow' && to === 'flopzilla') {
+    console.log('[convertRangeFormat] Converting gtow -> flopzilla');
+    result = gtowToFlopzilla(range);
+  } else if (from === 'flopzilla' && to === 'gtow') {
+    console.log('[convertRangeFormat] Converting flopzilla -> gtow');
+    result = flopzillaToGtow(range);
+  } else {
+    console.log('[convertRangeFormat] Unknown format combination, returning input');
+    result = range;
+  }
+  
+  console.log('[convertRangeFormat] Final result:', result);
+  return result;
 }
 
 // Export all functions
