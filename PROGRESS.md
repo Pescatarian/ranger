@@ -1,6 +1,6 @@
 # Rangebuilder Progress Tracker
 
-**Last Updated:** 2026-01-17
+**Last Updated:** 2026-01-18
 **Overall Status:** 80% Complete (27/33 features)
 **Status:** ✅ On Track
 
@@ -14,6 +14,36 @@
 | **Backend** | https://ranger-back-production.up.railway.app | ✅ Live |
 | **Health Check** | https://ranger-back-production.up.railway.app/health | ✅ Available |
 | **MongoDB** | Atlas cluster `rangerdb` | ✅ Connected |
+
+---
+
+## Range Engine Migration
+
+### Status: ✅ COMPLETE (Structural) | ⏳ PENDING (Test Verification)
+
+### Completed (2026-01-18)
+- [x] Backend `services/RangeFormatConverter.js` implemented
+- [x] `/api/range-engine/convert` endpoint tested and functional
+- [x] Frontend `src/utils/RangeFormatConverter.js` deleted (commit fbd9710)
+- [x] Zero frontend imports remaining (GitHub search verified)
+- [x] Code review confirmed weighted range support preserved
+
+### Deferred
+- [ ] Run `npm test` when local environment available
+- [ ] Verify CI pipeline passes
+- [ ] E2E test of range input components
+
+### Verification Notes
+Migration verified through:
+- Manual endpoint testing (returned correct converted data)
+- Code-level review of conversion logic
+- GitHub search confirming zero dangling imports
+
+Automated test suite not yet executed due to environment constraints.
+Will verify on next local development session.
+
+### Rollback Plan
+If issues discovered: Revert commit fbd9710 to restore frontend file
 
 ---
 
@@ -47,6 +77,32 @@
 | Vercel deployment | ✅ Done | Frontend live |
 | CORS configuration | ✅ Done | Allows Vercel + localhost |
 | Health endpoint | ✅ Done | /health for monitoring |
+| Range Engine API | ✅ Done | /api/range-engine/convert |
+
+---
+
+## Session Log - 2026-01-18
+
+### Range Engine Migration Completed:
+
+1. **Reverted Bad Implementation:**
+   - Deleted `services/rangeEngine.js` (commit 46e21c8)
+   - Deleted `routes/rangeEngine.js` (commit 0b361e3)
+   - Fixed app.js broken reference (commit a84336d)
+
+2. **Correct Migration:**
+   - Created `services/RangeFormatConverter.js` - exact copy from frontend (commit 4c17d09)
+   - Created `routes/rangeEngine.js` - API wrapper (commit 4c17d09)
+   - Registered route in app.js (commit f23449e)
+
+3. **Frontend Cleanup:**
+   - Deleted orphaned `src/utils/RangeFormatConverter.js` (commit fbd9710)
+   - Verified zero imports via GitHub code search
+
+4. **API Endpoint:**
+   - `POST /api/range-engine/convert`
+   - Header: `x-auth-token: <raw token>` (no Bearer prefix)
+   - Body: `{"rangeText":"...", "fromFormat":"format1", "toFormat":"format2"}`
 
 ---
 
@@ -76,9 +132,10 @@
 
 ## Next Priorities
 
-1. **Implement `range_clone` endpoint** (High, 1 hour)
-2. **Add basic trainer feedback** (High, 3-4 hours)
-3. **Backend folder API** (Medium, 2-3 hours)
+1. **Run test suite locally** (High, verify migration)
+2. **Implement `range_clone` endpoint** (High, 1 hour)
+3. **Add basic trainer feedback** (High, 3-4 hours)
+4. **Backend folder API** (Medium, 2-3 hours)
 
 ---
 
