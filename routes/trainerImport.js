@@ -14,23 +14,23 @@ const multer = require('multer');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB max
+    fileSize: 50 * 1024 * 1024 // 50MB max
   }
 });
 
 /**
- * @route   POST /api/trainer/import
- * @desc    Import HRC JSON file and create trainer spots
- * @access  Private
- * @body    multipart/form-data with 'hrcFile' field
+ * @route POST /api/trainer/import
+ * @desc Import HRC JSON file and create trainer spots
+ * @access Private
+ * @body multipart/form-data with 'hrcFile' field
  */
 router.post('/import', auth, upload.single('hrcFile'), async (req, res) => {
   try {
     // Validate file upload
     if (!req.file) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        msg: 'No file uploaded. Please attach an HRC JSON file.' 
+        msg: 'No file uploaded. Please attach an HRC JSON file.'
       });
     }
 
@@ -40,9 +40,9 @@ router.post('/import', auth, upload.single('hrcFile'), async (req, res) => {
       const fileContent = req.file.buffer.toString('utf8');
       hrcData = JSON.parse(fileContent);
     } catch (parseError) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        msg: 'Invalid JSON file. Please ensure the file is valid HRC JSON format.' 
+        msg: 'Invalid JSON file. Please ensure the file is valid HRC JSON format.'
       });
     }
 
@@ -50,9 +50,9 @@ router.post('/import', auth, upload.single('hrcFile'), async (req, res) => {
     try {
       validateHrcFile(req.file.buffer, hrcData);
     } catch (validationError) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        msg: validationError.message 
+        msg: validationError.message
       });
     }
 
@@ -60,10 +60,10 @@ router.post('/import', auth, upload.single('hrcFile'), async (req, res) => {
     const { spots, summary } = parseHrcJson(hrcData, req.user.id);
 
     if (spots.length === 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
         msg: 'No valid spots found in file. Check that the file format is correct.',
-        summary 
+        summary
       });
     }
 
@@ -84,7 +84,7 @@ router.post('/import', auth, upload.single('hrcFile'), async (req, res) => {
 
   } catch (err) {
     console.error('HRC import error:', err);
-    
+
     // Handle MongoDB bulk insert partial failures
     if (err.writeErrors) {
       const insertedCount = err.insertedDocs ? err.insertedDocs.length : 0;
@@ -98,7 +98,7 @@ router.post('/import', auth, upload.single('hrcFile'), async (req, res) => {
       });
     }
 
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
       msg: 'Server error during import. Please try again.',
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -107,17 +107,17 @@ router.post('/import', auth, upload.single('hrcFile'), async (req, res) => {
 });
 
 /**
- * @route   POST /api/trainer/import/preview
- * @desc    Preview HRC import without saving to database
- * @access  Private
- * @body    multipart/form-data with 'hrcFile' field
+ * @route POST /api/trainer/import/preview
+ * @desc Preview HRC import without saving to database
+ * @access Private
+ * @body multipart/form-data with 'hrcFile' field
  */
 router.post('/import/preview', auth, upload.single('hrcFile'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        msg: 'No file uploaded' 
+        msg: 'No file uploaded'
       });
     }
 
@@ -126,9 +126,9 @@ router.post('/import/preview', auth, upload.single('hrcFile'), async (req, res) 
     try {
       hrcData = JSON.parse(req.file.buffer.toString('utf8'));
     } catch (err) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        msg: 'Invalid JSON format' 
+        msg: 'Invalid JSON format'
       });
     }
 
@@ -136,9 +136,9 @@ router.post('/import/preview', auth, upload.single('hrcFile'), async (req, res) 
     try {
       validateHrcFile(req.file.buffer, hrcData);
     } catch (err) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        msg: err.message 
+        msg: err.message
       });
     }
 
@@ -155,16 +155,16 @@ router.post('/import/preview', auth, upload.single('hrcFile'), async (req, res) 
         villain: s.villain,
         action: s.action,
         rangeCount: s.ranges.length,
-        sampleRange: s.ranges[0] ? {
-          condition: s.ranges[0].condition,
-          handCount: Object.keys(s.ranges[0].rangeData).length
+        sampleRange: s.ranges ? {
+          condition: s.ranges.condition,
+          handCount: Object.keys(s.ranges.rangeData).length
         } : null
       }))
     });
 
   } catch (err) {
     console.error('HRC preview error:', err);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
       msg: 'Server error during preview',
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -173,28 +173,28 @@ router.post('/import/preview', auth, upload.single('hrcFile'), async (req, res) 
 });
 
 /**
- * @route   DELETE /api/trainer/spots/bulk
- * @desc    Delete multiple trainer spots by IDs
- * @access  Private
- * @body    { spotIds: [id1, id2, ...] }
+ * @route DELETE /api/trainer/spots/bulk
+ * @desc Delete multiple trainer spots by IDs
+ * @access Private
+ * @body { spotIds: [id1, id2, ...] }
  */
 router.delete('/spots/bulk', auth, async (req, res) => {
   try {
     const { spotIds } = req.body;
 
     if (!spotIds || !Array.isArray(spotIds) || spotIds.length === 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        msg: 'Please provide an array of spot IDs to delete' 
+        msg: 'Please provide an array of spot IDs to delete'
       });
     }
 
     // Delete spots owned by this user
-    const result = await TrainerSpot.deleteMany({ 
+    const result = await TrainerSpot.deleteMany({
       _id: { $in: spotIds },
-      user: req.user.id 
+      user: req.user.id
     });
-    
+
     return res.json({
       success: true,
       msg: `Deleted ${result.deletedCount} spots`,
@@ -203,9 +203,9 @@ router.delete('/spots/bulk', auth, async (req, res) => {
 
   } catch (err) {
     console.error('Bulk delete error:', err);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
-      msg: 'Server error during bulk delete' 
+      msg: 'Server error during bulk delete'
     });
   }
 });
