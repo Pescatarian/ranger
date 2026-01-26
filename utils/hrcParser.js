@@ -1,7 +1,7 @@
 /**
  * HRC JSON Parser
  * Converts HRC exported JSON to TrainerSpot format
- * Maps HRC frequencies to RangeBuilder grid format
+ * Generates grid data compatible with RangeBuilder's cellData Map structure
  */
 
 const ACTION_MAP = {
@@ -15,17 +15,8 @@ const ACTION_MAP = {
   '5B': '5-Bet'
 };
 
-// Color mapping for actions (matches RangeBuilder defaults)
-const ACTION_COLORS = {
-  'Fold': '#FF0000',    // Red
-  'Raise': '#4CAF50',   // Green
-  'Call': '#2196F3',    // Blue
-  '3-Bet': '#9C27B0',   // Purple
-  '4-Bet': '#FF9800',   // Orange
-  '5-Bet': '#F44336',   // Deep Red
-  'Check': '#00BCD4',   // Cyan
-  'All-in': '#FFC107'   // Amber
-};
+// RangeBuilder grid structure: 13x13 grid for all 169 poker hands
+const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
 
 /**
  * Parse HRC JSON file and convert to TrainerSpot array
@@ -80,10 +71,13 @@ function parseHrcJson(hrcData, userId) {
         continue;
       }
 
-      // Parse context from spot name
-      const { villain, action } = parseSpotContext(spotName, spot.position);
+      // Parse villain from spot name
+      const villain = parseVillain(spotName);
 
-      // Convert hands to ranges per action (RangeBuilder format)
+      // Determine primary action context
+      const action = parseAction(spotName);
+
+      // Convert hands to ranges per action (RangeBuilder grid format)
       const ranges = buildRangesForRangeBuilder(spot.hands, spot.actions);
 
       if (ranges.length === 0) {
@@ -115,45 +109,41 @@ function parseHrcJson(hrcData, userId) {
 }
 
 /**
- * Parse villain and action from spot name
+ * Parse villain position from spot name
  * Examples:
- *  - "EP RFI" → { villain: "None", action: "RFI" }
- *  - "BB vs CO Open" → { villain: "CO", action: "Defend" }
- *  - "SB vs BU 3Bet" → { villain: "BU", action: "vs 3Bet" }
+ *  - "EP RFI" → "Unopened"
+ *  - "EP vs BB 3Bet" → "BB"
+ *  - "SB vs BU" → "BU"
  */
-function parseSpotContext(spotName, position) {
-  let villain = 'None';
-  let action = 'RFI';
-
-  // Extract villain if "vs X" pattern exists
+function parseVillain(spotName) {
   const vsMatch = spotName.match(/vs\s+([A-Z]{2,3})/i);
   if (vsMatch) {
-    villain = vsMatch[1];
+    return vsMatch[1];
   }
-
-  // Extract action context
+  
+  // RFI spots have no villain
   if (spotName.includes('RFI')) {
-    action = 'RFI';
-  } else if (spotName.includes('3Bet')) {
-    action = vsMatch ? 'vs 3Bet' : '3Bet';
-  } else if (spotName.includes('4Bet')) {
-    action = vsMatch ? 'vs 4Bet' : '4Bet';
-  } else if (spotName.includes('5Bet')) {
-    action = vsMatch ? 'vs 5Bet' : '5Bet';
-  } else if (spotName.includes('Open')) {
-    action = vsMatch ? 'vs Open' : 'Open';
-  } else if (spotName.includes('Call')) {
-    action = 'Call';
-  } else if (spotName.includes('Defend')) {
-    action = 'Defend';
+    return 'Unopened';
   }
-
-  return { villain, action };
+  
+  return 'Unknown';
 }
 
 /**
- * Build ranges in RangeBuilder grid format
- * Converts HRC frequencies → Map-based grid with colors
+ * Parse primary action from spot name
+ * Examples:
+ *  - "EP RFI" → "RFI"
+ *  - "CO vs BB 3Bet" → "3Bet"
+ *  - "BU 4Bet" → "4Bet"
+ */
+function parseAction(spotName) {
+  const actionMatch = spotName.match(/(RFI|3Bet|4Bet|5Bet|Call|Raise|Fold|Check|All-in)/i);
+  return actionMatch ? actionMatch[1] : 'RFI';
+}
+
+/**
+ * Build ranges array compatible with RangeBuilder's grid structure
+ * Creates grid data matching cellData Map format used in TrainingMode.js
  * @param {Object} hands - HRC hands object
  * @param {Array} actions - HRC actions array
  * @returns {Array} ranges - Array of { condition, rangeData }
@@ -162,44 +152,47 @@ function buildRangesForRangeBuilder(hands, actions) {
   const ranges = [];
 
   // Create a range for each action type
-  for (let actionIndex = 0; actionIndex < actions.length; actionIndex++) {
-    const action = actions[actionIndex];
+  for (const action of actions) {
     const actionType = action.type;
     const actionLabel = ACTION_MAP[actionType] || actionType;
-    const color = ACTION_COLORS[actionLabel] || '#808080';
 
-    const rangeData = {};
+    // Grid data: Map-like object with [row,col] keys
+    const gridData = {};
 
-    // Process each hand
-    for (const [handNotation, handData] of Object.entries(hands)) {
-      if (!handData.played || !Array.isArray(handData.played)) {
+    // Process each hand from HRC
+    for (const [handStr, handData] of Object.entries(hands)) {
+      if (!handData.frequencies || !handData.frequencies[actionType]) {
         continue;
       }
 
-      const frequency = handData.played[actionIndex];
+      const frequency = handData.frequencies[actionType];
+      
+      // Skip hands with 0% frequency
+      if (frequency === 0) continue;
 
-      // Only include hands with non-zero frequency for this action
-      if (frequency > 0) {
-        // Convert HRC notation (e.g., "AKs") to grid cells
-        const gridCells = convertHandToGridCells(handNotation);
+      // Convert hand string to grid coordinates
+      const gridCoords = handToGridCoords(handStr);
+      if (!gridCoords) continue;
 
-        for (const cellKey of gridCells) {
-          rangeData[cellKey] = {
-            weight: Math.round(frequency * 100), // Convert 0.83 → 83%
-            color: color,
-            ev: handData.evs && handData.evs[actionIndex] !== undefined 
-              ? handData.evs[actionIndex] 
-              : null
-          };
-        }
-      }
+      const { row, col, isPair, isSuited } = gridCoords;
+      const key = `${row},${col}`;
+
+      // Store in grid format matching RangeBuilder
+      gridData[key] = {
+        weight: Math.round(frequency * 100), // Convert 0.0-1.0 to 0-100
+        isPair: isPair,
+        isSuited: isSuited,
+        ev: handData.evs && handData.evs[actions.indexOf(action)] !== undefined 
+          ? handData.evs[actions.indexOf(action)] 
+          : null
+      };
     }
 
     // Only add range if it has hands
-    if (Object.keys(rangeData).length > 0) {
+    if (Object.keys(gridData).length > 0) {
       ranges.push({
         condition: actionLabel,
-        rangeData: rangeData
+        rangeData: gridData
       });
     }
   }
@@ -208,17 +201,62 @@ function buildRangesForRangeBuilder(hands, actions) {
 }
 
 /**
- * Convert HRC hand notation to RangeBuilder grid cell keys
- * Examples:
- *  - "AA" → ["AA"]
- *  - "AKs" → ["AKs"]
- *  - "AKo" → ["AKo"]
- *  - "22" → ["22"]
+ * Convert poker hand notation to RangeBuilder grid coordinates
+ * Grid layout (13x13):
+ *   - Diagonal = pairs (AA at [0,0], 22 at [12,12])
+ *   - Upper right = suited hands
+ *   - Lower left = offsuit hands
+ * 
+ * @param {String} handStr - Hand notation (e.g., "AKs", "22", "T9o")
+ * @returns {Object|null} { row, col, isPair, isSuited }
  */
-function convertHandToGridCells(handNotation) {
-  // HRC uses standard poker notation, which matches RangeBuilder
-  // Just return as-is since the grid uses the same keys
-  return [handNotation];
+function handToGridCoords(handStr) {
+  // Normalize hand string
+  handStr = handStr.toUpperCase().trim();
+
+  let rank1, rank2, suited = false, pair = false;
+
+  if (handStr.length === 2) {
+    // Pair: "AA", "KK", "22"
+    rank1 = handStr[0];
+    rank2 = handStr[1];
+    if (rank1 !== rank2) return null; // Invalid pair
+    pair = true;
+  } else if (handStr.length === 3) {
+    // Suited/Offsuit: "AKs", "T9o"
+    rank1 = handStr[0];
+    rank2 = handStr[1];
+    const suitIndicator = handStr[2];
+    suited = (suitIndicator === 'S');
+  } else {
+    return null; // Invalid format
+  }
+
+  const row = RANKS.indexOf(rank1);
+  const col = RANKS.indexOf(rank2);
+
+  if (row === -1 || col === -1) return null;
+
+  // For RangeBuilder grid:
+  // - Pairs on diagonal
+  // - Suited hands: higher rank on row, lower rank on col (upper right triangle)
+  // - Offsuit hands: reverse (lower left triangle)
+  
+  if (pair) {
+    return { row, col: row, isPair: true, isSuited: false };
+  } else if (suited) {
+    // Suited: ensure row < col (upper triangle)
+    if (row > col) {
+      return { row: col, col: row, isPair: false, isSuited: true };
+    }
+    return { row, col, isPair: false, isSuited: true };
+  } else {
+    // Offsuit: ensure row > col (lower triangle)
+    if (row < col) {
+      return { row: col, col: row, isPair: false, isSuited: false };
+    }
+    return { row, col, isPair: false, isSuited: false };
+  }
 }
 
 /**
@@ -253,5 +291,5 @@ module.exports = {
   parseHrcJson,
   validateHrcFile,
   ACTION_MAP,
-  ACTION_COLORS
+  handToGridCoords // Export for testing
 };
