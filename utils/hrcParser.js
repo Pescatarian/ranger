@@ -111,30 +111,30 @@ function parseHrcJson(hrcData, userId) {
 /**
  * Parse villain position from spot name
  * Examples:
- *  - "EP RFI" → "Unopened"
- *  - "EP vs BB 3Bet" → "BB"
- *  - "SB vs BU" → "BU"
+ * - "EP RFI" → "Unopened"
+ * - "EP vs BB 3Bet" → "BB"
+ * - "SB vs BU" → "BU"
  */
 function parseVillain(spotName) {
   const vsMatch = spotName.match(/vs\s+([A-Z]{2,3})/i);
   if (vsMatch) {
     return vsMatch[1];
   }
-  
+
   // RFI spots have no villain
   if (spotName.includes('RFI')) {
     return 'Unopened';
   }
-  
+
   return 'Unknown';
 }
 
 /**
  * Parse primary action from spot name
  * Examples:
- *  - "EP RFI" → "RFI"
- *  - "CO vs BB 3Bet" → "3Bet"
- *  - "BU 4Bet" → "4Bet"
+ * - "EP RFI" → "RFI"
+ * - "CO vs BB 3Bet" → "3Bet"
+ * - "BU 4Bet" → "4Bet"
  */
 function parseAction(spotName) {
   const actionMatch = spotName.match(/(RFI|3Bet|4Bet|5Bet|Call|Raise|Fold|Check|All-in)/i);
@@ -166,7 +166,7 @@ function buildRangesForRangeBuilder(hands, actions) {
       }
 
       const frequency = handData.frequencies[actionType];
-      
+
       // Skip hands with 0% frequency
       if (frequency === 0) continue;
 
@@ -182,8 +182,8 @@ function buildRangesForRangeBuilder(hands, actions) {
         weight: Math.round(frequency * 100), // Convert 0.0-1.0 to 0-100
         isPair: isPair,
         isSuited: isSuited,
-        ev: handData.evs && handData.evs[actions.indexOf(action)] !== undefined 
-          ? handData.evs[actions.indexOf(action)] 
+        ev: handData.evs && handData.evs[actions.indexOf(action)] !== undefined
+          ? handData.evs[actions.indexOf(action)]
           : null
       };
     }
@@ -203,10 +203,10 @@ function buildRangesForRangeBuilder(hands, actions) {
 /**
  * Convert poker hand notation to RangeBuilder grid coordinates
  * Grid layout (13x13):
- *   - Diagonal = pairs (AA at [0,0], 22 at [12,12])
- *   - Upper right = suited hands
- *   - Lower left = offsuit hands
- * 
+ * - Diagonal = pairs (AA at [0,0], 22 at [12,12])
+ * - Upper right = suited hands
+ * - Lower left = offsuit hands
+ *
  * @param {String} handStr - Hand notation (e.g., "AKs", "22", "T9o")
  * @returns {Object|null} { row, col, isPair, isSuited }
  */
@@ -241,7 +241,7 @@ function handToGridCoords(handStr) {
   // - Pairs on diagonal
   // - Suited hands: higher rank on row, lower rank on col (upper right triangle)
   // - Offsuit hands: reverse (lower left triangle)
-  
+
   if (pair) {
     return { row, col: row, isPair: true, isSuited: false };
   } else if (suited) {
@@ -266,11 +266,11 @@ function handToGridCoords(handStr) {
  * @throws {Error} if validation fails
  */
 function validateHrcFile(fileBuffer, hrcData) {
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
   const MAX_SPOTS = 5000;
 
   if (fileBuffer.length > MAX_FILE_SIZE) {
-    throw new Error('File too large: maximum 10MB');
+    throw new Error('File too large: maximum 500MB');
   }
 
   if (!hrcData.metadata || hrcData.metadata.format !== '6max') {
